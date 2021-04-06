@@ -135,7 +135,7 @@ main(int argc, char **argv)
 #ifdef THREADS
         if (!strcmp(*argv, "-tt")) {         // Test the threading subsystem.
             ThreadTest();
-            interrupt->Halt();
+            // interrupt->Halt();
         }
 #endif
 #ifdef USER_PROGRAM

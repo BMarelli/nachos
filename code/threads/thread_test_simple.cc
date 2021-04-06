@@ -11,6 +11,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef SEMAPHORE_TEST
+#include "semaphore.hh"
+Semaphore *sem = new Semaphore("Semaphore", 3);
+#endif
 
 /// Loop 10 times, yielding the CPU to another ready thread each iteration.
 ///
@@ -22,6 +26,11 @@ SimpleThread(void *name_)
     // Reinterpret arg `name` as a string.
     char *name = (char *) name_;
 
+    #ifdef SEMAPHORE_TEST
+    DEBUG('s', "<thread %s> llamado a P()\n", name);
+    sem->P();
+    #endif
+
     // If the lines dealing with interrupts are commented, the code will
     // behave incorrectly, because printf execution may cause race
     // conditions.
@@ -30,6 +39,11 @@ SimpleThread(void *name_)
         currentThread->Yield();
     }
     printf("!!! Thread `%s` has finished\n", name);
+
+    #ifdef SEMAPHORE_TEST
+    DEBUG('s', "<thread %s> llamado a V()\n", name);
+    sem->V();
+    #endif
 }
 
 /// Set up a ping-pong between several threads.
