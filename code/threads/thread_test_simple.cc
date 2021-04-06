@@ -39,10 +39,12 @@ SimpleThread(void *name_)
 void
 ThreadTestSimple()
 {
-    char *name = new char [64];
-    strncpy(name, "2nd", 64);
-    Thread *newThread = new Thread(name);
-    newThread->Fork(SimpleThread, (void *) name);
+    for (unsigned i = 2; i <= 5; i++) {
+        char *name = new char [16];
+        sprintf(name, "%u", i);
+        Thread *t = new Thread(name);
+        t->Fork(SimpleThread, (void *) name);
+    }
 
-    SimpleThread((void *) "1st");
+    SimpleThread((void *) "1");
 }
