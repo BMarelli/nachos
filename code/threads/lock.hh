@@ -17,6 +17,8 @@
 #ifndef NACHOS_THREADS_LOCK__HH
 #define NACHOS_THREADS_LOCK__HH
 
+#include "semaphore.h"
+#include "system.hh"
 
 /// This class defines a “lock”.
 ///
@@ -29,9 +31,9 @@
 ///
 /// For convenience, nobody but the thread that holds the lock can free it.
 /// There is no operation for reading the state of the lock.
-class Lock {
+class Lock
+{
 public:
-
     /// Constructor: set up the lock as free.
     Lock(const char *debugName);
 
@@ -53,12 +55,14 @@ public:
     bool IsHeldByCurrentThread() const;
 
 private:
-
     /// For debugging.
     const char *name;
 
     // Add other needed fields here.
-};
 
+    Semaphore *semaphore;
+
+    // Thread *threadLocking;
+};
 
 #endif
