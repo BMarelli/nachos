@@ -9,7 +9,7 @@
 /// its only aim is to ease debugging the program.
 ///
 /// Copyright (c) 1992-1993 The Regents of the University of California.
-///               2000      José Miguel Santos Espino - ULPGC.
+///               2000      JosÃ© Miguel Santos Espino - ULPGC.
 ///               2016-2021 Docentes de la Universidad Nacional de Rosario.
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
@@ -17,10 +17,9 @@
 #ifndef NACHOS_THREADS_LOCK__HH
 #define NACHOS_THREADS_LOCK__HH
 
-#include "semaphore.h"
-#include "system.hh"
+#include "semaphore.hh"
 
-/// This class defines a “lock”.
+/// This class defines a â€œlockâ€.
 ///
 /// A lock can have two states: free and busy. Only two operations are
 /// allowed on locks:
@@ -31,9 +30,9 @@
 ///
 /// For convenience, nobody but the thread that holds the lock can free it.
 /// There is no operation for reading the state of the lock.
-class Lock
-{
+class Lock {
 public:
+
     /// Constructor: set up the lock as free.
     Lock(const char *debugName);
 
@@ -55,14 +54,13 @@ public:
     bool IsHeldByCurrentThread() const;
 
 private:
+
     /// For debugging.
     const char *name;
 
     // Add other needed fields here.
-
     Semaphore *semaphore;
-
-    // Thread *threadLocking;
 };
+
 
 #endif
