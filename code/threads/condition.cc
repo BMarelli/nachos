@@ -29,6 +29,7 @@ Condition::Condition(const char *debugName, Lock *conditionLock)
     name = debugName;
     listeningThreads = 0;
     semaphore = new Semaphore(name, 0);
+    lock = conditionLock;
 
 }
 
@@ -36,6 +37,7 @@ Condition::~Condition()
 {
     // TODO
     delete semaphore;
+    delete lock;
 }
 
 const char *
@@ -69,8 +71,9 @@ Condition::Broadcast()
 {
     // TODO
     ASSERT(lock->IsHeldByCurrentThread());
-    while (listeningThreads > 0) {
+    for (;listeningThreads > 0; listeningThreads--)
+    {
         semaphore->V();
-        listeningThreads --;
     }
+    
 }
