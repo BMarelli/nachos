@@ -26,11 +26,16 @@
 Condition::Condition(const char *debugName, Lock *conditionLock)
 {
     // TODO
+    name = debugName;
+    listeningThreads = 0;
+    semaphore = new Semaphore(name, 0);
+
 }
 
 Condition::~Condition()
 {
     // TODO
+    delete semaphore;
 }
 
 const char *
@@ -43,16 +48,29 @@ void
 Condition::Wait()
 {
     // TODO
+    lock->Release();
+    semaphore->P();
+    listeningThreads ++;
 }
 
 void
 Condition::Signal()
 {
     // TODO
+    ASSERT(lock->IsHeldByCurrentThread());
+    if (listeningThreads > 0) {
+        semaphore->V();
+        listeningThreads --;
+    }
 }
 
 void
 Condition::Broadcast()
 {
     // TODO
+    ASSERT(lock->IsHeldByCurrentThread());
+    while (listeningThreads > 0) {
+        semaphore->V();
+        listeningThreads --;
+    }
 }

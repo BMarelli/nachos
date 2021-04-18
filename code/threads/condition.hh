@@ -77,6 +77,11 @@ private:
     const char *name;
 
     // Other needed fields are to be added here.
+    Lock *lock;
+    // Number of threads listening to a signal
+    int listeningThreads;
+    // Semaphore for the threads to wait
+    Semaphore *semaphore;
 };
 
 

@@ -7,7 +7,8 @@
 
 #include "thread_test_garden_sem.hh"
 #include "system.hh"
-#include "semaphore.hh"
+// #include "semaphore.hh"
+#include "lock.hh"
 
 #include <stdio.h>
 

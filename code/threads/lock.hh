@@ -60,6 +60,9 @@ private:
 
     // Add other needed fields here.
     Semaphore *semaphore;
+
+    // The current thread with the lock
+    Thread* thread_lock;
 };
 
 
