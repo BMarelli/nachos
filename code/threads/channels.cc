@@ -35,7 +35,7 @@ Channels::Receive(int *message)
 {
   lock4receive->Acquire();
   semaphore4receive->P();
-  buffer = message;
+  message = buffer;
   semaphore4send->V();
   lock4receive->Release();
 }
