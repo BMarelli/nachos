@@ -17,7 +17,7 @@ public:
 private:
   char *name;
 
-  int* buffer;
+  int buffer;
 
   Lock *lock4send, *lock4receive;
 

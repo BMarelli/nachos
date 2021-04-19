@@ -38,7 +38,6 @@
 #ifndef NACHOS_THREADS_THREAD__HH
 #define NACHOS_THREADS_THREAD__HH
 
-
 #include "lib/utility.hh"
 
 #ifdef USER_PROGRAM
@@ -47,7 +46,6 @@
 #endif
 
 #include <stdint.h>
-
 
 /// CPU register state to be saved on context switch.
 ///
@@ -62,9 +60,9 @@ const unsigned MACHINE_STATE_SIZE = 17;
 /// WATCH OUT IF THIS IS NOT BIG ENOUGH!!!!!
 const unsigned STACK_SIZE = 4 * 1024;
 
-
 /// Thread state.
-enum ThreadStatus {
+enum ThreadStatus
+{
     JUST_CREATED,
     RUNNING,
     READY,
@@ -82,9 +80,9 @@ enum ThreadStatus {
 ///
 ///  Some threads also belong to a user address space; threads that only run
 ///  in the kernel have a null address space.
-class Thread {
+class Thread
+{
 private:
-
     // NOTE: DO NOT CHANGE the order of these first two members.
     // THEY MUST be in this position for `SWITCH` to work.
 
@@ -95,9 +93,12 @@ private:
     uintptr_t machineState[MACHINE_STATE_SIZE];
 
 public:
-
     /// Initialize a `Thread`.
     Thread(const char *debugName);
+
+    Thread(const char *debugName, bool isJoineable);
+
+    Thread(const char *debugName, bool isJoineable, unsigned initialPriority);
 
     /// Deallocate a Thread.
     ///
@@ -109,6 +110,8 @@ public:
 
     /// Make thread run `(*func)(arg)`.
     void Fork(VoidFunctionPtr func, void *arg);
+
+    void Join();
 
     /// Relinquish the CPU if any other thread is runnable.
     void Yield();
@@ -128,6 +131,9 @@ public:
 
     void Print() const;
 
+    /// Returns the priority of the threads
+    unsigned GetPriority();
+
 private:
     // Some of the private data for this class is listed above.
 
@@ -144,6 +150,10 @@ private:
     /// Allocate a stack for thread.  Used internally by `Fork`.
     void StackAllocate(VoidFunctionPtr func, void *arg);
 
+    bool joineable;
+    bool finished;
+    unsigned priority;
+
 #ifdef USER_PROGRAM
     /// User-level CPU register state.
     ///
@@ -153,7 +163,6 @@ private:
     int userRegisters[NUM_TOTAL_REGS];
 
 public:
-
     // Save user-level register state.
     void SaveUserState();
 
@@ -167,7 +176,8 @@ public:
 
 /// Magical machine-dependent routines, defined in `switch.s`.
 
-extern "C" {
+extern "C"
+{
     /// First frame on thread execution stack.
     ///
     /// 1. Enable interrupts.
@@ -178,6 +188,5 @@ extern "C" {
     // Stop running `oldThread` and start running `newThread`.
     void SWITCH(Thread *oldThread, Thread *newThread);
 }
-
 
 #endif

@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #ifdef SEMAPHORE_TEST
 #include "semaphore.hh"
@@ -46,6 +47,24 @@ SimpleThread(void *name_)
     #endif
 }
 
+void Priority1(void *id) {
+    printf("Esto deberia ejecutarse con mas prioridad, cuando se termine esto siguen las demas\n");
+    for(int i=0; i < 10; i++) {
+        printf("Iteracion Priority1 %d\n", i);
+        sleep(1);
+        currentThread->Yield();
+    }
+}
+
+void Priority2(void* _id) {
+    int id = *(int*) _id;
+    printf("Entrando a priority2 %d\n", id);
+    for(int i = 0; i < 10; i++) {
+        printf("Iteracion Priority2 (%d) %d\n", id, i);
+        currentThread->Yield();
+    }
+}
+
 /// Set up a ping-pong between several threads.
 ///
 /// Do it by launching one thread which calls `SimpleThread`, and finally
@@ -53,12 +72,22 @@ SimpleThread(void *name_)
 void
 ThreadTestSimple()
 {
-    for (unsigned i = 2; i <= 5; i++) {
-        char *name = new char [16];
-        sprintf(name, "%u", i);
-        Thread *t = new Thread(name);
-        t->Fork(SimpleThread, (void *) name);
-    }
+    // for (unsigned i = 2; i <= 5; i++) {
+    //     char *name = new char [16];
+    //     sprintf(name, "%u", i);
+    //     Thread *t = new Thread(name);
+    //     t->Fork(SimpleThread, (void *) name);
+    // }
 
-    SimpleThread((void *) "1");
+    // SimpleThread((void *) "1");
+
+    Thread *t1 = new Thread("t1", false, 9);
+    Thread *t2 = new Thread("t2", false, 1);
+    Thread *t3 = new Thread("t3", false, 1);
+
+    int t2id = 1, t3id = 2;
+
+    t1->Fork(Priority1, nullptr);
+    t2->Fork(Priority2, &t2id);
+    t3->Fork(Priority2, &t3id);
 }
