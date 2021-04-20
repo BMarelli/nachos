@@ -19,7 +19,7 @@
 #include "thread.hh"
 #include "switch.h"
 #include "system.hh"
-#include "condition.hh"
+#include "lock.hh"
 
 #include <inttypes.h>
 #include <stdio.h>
