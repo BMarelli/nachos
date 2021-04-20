@@ -67,8 +67,6 @@ Scheduler::ReadyToRun(Thread *thread)
 Thread *
 Scheduler::FindNextToRun()
 {
-    Print();
-
     Thread* next = nullptr;
 
     unsigned i = 0;
@@ -78,7 +76,7 @@ Scheduler::FindNextToRun()
     }
 
     if (next) DEBUG('t', "Found next thread to run: %s\n", next->GetName());
-    
+
     return next;
 }
 
@@ -160,7 +158,7 @@ Scheduler::Print()
 {
     printf("Ready list contents:\n");
 
-    for(unsigned i=0; i < QUEUES; i++) 
+    for(unsigned i=0; i < QUEUES; i++)
         readyList[i]->Apply(ThreadPrint);
 
     printf("\n");

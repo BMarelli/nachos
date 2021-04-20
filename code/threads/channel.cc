@@ -1,6 +1,6 @@
-#include "channels.hh"
+#include "channel.hh"
 
-Channels::Channels(char *debugName)
+Channel::Channel(char *debugName)
 {
   name = debugName;
   lock4send = new Lock("lock4send");
@@ -9,7 +9,7 @@ Channels::Channels(char *debugName)
   semaphore4receive = new Semaphore("semaphore4receive", 0);
 }
 
-Channels::~Channels()
+Channel::~Channel()
 {
   delete lock4send;
   delete lock4receive;
@@ -18,7 +18,7 @@ Channels::~Channels()
 }
 
 void
-Channels::Send(int message)
+Channel::Send(int message)
 {
   lock4send->Acquire();
   semaphore4send->P();
@@ -28,7 +28,7 @@ Channels::Send(int message)
 }
 
 void
-Channels::Receive(int *message)
+Channel::Receive(int *message)
 {
   lock4receive->Acquire();
   semaphore4send->V();

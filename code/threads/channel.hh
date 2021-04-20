@@ -1,14 +1,14 @@
-#ifndef NACHOS_CHANNELS__HH
-#define NACHOS_CHANNELS__HH
+#ifndef NACHOS_CHANNEL__HH
+#define NACHOS_CHANNEL__HH
 
 #include "lock.hh"
 
-class Channels
+class Channel
 {
 public:
-  Channels(char *debugName);
+  Channel(char *debugName);
 
-  ~Channels();
+  ~Channel();
 
   void Send(int message);
 

@@ -17,6 +17,11 @@
 Semaphore *sem = new Semaphore("Semaphore", 3);
 #endif
 
+#ifdef CHANNEL_TEST
+#include "channel.hh"
+Channel *channel = new Channel("test channel");
+#endif
+
 /// Loop 10 times, yielding the CPU to another ready thread each iteration.
 ///
 /// * `name` points to a string with a thread name, just for debugging
@@ -47,6 +52,38 @@ SimpleThread(void *name_)
     #endif
 }
 
+#ifdef CHANNEL_TEST
+void channel_thread_1(void* arg) {
+    int number = 10;
+
+    DEBUG('c', "thread_1 quiere enviar %d\n", number);
+    channel->Send(number);
+    DEBUG('c', "thread_1 consiguio enviar el dato\n");
+
+    sleep(5);
+
+    DEBUG('c', "thread_1 quiere recibir un dato\n");
+    channel->Receive(&number);
+    DEBUG('c', "thread_1 consiguio recibir el dato: %d\n", number);
+
+}
+
+void channel_thread_2(void* arg) {
+    int number;
+
+    sleep(5);
+
+    DEBUG('c', "thread_2 quiere recibir un dato\n");
+    channel->Receive(&number);
+    DEBUG('c', "thread_2 consiguio recibir el dato: %d\n", number);
+
+    number = 5;
+    DEBUG('c', "thread_2 quiere enviar %d\n", number);
+    channel->Send(number);
+    DEBUG('c', "thread_2 consiguio enviar el dato\n");
+}
+#endif
+
 /// Set up a ping-pong between several threads.
 ///
 /// Do it by launching one thread which calls `SimpleThread`, and finally
@@ -54,12 +91,21 @@ SimpleThread(void *name_)
 void
 ThreadTestSimple()
 {
-    for (unsigned i = 2; i <= 5; i++) {
-        char *name = new char [16];
-        sprintf(name, "%u", i);
-        Thread *t = new Thread(name, false, PRIORITY_DEFAULT);
-        t->Fork(SimpleThread, (void *) name);
-    }
+    // for (unsigned i = 2; i <= 5; i++) {
+    //     char *name = new char [16];
+    //     sprintf(name, "%u", i);
+    //     Thread *t = new Thread(name, false, PRIORITY_DEFAULT);
+    //     t->Fork(SimpleThread, (void *) name);
+    // }
 
-    SimpleThread((void *) "1");
+    // SimpleThread((void *) "1");
+
+#ifdef CHANNEL_TEST
+    DEBUG('c', "CHANNEL TEST\n");
+    Thread *t1 = new Thread("t1", false, PRIORITY_DEFAULT);
+    Thread *t2 = new Thread("t2", false, PRIORITY_DEFAULT);
+
+    t1->Fork(channel_thread_1, nullptr);
+    t2->Fork(channel_thread_2, nullptr);
+#endif
 }
