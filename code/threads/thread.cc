@@ -203,8 +203,6 @@ void Thread::Yield()
 
     DEBUG('t', "Yielding thread \"%s\"\n", GetName());
 
-    // TODO: cambiar orden para la prioridad?
-
     Thread *nextThread = scheduler->FindNextToRun();
     if (nextThread != nullptr)
     {
@@ -300,6 +298,11 @@ void Thread::StackAllocate(VoidFunctionPtr func, void *arg)
 unsigned
 Thread::GetPriority() {
     return priority;
+}
+
+void
+Thread::SetPriority(unsigned priority_) {
+    priority = priority_;
 }
 
 #ifdef USER_PROGRAM

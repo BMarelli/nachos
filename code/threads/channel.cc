@@ -1,6 +1,6 @@
 #include "channel.hh"
 
-Channel::Channel(char *debugName)
+Channel::Channel(const char *debugName)
 {
   name = debugName;
   lock4send = new Lock("lock4send");

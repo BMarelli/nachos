@@ -132,8 +132,8 @@ public:
 
     void Print() const;
 
-    /// Returns the priority of the threads
     unsigned GetPriority();
+    void SetPriority(unsigned priority);
 
 private:
     // Some of the private data for this class is listed above.

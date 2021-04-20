@@ -6,7 +6,7 @@
 class Channel
 {
 public:
-  Channel(char *debugName);
+  Channel(const char *debugName);
 
   ~Channel();
 
@@ -15,7 +15,7 @@ public:
   void Receive(int *message);
 
 private:
-  char *name;
+  const char *name;
 
   int buffer;
 
