@@ -23,8 +23,8 @@ Channels::Send(int message)
   lock4send->Acquire();
   semaphore4send->P();
   buffer = message;
-  lock4send->Release();
   semaphore4receive->V();
+  lock4send->Release();
 }
 
 void
