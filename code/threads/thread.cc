@@ -19,7 +19,6 @@
 #include "thread.hh"
 #include "switch.h"
 #include "system.hh"
-#include "lock.hh"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -39,21 +38,16 @@ IsThreadStatus(ThreadStatus s)
 /// `Thread::Fork`.
 ///
 /// * `threadName` is an arbitrary string, useful for debugging.
-/// * `isJoineable` is ...........
+/// * `isJoinable` is ...........
 /// * `initialPriority` is ...........
-Thread::Thread(const char *threadName, bool isJoineable, unsigned initialPriority)
+Thread::Thread(const char *threadName, bool isJoinable, unsigned initialPriority)
 {
     name = threadName;
     stackTop = nullptr;
     stack = nullptr;
     status = JUST_CREATED;
-    joineable = isJoineable;
-    if (joineable) {
-        joinLock = new Lock("joinLock");
-        joinLock->Acquire();
-    } else {
-        joinLock = nullptr;
-    }
+    joinable = isJoinable;
+    joinThread = nullptr;
     priority = initialPriority;
 #ifdef USER_PROGRAM
     space = nullptr;
@@ -78,8 +72,6 @@ Thread::~Thread()
         SystemDep::DeallocBoundedArray((char *)stack,
                                        STACK_SIZE * sizeof *stack);
     }
-
-    if (joineable) delete joinLock;
 }
 
 /// Invoke `(*func)(arg)`, allowing caller and callee to execute
@@ -116,9 +108,14 @@ void Thread::Fork(VoidFunctionPtr func, void *arg)
 void Thread::Join()
 {
     ASSERT(this != currentThread);
-    ASSERT(joineable);
+    ASSERT(joinable);
 
-    joinLock->Acquire();
+    IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
+
+    joinThread = currentThread;
+    currentThread->Sleep();
+
+    interrupt->SetLevel(oldLevel);
 }
 
 /// Check a thread's stack to see if it has overrun the space that has been
@@ -176,9 +173,9 @@ void Thread::Finish()
 
     DEBUG('t', "Finishing thread \"%s\"\n", GetName());
 
-    threadToBeDestroyed = currentThread;
+    if (joinable && joinThread) scheduler->ReadyToRun(joinThread);
 
-    if (joineable) joinLock->Release();
+    threadToBeDestroyed = currentThread;
 
     Sleep(); // Invokes `SWITCH`.
     // Not reached.

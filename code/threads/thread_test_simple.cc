@@ -60,8 +60,6 @@ void channel_thread_1(void* arg) {
     channel->Send(number);
     DEBUG('c', "thread_1 consiguio enviar el dato\n");
 
-    sleep(5);
-
     DEBUG('c', "thread_1 quiere recibir un dato\n");
     channel->Receive(&number);
     DEBUG('c', "thread_1 consiguio recibir el dato: %d\n", number);
@@ -70,8 +68,6 @@ void channel_thread_1(void* arg) {
 
 void channel_thread_2(void* arg) {
     int number;
-
-    sleep(5);
 
     DEBUG('c', "thread_2 quiere recibir un dato\n");
     channel->Receive(&number);
@@ -102,10 +98,13 @@ ThreadTestSimple()
 
 #ifdef CHANNEL_TEST
     DEBUG('c', "CHANNEL TEST\n");
-    Thread *t1 = new Thread("t1", false, PRIORITY_DEFAULT);
-    Thread *t2 = new Thread("t2", false, PRIORITY_DEFAULT);
+    Thread *t1 = new Thread("t1", true, PRIORITY_DEFAULT);
+    Thread *t2 = new Thread("t2", true, PRIORITY_DEFAULT);
 
     t1->Fork(channel_thread_1, nullptr);
     t2->Fork(channel_thread_2, nullptr);
+
+    t1->Join();
+    t2->Join();
 #endif
 }
