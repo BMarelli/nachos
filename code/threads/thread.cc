@@ -19,6 +19,7 @@
 #include "thread.hh"
 #include "switch.h"
 #include "system.hh"
+#include "channel.hh"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -47,7 +48,7 @@ Thread::Thread(const char *threadName, bool isJoinable, unsigned initialPriority
     stack = nullptr;
     status = JUST_CREATED;
     joinable = isJoinable;
-    joinThread = nullptr;
+    if (joinable) joinChannel = new Channel("joinChannel");
     priority = initialPriority;
 #ifdef USER_PROGRAM
     space = nullptr;
@@ -72,6 +73,8 @@ Thread::~Thread()
         SystemDep::DeallocBoundedArray((char *)stack,
                                        STACK_SIZE * sizeof *stack);
     }
+
+    if (joinable) delete joinChannel;
 }
 
 /// Invoke `(*func)(arg)`, allowing caller and callee to execute
@@ -110,12 +113,10 @@ void Thread::Join()
     ASSERT(this != currentThread);
     ASSERT(joinable);
 
-    IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
+    int dummy;
+    joinChannel->Receive(&dummy);
 
-    joinThread = currentThread;
-    currentThread->Sleep();
-
-    interrupt->SetLevel(oldLevel);
+    threadToBeDestroyed = this;
 }
 
 /// Check a thread's stack to see if it has overrun the space that has been
@@ -173,9 +174,7 @@ void Thread::Finish()
 
     DEBUG('t', "Finishing thread \"%s\"\n", GetName());
 
-    if (joinable && joinThread) scheduler->ReadyToRun(joinThread);
-
-    threadToBeDestroyed = currentThread;
+    if (joinable) joinChannel->Send(0);
 
     Sleep(); // Invokes `SWITCH`.
     // Not reached.

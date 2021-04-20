@@ -49,6 +49,8 @@
 
 #define PRIORITY_DEFAULT 0
 
+class Channel;
+
 /// CPU register state to be saved on context switch.
 ///
 /// x86 processors needs 9 32-bit registers, whereas x64 has 8 extra
@@ -150,7 +152,7 @@ private:
     void StackAllocate(VoidFunctionPtr func, void *arg);
 
     bool joinable;
-    Thread* joinThread;
+    Channel* joinChannel;
 
     unsigned priority;
 
