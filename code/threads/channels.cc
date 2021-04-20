@@ -17,7 +17,7 @@ Channels::~Channels()
   delete semaphore4receive;
 }
 
-void 
+void
 Channels::Send(int message)
 {
   lock4send->Acquire();
@@ -28,11 +28,11 @@ Channels::Send(int message)
 }
 
 void
-Channels::Receive(int *message) 
+Channels::Receive(int *message)
 {
   lock4receive->Acquire();
+  semaphore4send->V();
   semaphore4receive->P();
   *message = buffer;
-  semaphore4send->V();
   lock4receive->Release();
 }
