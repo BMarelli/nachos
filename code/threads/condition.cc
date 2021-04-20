@@ -69,7 +69,5 @@ Condition::Signal()
 void
 Condition::Broadcast()
 {
-    while (!waitQueue->IsEmpty()) {
-        Signal();
-    }
+    while (!waitQueue->IsEmpty()) Signal();
 }
