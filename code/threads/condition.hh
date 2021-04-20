@@ -18,6 +18,7 @@
 #define NACHOS_THREADS_CONDITION__HH
 
 
+#include "semaphore.hh"
 #include "lock.hh"
 
 
@@ -57,7 +58,7 @@ class Condition {
 public:
 
     /// Constructor: indicate which lock the condition variable belongs to.
-    Condition(const char *debugName, Lock *conditionLock);
+    Condition(const char *debugName, Lock* conditionLock);
 
     ~Condition();
 
@@ -77,11 +78,9 @@ private:
     const char *name;
 
     // Other needed fields are to be added here.
-    Lock *lock;
-    // Number of threads listening to a signal
-    int listeningThreads;
-    // Semaphore for the threads to wait
-    Semaphore *semaphore;
+
+    List<Semaphore*> *waitQueue;
+    Lock* lock;
 };
 
 

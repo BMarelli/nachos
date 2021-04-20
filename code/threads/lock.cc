@@ -43,7 +43,6 @@ Lock::GetName() const
 void
 Lock::Acquire()
 {
-    // TODO
     ASSERT(!IsHeldByCurrentThread());
 
     semaphore->P();
@@ -53,7 +52,6 @@ Lock::Acquire()
 void
 Lock::Release()
 {
-    // TODO
     ASSERT(IsHeldByCurrentThread());
 
     semaphore->V();
@@ -63,6 +61,5 @@ Lock::Release()
 bool
 Lock::IsHeldByCurrentThread() const
 {
-    // TODO
     return thread_lock == currentThread;
 }

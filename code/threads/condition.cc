@@ -23,21 +23,16 @@
 /// Note -- without a correct implementation of `Condition::Wait`, the test
 /// case in the network assignment will not work!
 
-Condition::Condition(const char *debugName, Lock *conditionLock)
+Condition::Condition(const char *debugName, Lock* conditionLock)
 {
-    // TODO
     name = debugName;
-    listeningThreads = 0;
-    semaphore = new Semaphore(name, 0);
+    waitQueue = new List<Semaphore*>;
     lock = conditionLock;
-
 }
 
 Condition::~Condition()
 {
-    // TODO
-    delete semaphore;
-    delete lock;
+    delete waitQueue;
 }
 
 const char *
@@ -49,31 +44,32 @@ Condition::GetName() const
 void
 Condition::Wait()
 {
-    // TODO
+    ASSERT(lock->IsHeldByCurrentThread());
+
+    Semaphore *semaphore = new Semaphore("condition", 0);
+    waitQueue->Append(semaphore);
     lock->Release();
     semaphore->P();
-    listeningThreads ++;
+    lock->Acquire();
+
+    delete semaphore;
 }
 
 void
 Condition::Signal()
 {
-    // TODO
     ASSERT(lock->IsHeldByCurrentThread());
-    if (listeningThreads > 0) {
+
+    if (!waitQueue->IsEmpty()) {
+        Semaphore *semaphore = waitQueue->Pop();
         semaphore->V();
-        listeningThreads --;
     }
 }
 
 void
 Condition::Broadcast()
 {
-    // TODO
-    ASSERT(lock->IsHeldByCurrentThread());
-    for (;listeningThreads > 0; listeningThreads--)
-    {
-        semaphore->V();
+    while (!waitQueue->IsEmpty()) {
+        Signal();
     }
-    
 }
