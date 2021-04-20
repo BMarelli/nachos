@@ -51,7 +51,7 @@ ThreadTestGardenSem()
         sprintf(name, "Turnstile %u", i);
         unsigned *n = new unsigned;
         *n = i;
-        Thread *t = new Thread(name);
+        Thread *t = new Thread(name, false, PRIORITY_DEFAULT);
         t->Fork(Turnstile, (void *) n);
     }
 

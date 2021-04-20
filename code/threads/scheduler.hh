@@ -15,7 +15,7 @@
 #include "lib/list.hh"
 
 #define QUEUES 10
-
+#define PRIORITY_MAX QUEUES-1
 
 /// The following class defines the scheduler/dispatcher abstraction --
 /// the data structures and operations needed to keep track of which

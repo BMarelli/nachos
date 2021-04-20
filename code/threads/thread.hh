@@ -47,6 +47,10 @@
 
 #include <stdint.h>
 
+#define PRIORITY_DEFAULT 0
+
+class Lock;
+
 /// CPU register state to be saved on context switch.
 ///
 /// x86 processors needs 9 32-bit registers, whereas x64 has 8 extra
@@ -94,9 +98,6 @@ private:
 
 public:
     /// Initialize a `Thread`.
-    Thread(const char *debugName);
-
-    Thread(const char *debugName, bool isJoineable);
 
     Thread(const char *debugName, bool isJoineable, unsigned initialPriority);
 
@@ -151,7 +152,8 @@ private:
     void StackAllocate(VoidFunctionPtr func, void *arg);
 
     bool joineable;
-    bool finished;
+    Lock* joinLock;
+
     unsigned priority;
 
 #ifdef USER_PROGRAM

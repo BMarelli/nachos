@@ -57,7 +57,7 @@ ThreadTestSimple()
     for (unsigned i = 2; i <= 5; i++) {
         char *name = new char [16];
         sprintf(name, "%u", i);
-        Thread *t = new Thread(name);
+        Thread *t = new Thread(name, false, PRIORITY_DEFAULT);
         t->Fork(SimpleThread, (void *) name);
     }
 

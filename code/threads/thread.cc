@@ -19,11 +19,10 @@
 #include "thread.hh"
 #include "switch.h"
 #include "system.hh"
+#include "condition.hh"
 
 #include <inttypes.h>
 #include <stdio.h>
-
-#define DEFAULT_PRIORITY 0
 
 /// This is put at the top of the execution stack, for detecting stack
 /// overflows.
@@ -35,49 +34,13 @@ IsThreadStatus(ThreadStatus s)
     return 0 <= s && s < NUM_THREAD_STATUS;
 }
 
-/// Initialize a thread control block, so that we can then call
-/// `Thread::Fork`.
-///
-/// * `threadName` is an arbitrary string, useful for debugging.
-Thread::Thread(const char *threadName)
-{
-    name = threadName;
-    stackTop = nullptr;
-    stack = nullptr;
-    status = JUST_CREATED;
-    joineable = false;
-    finished = false;
-    priority = DEFAULT_PRIORITY;
-#ifdef USER_PROGRAM
-    space = nullptr;
-#endif
-}
-
+// TODO: doc
 /// Initialize a thread control block, so that we can then call
 /// `Thread::Fork`.
 ///
 /// * `threadName` is an arbitrary string, useful for debugging.
 /// * `isJoineable` is ...........
-Thread::Thread(const char *threadName, bool isJoineable)
-{
-    name = threadName;
-    stackTop = nullptr;
-    stack = nullptr;
-    status = JUST_CREATED;
-    joineable = false;
-    finished = false;
-    priority = DEFAULT_PRIORITY;
-#ifdef USER_PROGRAM
-    space = nullptr;
-#endif
-}
-
-/// Initialize a thread control block, so that we can then call
-/// `Thread::Fork`.
-///
-/// * `threadName` is an arbitrary string, useful for debugging.
-/// * `isJoineable` is ...........
-/// * `initialPriority` is ........... TODO
+/// * `initialPriority` is ...........
 Thread::Thread(const char *threadName, bool isJoineable, unsigned initialPriority)
 {
     name = threadName;
@@ -85,7 +48,12 @@ Thread::Thread(const char *threadName, bool isJoineable, unsigned initialPriorit
     stack = nullptr;
     status = JUST_CREATED;
     joineable = isJoineable;
-    finished = false;
+    if (joineable) {
+        joinLock = new Lock("joinLock");
+        joinLock->Acquire();
+    } else {
+        joinLock = nullptr;
+    }
     priority = initialPriority;
 #ifdef USER_PROGRAM
     space = nullptr;
@@ -110,6 +78,8 @@ Thread::~Thread()
         SystemDep::DeallocBoundedArray((char *)stack,
                                        STACK_SIZE * sizeof *stack);
     }
+
+    if (joineable) delete joinLock;
 }
 
 /// Invoke `(*func)(arg)`, allowing caller and callee to execute
@@ -148,9 +118,7 @@ void Thread::Join()
     ASSERT(this != currentThread);
     ASSERT(joineable);
 
-    while(!finished) {
-        currentThread->Yield();
-    }
+    joinLock->Acquire();
 }
 
 /// Check a thread's stack to see if it has overrun the space that has been
@@ -210,7 +178,7 @@ void Thread::Finish()
 
     threadToBeDestroyed = currentThread;
 
-    finished = true;
+    if (joineable) joinLock->Release();
 
     Sleep(); // Invokes `SWITCH`.
     // Not reached.
