@@ -45,6 +45,12 @@ Lock::Acquire()
 {
     ASSERT(!IsHeldByCurrentThread());
 
+    if (thread_lock && thread_lock->GetPriority() < currentThread->GetPriority()) {
+        unsigned temp = thread_lock->GetPriority();
+        thread_lock->SetPriority(currentThread->GetPriority());
+        scheduler->UpdatePriority(thread_lock, temp);
+    }
+
     semaphore->P();
     thread_lock = currentThread;
 }
@@ -54,6 +60,7 @@ Lock::Release()
 {
     ASSERT(IsHeldByCurrentThread());
 
+    currentThread->RestorePriority();
     semaphore->V();
     thread_lock = nullptr;
 }

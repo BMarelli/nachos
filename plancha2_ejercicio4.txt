@@ -1,0 +1,5 @@
+La técnica utilizada para solucionar el problema de inversión de prioridades en el caso de Locks,
+no puede ser utilizada para semáforos en particular debido a que,
+cuando un hilo de alta prioridad llama semaforo->P() quedando bloqueado,
+no tenemos información sobre que hilo será el que llame a semaforo->V() desbloqueando el hilo anterior.
+Por ende, no podemos asignarle a este hilo de menor prioridad una mayor prioridad en ese momento para evitar el posible problema de inversión de prioridades a futuro.

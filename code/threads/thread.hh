@@ -134,6 +134,7 @@ public:
 
     unsigned GetPriority();
     void SetPriority(unsigned priority);
+    void RestorePriority();
 
 private:
     // Some of the private data for this class is listed above.
@@ -155,6 +156,7 @@ private:
     Channel* joinChannel;
 
     unsigned priority;
+    unsigned prevPriority;
 
 #ifdef USER_PROGRAM
     /// User-level CPU register state.

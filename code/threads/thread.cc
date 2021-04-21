@@ -34,13 +34,12 @@ IsThreadStatus(ThreadStatus s)
     return 0 <= s && s < NUM_THREAD_STATUS;
 }
 
-// TODO: doc
 /// Initialize a thread control block, so that we can then call
 /// `Thread::Fork`.
 ///
 /// * `threadName` is an arbitrary string, useful for debugging.
-/// * `isJoinable` is ...........
-/// * `initialPriority` is ...........
+/// * `isJoinable` is a bool indicating if another thread is going to join it.
+/// * `initialPriority` is the thread's assigned priority
 Thread::Thread(const char *threadName, bool isJoinable, unsigned initialPriority)
 {
     name = threadName;
@@ -50,6 +49,7 @@ Thread::Thread(const char *threadName, bool isJoinable, unsigned initialPriority
     joinable = isJoinable;
     if (joinable) joinChannel = new Channel("joinChannel");
     priority = initialPriority;
+    prevPriority = initialPriority;
 #ifdef USER_PROGRAM
     space = nullptr;
 #endif
@@ -302,7 +302,13 @@ Thread::GetPriority() {
 
 void
 Thread::SetPriority(unsigned priority_) {
+    prevPriority = priority;
     priority = priority_;
+}
+
+void
+Thread::RestorePriority() {
+    priority = prevPriority;
 }
 
 #ifdef USER_PROGRAM

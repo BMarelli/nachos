@@ -163,3 +163,10 @@ Scheduler::Print()
 
     printf("\n");
 }
+
+void
+Scheduler::UpdatePriority(Thread* thread, unsigned prevPriority)
+{
+    readyList[QUEUES - 1 - prevPriority]->Remove(thread);
+    ReadyToRun(thread);
+}
