@@ -87,14 +87,14 @@ void channel_thread_2(void* arg) {
 void
 ThreadTestSimple()
 {
-    // for (unsigned i = 2; i <= 5; i++) {
-    //     char *name = new char [16];
-    //     sprintf(name, "%u", i);
-    //     Thread *t = new Thread(name, false, PRIORITY_DEFAULT);
-    //     t->Fork(SimpleThread, (void *) name);
-    // }
+    for (unsigned i = 2; i <= 5; i++) {
+        char *name = new char [16];
+        sprintf(name, "%u", i);
+        Thread *t = new Thread(name, false, PRIORITY_DEFAULT);
+        t->Fork(SimpleThread, (void *) name);
+    }
 
-    // SimpleThread((void *) "1");
+    SimpleThread((void *) "1");
 
 #ifdef CHANNEL_TEST
     DEBUG('c', "CHANNEL TEST\n");
