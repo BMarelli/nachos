@@ -7,11 +7,25 @@
 #include "lib/utility.hh"
 #include "threads/system.hh"
 
+// DUDA: las strings no deberian ser null terminated?
+// en la linea de ReadStringFromUser
+// while (*outString++ != '\0' ...
+// esta asumiendo que el que usa la cadena ya puso el nulo al final?
+// pero cuando hacemos write a userspace, deberiamos agregarlo?
 
 void ReadBufferFromUser(int userAddress, char *outBuffer,
                         unsigned byteCount)
 {
-    // TODO: implement.
+    ASSERT(userAddress != 0);
+    ASSERT(outBuffer != nullptr);
+    ASSERT(byteCount != 0);
+
+    for(unsigned i = 0; i < byteCount; i++) {
+        int temp;
+        ASSERT(machine->ReadMem(userAddress++, 1, &temp));
+        *outBuffer = (unsigned char) temp;
+        outBuffer++;
+    }
 }
 
 bool ReadStringFromUser(int userAddress, char *outString,
@@ -35,10 +49,25 @@ bool ReadStringFromUser(int userAddress, char *outString,
 void WriteBufferToUser(const char *buffer, int userAddress,
                        unsigned byteCount)
 {
-    // TODO: implement.
+    ASSERT(buffer != nullptr);
+    ASSERT(userAddress != 0);
+    ASSERT(byteCount != 0);
+
+    for(unsigned i = 0; i < byteCount; i++) {
+        ASSERT(machine->WriteMem(userAddress, 1, (int) buffer[i]));
+        buffer++;
+    }
+
 }
 
 void WriteStringToUser(const char *string, int userAddress)
 {
-    // TODO: implement.
+    ASSERT(string != nullptr);
+    ASSERT(userAddress != 0);
+
+    unsigned i = 0;
+    do {
+        ASSERT(machine->WriteMem(userAddress, 1, (int) string[i]));
+        userAddress++;
+    } while (*string++ != '\0');
 }
