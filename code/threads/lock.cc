@@ -61,8 +61,8 @@ Lock::Release()
     ASSERT(IsHeldByCurrentThread());
 
     currentThread->RestorePriority();
-    semaphore->V();
     thread_lock = nullptr;
+    semaphore->V();
 }
 
 bool
