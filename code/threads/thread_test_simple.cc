@@ -33,7 +33,6 @@ SimpleThread(void *name_)
     char *name = (char *) name_;
 
     #ifdef SEMAPHORE_TEST
-    DEBUG('s', "<thread %s> llamado a P()\n", name);
     sem->P();
     #endif
 
@@ -47,7 +46,6 @@ SimpleThread(void *name_)
     printf("!!! Thread `%s` has finished\n", name);
 
     #ifdef SEMAPHORE_TEST
-    DEBUG('s', "<thread %s> llamado a V()\n", name);
     sem->V();
     #endif
 }
