@@ -89,10 +89,22 @@ SyscallHandler(ExceptionType _et)
             interrupt->Halt();
             break;
 
+        case SC_EXIT: {
+            int status = machine->ReadRegister(4);
+
+            DEBUG('e', "Thead `%s` exiting. Status: %d", currentThread->GetName(), status);
+
+            currentThread->Finish();
+
+            break;
+        }
+
         case SC_CREATE: {
             int filenameAddr = machine->ReadRegister(4);
             if (filenameAddr == 0) {
                 DEBUG('e', "Error: address to filename string is null.\n");
+                machine->WriteRegister(2, -1);
+                break;
             }
 
             char filename[FILE_NAME_MAX_LEN + 1];
@@ -103,6 +115,15 @@ SyscallHandler(ExceptionType _et)
             }
 
             DEBUG('e', "`Create` requested for file `%s`.\n", filename);
+
+            if(fileSystem->Create(filename, 0)) {
+                DEBUG('e', "File `%s` successfully created.\n", filename);
+                machine->WriteRegister(2, 0);
+            } else {
+                DEBUG('e', "Error: file `%s` could not be created.\n", filename);
+                machine->WriteRegister(2, -1);
+            }
+
             break;
         }
 
