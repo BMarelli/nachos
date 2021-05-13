@@ -133,6 +133,104 @@ SyscallHandler(ExceptionType _et)
             break;
         }
 
+        case SC_READ: { // int Read(char *buffer, int size, OpenFileId id)
+            int bufferAddr = machine->ReadRegister(4);
+            int size = machine->ReadRegister(5);
+            int fid = machine->ReadRegister(6);
+
+            if (bufferAddr == 0) {
+                DEBUG('e', "Error: address to buffer is null.\n");
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            if (size <= 0) {
+                DEBUG('e', "Error: size is not positive.\n");
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            switch(fid) {
+                case CONSOLE_INPUT: {
+                    DEBUG('e', "Reading %d bytes from stdin.\n", size);
+
+                    char buffer[size + 1];
+
+                    int i;
+                    for(i = 0; i < size; i++) {
+                        buffer[i] = gSynchConsole->ReadChar();
+                        if(buffer[i] == EOF) break;
+                    }
+                    buffer[i] = '\0';
+
+                    WriteStringToUser(buffer, bufferAddr);
+
+                    machine->WriteRegister(2, i - 1); // return number of read bytes
+                    break;
+                }
+
+                case CONSOLE_OUTPUT: {
+                    DEBUG('e', "Error: tried to read from stdout.\n");
+                    machine->WriteRegister(2, -1);
+                    break;
+                }
+
+                default:
+                    // es un archivo! jej ahora q
+                    // seguramente hay q hacer q cada thread tenga un arreglo de openFiles, y leerlo asi
+                    machine->WriteRegister(2, 0);
+            }
+
+            break;
+        }
+
+        case SC_WRITE: { // int Write(const char *buffer, int size, OpenFileId id);
+            int bufferAddr = machine->ReadRegister(4);
+            int size = machine->ReadRegister(5);
+            int fid = machine->ReadRegister(6);
+
+            if (bufferAddr == 0) {
+                DEBUG('e', "Error: address to buffer is null.\n");
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            if (size <= 0) {
+                DEBUG('e', "Error: size is not positive.\n");
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            switch(fid) {
+                case CONSOLE_INPUT: {
+                    DEBUG('e', "Error: tried to write to stdin.\n");
+                    machine->WriteRegister(2, -1);
+                    break;
+                }
+
+                case CONSOLE_OUTPUT: {
+                    DEBUG('e', "Writing %d bytes to stdout.\n", size);
+
+                    char buffer[size];
+                    bool r = ReadStringFromUser(bufferAddr, buffer, size);
+
+                    int i;
+                    for (i = 0; (r && buffer[i] != '\0') || (!r && i < size); i++)
+                        gSynchConsole->WriteChar(buffer[i]);
+
+                    machine->WriteRegister(2, i - 1); // return number of written bytes
+                    break;
+                }
+
+                default:
+                    // es un archivo! jej ahora q
+                    // seguramente hay q hacer q cada thread tenga un arreglo de openFiles, y leerlo asi
+                    machine->WriteRegister(2, 0);
+            }
+
+            break;
+        }
+
         default:
             fprintf(stderr, "Unexpected system call: id %d.\n", scid);
             ASSERT(false);

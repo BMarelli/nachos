@@ -44,6 +44,7 @@ SynchDisk *synchDisk;
 
 #ifdef USER_PROGRAM  // Requires either *FILESYS* or *FILESYS_STUB*.
 Machine *machine;  ///< User program memory and registers.
+SynchConsole *gSynchConsole;
 #endif
 
 #ifdef NETWORK
@@ -229,6 +230,7 @@ Initialize(int argc, char **argv)
     Debugger *d = debugUserProg ? new Debugger : nullptr;
     machine = new Machine(d);  // This must come first.
     SetExceptionHandlers();
+    gSynchConsole = new SynchConsole("gSynchConsole");
 #endif
 
 #ifdef FILESYS
@@ -259,6 +261,7 @@ Cleanup()
 
 #ifdef USER_PROGRAM
     delete machine;
+    delete gSynchConsole;
 #endif
 
 #ifdef FILESYS_NEEDED
