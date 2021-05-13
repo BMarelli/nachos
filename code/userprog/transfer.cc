@@ -49,8 +49,8 @@ bool ReadStringFromUser(int userAddress, char *outString,
 void WriteBufferToUser(const char *buffer, int userAddress,
                        unsigned byteCount)
 {
-    ASSERT(buffer != nullptr);
     ASSERT(userAddress != 0);
+    ASSERT(buffer != nullptr);
     ASSERT(byteCount != 0);
 
     for(unsigned i = 0; i < byteCount; i++) {
