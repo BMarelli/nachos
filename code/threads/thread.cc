@@ -347,11 +347,6 @@ void Thread::RestoreUserState()
 }
 
 int
-Thread::AddOpenFile(OpenFile *file) {
-    return openFiles->Add(file);
-}
-
-int
 Thread::RemoveOpenFile(int file_index) {
     if (openFiles->HasKey(file_index)) {
         openFiles->Remove(file_index);

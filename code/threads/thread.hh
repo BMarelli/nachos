@@ -167,8 +167,6 @@ private:
     /// state while executing kernel code.
     int userRegisters[NUM_TOTAL_REGS];
 
-    Table<OpenFile*>* openFiles;
-
 public:
     // Save user-level register state.
     void SaveUserState();
@@ -179,8 +177,7 @@ public:
     // User code this thread is running.
     AddressSpace *space;
 
-    int AddOpenFile(OpenFile* file);
-    int RemoveOpenFile(int i);
+    Table<OpenFile*>* openFiles;
 #endif
 };
 

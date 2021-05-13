@@ -152,7 +152,7 @@ SyscallHandler(ExceptionType _et)
                 DEBUG('e', "Error: file not found.\n");
                 machine->WriteRegister(2, -1);
             } else {
-                int id = currentThread->AddOpenFile(file);
+                int id = currentThread->openFiles->Add(file);
                 if (id == -1) {
                     DEBUG('e', "Error: thread <%s> already has too many open files.\n");
                     machine->WriteRegister(2, -1);
@@ -181,8 +181,15 @@ SyscallHandler(ExceptionType _et)
                 machine->WriteRegister(2, -1);
             }
 
-            int ret = currentThread->RemoveOpenFile(fid - 2);
-            machine->WriteRegister(2, ret);
+            if (currentThread->openFiles->HasKey(fid - 2)) {
+                DEBUG('e', "File %u closed successfully.\n", fid);
+                currentThread->openFiles->Remove(fid - 2);
+                machine->WriteRegister(2, 0);
+            } else {
+                DEBUG('e', "File %u was not open.\n", fid);
+                machine->WriteRegister(2, 0);
+            }
+
             break;
         }
 
@@ -229,9 +236,16 @@ SyscallHandler(ExceptionType _et)
                 }
 
                 default:
-                    // es un archivo! jej ahora q
-                    // seguramente hay q hacer q cada thread tenga un arreglo de openFiles, y leerlo asi
-                    machine->WriteRegister(2, 0);
+                    if (currentThread->openFiles->HasKey(fid - 2)) {
+                        OpenFile* file = currentThread->openFiles->Get(fid - 2);
+
+                        char buffer[size + 1];
+                        int read = file->Read(buffer, sizeof buffer);
+                        machine->WriteRegister(2, read);
+                    } else {
+                        machine->WriteRegister(2, -1);
+                    }
+
             }
 
             break;
@@ -265,10 +279,11 @@ SyscallHandler(ExceptionType _et)
                     DEBUG('e', "Writing %d bytes to stdout.\n", size);
 
                     char buffer[size + 1];
-                    bool r = ReadStringFromUser(bufferAddr, buffer, size + 1);
+                    buffer[size] = '\0';
+                    ReadStringFromUser(bufferAddr, buffer, size + 1);
 
                     int i;
-                    for (i = 0; (r && buffer[i] != '\0') || (!r && i < size); i++)
+                    for (i = 0; buffer[i] != '\0'; i++)
                         gSynchConsole->WriteChar(buffer[i]);
 
                     machine->WriteRegister(2, i - 1); // return number of written bytes
@@ -276,8 +291,21 @@ SyscallHandler(ExceptionType _et)
                 }
 
                 default:
-                    // es un archivo! jej ahora q
-                    // seguramente hay q hacer q cada thread tenga un arreglo de openFiles, y leerlo asi
+                    if (currentThread->openFiles->HasKey(fid - 2)) {
+                        OpenFile* file = currentThread->openFiles->Get(fid - 2);
+
+                        char buffer[size + 1];
+                        buffer[size] = '\0';
+                        ReadStringFromUser(bufferAddr, buffer, size + 1);
+
+                        int i;
+                        for (i = 0; buffer[i] != '\0'; i++);
+
+                        int written = file->Write(buffer, i);
+                        machine->WriteRegister(2, written);
+                    } else {
+                        machine->WriteRegister(2, -1);
+                    }
                     machine->WriteRegister(2, 0);
             }
 
