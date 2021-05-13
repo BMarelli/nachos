@@ -346,14 +346,4 @@ void Thread::RestoreUserState()
     }
 }
 
-int
-Thread::RemoveOpenFile(int file_index) {
-    if (openFiles->HasKey(file_index)) {
-        openFiles->Remove(file_index);
-        return 0;
-    }
-
-    return -1;
-}
-
 #endif

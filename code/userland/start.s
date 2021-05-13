@@ -133,6 +133,14 @@ Close:
         j       $31
         .end    Close
 
+        .globl PrintScheduler
+        .ent PrintScheduler
+PrintScheduler:
+        addiu   $2, $0, SC_PS
+        syscall
+        j       $31
+        .end    PrintScheduler
+
 /// Dummy function to keep gcc happy.
         .globl  __main
         .ent    __main
