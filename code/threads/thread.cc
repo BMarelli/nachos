@@ -52,6 +52,7 @@ Thread::Thread(const char *threadName, bool isJoinable, unsigned initialPriority
     prevPriority = initialPriority;
 #ifdef USER_PROGRAM
     space = nullptr;
+    openFiles = new Table<OpenFile*>();
 #endif
 }
 
@@ -75,6 +76,10 @@ Thread::~Thread()
     }
 
     if (joinable) delete joinChannel;
+
+#ifdef USER_PROGRAM
+    delete openFiles;
+#endif
 }
 
 /// Invoke `(*func)(arg)`, allowing caller and callee to execute
@@ -339,6 +344,21 @@ void Thread::RestoreUserState()
     {
         machine->WriteRegister(i, userRegisters[i]);
     }
+}
+
+int
+Thread::AddOpenFile(OpenFile *file) {
+    return openFiles->Add(file);
+}
+
+int
+Thread::RemoveOpenFile(int file_index) {
+    if (openFiles->HasKey(file_index)) {
+        openFiles->Remove(file_index);
+        return 0;
+    }
+
+    return -1;
 }
 
 #endif

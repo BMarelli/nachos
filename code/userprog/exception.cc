@@ -112,6 +112,8 @@ SyscallHandler(ExceptionType _et)
                                     filename, sizeof filename)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
                       FILE_NAME_MAX_LEN);
+                machine->WriteRegister(2, -1);
+                break;
             }
 
             DEBUG('e', "`Create` requested for file `%s`.\n", filename);
@@ -127,9 +129,60 @@ SyscallHandler(ExceptionType _et)
             break;
         }
 
+        case SC_OPEN: { // OpenFileId Open(const char *name);
+            int filenameAddr = machine->ReadRegister(4);
+
+            if (filenameAddr == 0) {
+                DEBUG('e', "Error: address to filename is null.\n");
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            char filename[FILE_NAME_MAX_LEN + 1];
+            if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
+                DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n", FILE_NAME_MAX_LEN);
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            DEBUG('e', "Opening file %s.\n", filename);
+
+            OpenFile* file = fileSystem->Open(filename);
+            if (file == nullptr) {
+                DEBUG('e', "Error: file not found.\n");
+                machine->WriteRegister(2, -1);
+            } else {
+                int id = currentThread->AddOpenFile(file);
+                if (id == -1) {
+                    DEBUG('e', "Error: thread <%s> already has too many open files.\n");
+                    machine->WriteRegister(2, -1);
+                } else {
+                    id += 2;
+                    DEBUG('e', "Adding file %s to <%s>'s open file table with id %d", filename, currentThread->GetName(), id);
+                    machine->WriteRegister(2, id);
+                }
+            }
+
+            break;
+        }
+
         case SC_CLOSE: {
             int fid = machine->ReadRegister(4);
             DEBUG('e', "`Close` requested for id %u.\n", fid);
+
+            if (fid == CONSOLE_INPUT || fid == CONSOLE_OUTPUT) {
+                DEBUG('e', "Error: file with id %d can't be closed.\n");
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            if (fid < 0) {
+                DEBUG('e', "Error: invalid OpenFileId.\n");
+                machine->WriteRegister(2, -1);
+            }
+
+            int ret = currentThread->RemoveOpenFile(fid - 2);
+            machine->WriteRegister(2, ret);
             break;
         }
 
@@ -211,8 +264,8 @@ SyscallHandler(ExceptionType _et)
                 case CONSOLE_OUTPUT: {
                     DEBUG('e', "Writing %d bytes to stdout.\n", size);
 
-                    char buffer[size];
-                    bool r = ReadStringFromUser(bufferAddr, buffer, size);
+                    char buffer[size + 1];
+                    bool r = ReadStringFromUser(bufferAddr, buffer, size + 1);
 
                     int i;
                     for (i = 0; (r && buffer[i] != '\0') || (!r && i < size); i++)
