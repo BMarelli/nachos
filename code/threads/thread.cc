@@ -113,15 +113,17 @@ void Thread::Fork(VoidFunctionPtr func, void *arg)
     interrupt->SetLevel(oldLevel);
 }
 
-void Thread::Join()
+int Thread::Join()
 {
     ASSERT(this != currentThread);
     ASSERT(joinable);
 
-    int dummy;
-    joinChannel->Receive(&dummy);
+    int exitValue;
+    joinChannel->Receive(&exitValue);
 
     threadToBeDestroyed = this;
+
+    return exitValue;
 }
 
 /// Check a thread's stack to see if it has overrun the space that has been
@@ -172,14 +174,14 @@ void Thread::Print() const
 ///
 /// NOTE: we disable interrupts, so that we do not get a time slice between
 /// setting `threadToBeDestroyed`, and going to sleep.
-void Thread::Finish()
+void Thread::Finish(int returnValue)
 {
     interrupt->SetLevel(INT_OFF);
     ASSERT(this == currentThread);
 
     DEBUG('t', "Finishing thread \"%s\"\n", GetName());
 
-    if (joinable) joinChannel->Send(0);
+    if (joinable) joinChannel->Send(returnValue);
     else threadToBeDestroyed = currentThread;
 
     Sleep(); // Invokes `SWITCH`.
@@ -258,7 +260,7 @@ void Thread::Sleep()
 static void
 ThreadFinish()
 {
-    currentThread->Finish();
+    currentThread->Finish(0);
 }
 
 static void

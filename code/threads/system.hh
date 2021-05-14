@@ -40,7 +40,8 @@ extern Timer *timer;                 ///< The hardware alarm clock.
 
 extern Machine *machine;  // User program memory and registers.
 extern SynchConsole *gSynchConsole; // Global SynchConsole
-extern Bitmap *memoryBitmap;
+extern Bitmap *memoryBitmap; // memoryBitmap for used physical pages
+extern Table<Thread*> *processTable; // process table, NOTE: maybe use a custom class?
 #endif
 
 #ifdef FILESYS_NEEDED  // *FILESYS* or *FILESYS_STUB*.

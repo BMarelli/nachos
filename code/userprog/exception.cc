@@ -61,6 +61,15 @@ DefaultHandler(ExceptionType et)
     ASSERT(false);
 }
 
+static void
+ExecDummy(void* dummy) {
+    currentThread->space->InitRegisters();
+    currentThread->space->RestoreState();
+
+    // machine->Run();
+    // ASSERT(false); // machine->Run() never returns
+}
+
 /// Handle a system call exception.
 ///
 /// * `et` is the kind of exception.  The list of possible exceptions is in
@@ -97,8 +106,73 @@ SyscallHandler(ExceptionType _et)
 
             DEBUG('e', "Thead `%s` exiting. Status: %d", currentThread->GetName(), status);
 
-            currentThread->Finish();
+            currentThread->Finish(status);
 
+            break;
+        }
+
+        case SC_EXEC: {
+            DEBUG('e', "Exec, initiated by user program.\n");
+
+            int filenameAddr = machine->ReadRegister(4);
+            if (filenameAddr == 0) {
+                DEBUG('e', "Error: address to filename string is null.\n");
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            char filename[FILE_NAME_MAX_LEN + 1];
+            if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
+                DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",  FILE_NAME_MAX_LEN);
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            OpenFile *executable = fileSystem->Open(filename);
+            if (executable == nullptr) {
+                DEBUG('e', "Error: unable to open file %s.\n", filename);
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            AddressSpace *space = new AddressSpace(executable);
+            delete executable;
+
+            Thread *newThread = new Thread(filename, true, currentThread->GetPriority());
+            newThread->space = space;
+
+            int pid = processTable->Add(newThread);
+            if (pid == -1) {
+                DEBUG('e', "Error: too many processes are already running (maximum is %d).\n", processTable->SIZE);
+                delete newThread;
+                delete space;
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            machine->WriteRegister(2, pid);
+            currentThread->Fork(ExecDummy, nullptr);
+        }
+
+        case SC_JOIN: {
+            DEBUG('e', "Join, initiated by user pgrogram.\n");
+
+            SpaceId id = (SpaceId) machine->ReadRegister(4);
+
+            if (!processTable->HasKey(id)) {
+                DEBUG('e', "Error: invalid space with id %s.\n", id);
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            Thread* threadToJoin = processTable->Remove(id);
+            DEBUG('e', "Thread <%s> waiting for thread <%s> to finish.\n",
+                       currentThread->GetName(),
+                       threadToJoin->GetName());
+            int exitValue = threadToJoin->Join();
+            DEBUG('e', "Thread successfully joined.\n");
+
+            machine->WriteRegister(2, exitValue);
             break;
         }
 
@@ -111,10 +185,8 @@ SyscallHandler(ExceptionType _et)
             }
 
             char filename[FILE_NAME_MAX_LEN + 1];
-            if (!ReadStringFromUser(filenameAddr,
-                                    filename, sizeof filename)) {
-                DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
-                      FILE_NAME_MAX_LEN);
+            if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
+                DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",  FILE_NAME_MAX_LEN);
                 machine->WriteRegister(2, -1);
                 break;
             }

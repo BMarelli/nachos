@@ -62,10 +62,6 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
         memset(mainMemory + free * PAGE_SIZE, 0, PAGE_SIZE);
     }
 
-
-    // Zero out the entire address space, to zero the unitialized data
-    // segment and the stack segment.
-
     // Then, copy in the code and data segments into memory.
     uint32_t codeSize = exe.GetCodeSize();
     uint32_t initDataSize = exe.GetInitDataSize();

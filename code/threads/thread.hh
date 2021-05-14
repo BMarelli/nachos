@@ -113,7 +113,7 @@ public:
     /// Make thread run `(*func)(arg)`.
     void Fork(VoidFunctionPtr func, void *arg);
 
-    void Join();
+    int Join();
 
     /// Relinquish the CPU if any other thread is runnable.
     void Yield();
@@ -122,7 +122,7 @@ public:
     void Sleep();
 
     /// The thread is done executing.
-    void Finish();
+    void Finish(int returnValue);
 
     /// Check if thread has overflowed its stack.
     void CheckOverflow() const;
