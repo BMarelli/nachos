@@ -26,9 +26,9 @@
 #include "syscall.h"
 #include "filesys/directory_entry.hh"
 #include "threads/system.hh"
+#include "userprog/args.hh"
 
 #include <stdio.h>
-
 
 static void
 IncrementPC()
@@ -65,6 +65,14 @@ static void
 ExecDummy(void* dummy) {
     currentThread->space->InitRegisters();
     currentThread->space->RestoreState();
+
+    if (dummy) {
+        machine->WriteRegister(4, WriteArgs((char**) dummy));
+        int stack_reg = machine->ReadRegister(STACK_REG);
+
+        machine->WriteRegister(5, stack_reg);
+        machine->WriteRegister(STACK_REG, stack_reg - 16);
+    }
 
     machine->Run();
     ASSERT(false); // machine->Run() never returns
@@ -111,6 +119,8 @@ SyscallHandler(ExceptionType _et)
             DEBUG('e', "Exec, initiated by user program.\n");
 
             int filenameAddr = machine->ReadRegister(4);
+            int argsAddr = machine->ReadRegister(5);
+
             if (filenameAddr == 0) {
                 DEBUG('e', "Error: address to filename string is null.\n");
                 machine->WriteRegister(2, -1);
@@ -147,7 +157,9 @@ SyscallHandler(ExceptionType _et)
             }
 
             machine->WriteRegister(2, pid);
-            newThread->Fork(ExecDummy, nullptr);
+
+            char** args = SaveArgs(argsAddr);
+            newThread->Fork(ExecDummy, args);
             break;
         }
 
@@ -163,9 +175,6 @@ SyscallHandler(ExceptionType _et)
             }
 
             Thread* threadToJoin = processTable->Remove(id);
-            DEBUG('e', "Thread <%s> waiting for thread <%s> to finish.\n",
-                       currentThread->GetName(),
-                       threadToJoin->GetName());
             int exitValue = threadToJoin->Join();
             DEBUG('e', "Thread successfully joined.\n");
 
