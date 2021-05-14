@@ -77,7 +77,9 @@ Thread::~Thread()
 
     if (joinable) delete joinChannel;
 
+
 #ifdef USER_PROGRAM
+    if (space) delete space;
     delete openFiles;
 #endif
 }

@@ -66,8 +66,8 @@ ExecDummy(void* dummy) {
     currentThread->space->InitRegisters();
     currentThread->space->RestoreState();
 
-    // machine->Run();
-    // ASSERT(false); // machine->Run() never returns
+    machine->Run();
+    ASSERT(false); // machine->Run() never returns
 }
 
 /// Handle a system call exception.
@@ -99,12 +99,8 @@ SyscallHandler(ExceptionType _et)
             break;
 
         case SC_EXIT: {
-            // TODO: exit parece no estar funcionando como deberia? la thread termina correctamente pero
-            // la maquina no se apaga.
-
             int status = machine->ReadRegister(4);
-
-            DEBUG('e', "Thead `%s` exiting. Status: %d", currentThread->GetName(), status);
+            DEBUG('e', "Thead `%s` exiting. Status: %d.\n", currentThread->GetName(), status);
 
             currentThread->Finish(status);
 
@@ -136,10 +132,10 @@ SyscallHandler(ExceptionType _et)
             }
 
             AddressSpace *space = new AddressSpace(executable);
-            delete executable;
-
             Thread *newThread = new Thread(filename, true, currentThread->GetPriority());
             newThread->space = space;
+
+            delete executable;
 
             int pid = processTable->Add(newThread);
             if (pid == -1) {
@@ -151,16 +147,17 @@ SyscallHandler(ExceptionType _et)
             }
 
             machine->WriteRegister(2, pid);
-            currentThread->Fork(ExecDummy, nullptr);
+            newThread->Fork(ExecDummy, nullptr);
+            break;
         }
 
         case SC_JOIN: {
-            DEBUG('e', "Join, initiated by user pgrogram.\n");
+            DEBUG('e', "Join, initiated by user program.\n");
 
             SpaceId id = (SpaceId) machine->ReadRegister(4);
 
-            if (!processTable->HasKey(id)) {
-                DEBUG('e', "Error: invalid space with id %s.\n", id);
+            if (id < 0 || !processTable->HasKey(id)) {
+                DEBUG('e', "Error: invalid space id %s.\n", id);
                 machine->WriteRegister(2, -1);
                 break;
             }
@@ -263,7 +260,7 @@ SyscallHandler(ExceptionType _et)
                     machine->WriteRegister(2, -1);
                 } else {
                     id += 2;
-                    DEBUG('e', "Adding file %s to <%s>'s open file table with id %d", filename, currentThread->GetName(), id);
+                    DEBUG('e', "Adding file %s to <%s>'s open file table with id %d.\n", filename, currentThread->GetName(), id);
                     machine->WriteRegister(2, id);
                 }
             }

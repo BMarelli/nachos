@@ -67,16 +67,32 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
     uint32_t initDataSize = exe.GetInitDataSize();
     if (codeSize > 0) {
         uint32_t virtualAddr = exe.GetCodeAddr();
-        DEBUG('a', "Initializing code segment, at 0x%X, size %u\n",
-              virtualAddr, codeSize);
-        exe.ReadCodeBlock(&mainMemory[virtualAddr], codeSize, 0);
+        DEBUG('a', "Initializing code segment. Size: %u.\n", codeSize);
+
+        for (unsigned i = 0; i < codeSize; i++) {
+          int page = (virtualAddr + i) / PAGE_SIZE;
+          int offset = (virtualAddr + i) % PAGE_SIZE;
+          int frame = pageTable[page].physicalPage;
+
+          int physAddr = frame * PAGE_SIZE + offset;
+
+          exe.ReadCodeBlock(&(mainMemory[physAddr]), 1, i);
+        }
     }
     if (initDataSize > 0) {
         uint32_t virtualAddr = exe.GetInitDataAddr();
-        DEBUG('a', "Initializing data segment, at 0x%X, size %u\n",
-              virtualAddr, initDataSize);
-        exe.ReadDataBlock(&mainMemory[virtualAddr], initDataSize, 0);
-    }
+        DEBUG('a', "Initializing data segment. Size %u\n", initDataSize);
+
+        for (unsigned i = 0; i < initDataSize; i++) {
+          int page = (virtualAddr + i) / PAGE_SIZE;
+          int offset = (virtualAddr + i) % PAGE_SIZE;
+          int frame = pageTable[page].physicalPage;
+
+          int physAddr = frame * PAGE_SIZE + offset;
+
+          exe.ReadDataBlock(&(mainMemory[physAddr]), 1, i);
+        }
+   }
 
 }
 
@@ -85,8 +101,10 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
 /// Nothing for now!
 AddressSpace::~AddressSpace()
 {
-  for (unsigned int i = 0; i < numPages; i++)
+  for (unsigned int i = 0; i < numPages; i++) {
     memoryBitmap->Clear(pageTable[i].physicalPage);
+    memset(&machine->GetMMU()->mainMemory[pageTable[i].physicalPage * PAGE_SIZE], 0, PAGE_SIZE);
+  }
 
   delete [] pageTable;
 }
