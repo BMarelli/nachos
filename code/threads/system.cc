@@ -231,6 +231,7 @@ Initialize(int argc, char **argv)
     machine = new Machine(d);  // This must come first.
     SetExceptionHandlers();
     gSynchConsole = new SynchConsole("gSynchConsole");
+    memoryBitmap = new Bitmap(NUM_PHYS_PAGES);
 #endif
 
 #ifdef FILESYS
@@ -262,6 +263,7 @@ Cleanup()
 #ifdef USER_PROGRAM
     delete machine;
     delete gSynchConsole;
+    delete memoryBitmap;
 #endif
 
 #ifdef FILESYS_NEEDED

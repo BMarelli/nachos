@@ -90,6 +90,9 @@ SyscallHandler(ExceptionType _et)
             break;
 
         case SC_EXIT: {
+            // TODO: exit parece no estar funcionando como deberia? la thread termina correctamente pero
+            // la maquina no se apaga.
+
             int status = machine->ReadRegister(4);
 
             DEBUG('e', "Thead `%s` exiting. Status: %d", currentThread->GetName(), status);
@@ -128,7 +131,7 @@ SyscallHandler(ExceptionType _et)
 
             break;
         }
-        
+
         case SC_REMOVE: {
             int filenameAddr = machine->ReadRegister(4);
             if (filenameAddr == 0) {
@@ -213,7 +216,10 @@ SyscallHandler(ExceptionType _et)
 
             if (currentThread->openFiles->HasKey(fid - 2)) {
                 DEBUG('e', "File %u closed successfully.\n", fid);
-                currentThread->openFiles->Remove(fid - 2);
+
+                OpenFile *file = currentThread->openFiles->Remove(fid - 2);
+                delete file;
+
                 machine->WriteRegister(2, 0);
             } else {
                 DEBUG('e', "File %u was not open.\n", fid);

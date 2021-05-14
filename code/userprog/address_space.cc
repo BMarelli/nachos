@@ -30,33 +30,41 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
     numPages = DivRoundUp(size, PAGE_SIZE);
     size = numPages * PAGE_SIZE;
 
-    ASSERT(numPages <= NUM_PHYS_PAGES);
-      // Check we are not trying to run anything too big -- at least until we
-      // have virtual memory.
+    ASSERT(numPages <= memoryBitmap->CountClear());
 
     DEBUG('a', "Initializing address space, num pages %u, size %u\n",
           numPages, size);
+
+    char *mainMemory = machine->GetMMU()->mainMemory;
 
     // First, set up the translation.
 
     pageTable = new TranslationEntry[numPages];
     for (unsigned i = 0; i < numPages; i++) {
+        int free = memoryBitmap->Find();
+
+        if (free < 0) {
+          DEBUG('a', "Error: could not find a free physical page");
+          break;
+
+          // TODO: swap???
+        }
+
         pageTable[i].virtualPage  = i;
-          // For now, virtual page number = physical page number.
-        pageTable[i].physicalPage = i;
+        pageTable[i].physicalPage = free;
         pageTable[i].valid        = true;
         pageTable[i].use          = false;
         pageTable[i].dirty        = false;
         pageTable[i].readOnly     = false;
           // If the code segment was entirely on a separate page, we could
           // set its pages to be read-only.
+
+        memset(mainMemory + free * PAGE_SIZE, 0, PAGE_SIZE);
     }
 
-    char *mainMemory = machine->GetMMU()->mainMemory;
 
     // Zero out the entire address space, to zero the unitialized data
     // segment and the stack segment.
-    memset(mainMemory, 0, size);
 
     // Then, copy in the code and data segments into memory.
     uint32_t codeSize = exe.GetCodeSize();
@@ -81,7 +89,10 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
 /// Nothing for now!
 AddressSpace::~AddressSpace()
 {
-    delete [] pageTable;
+  for (unsigned int i = 0; i < numPages; i++)
+    memoryBitmap->Clear(pageTable[i].physicalPage);
+
+  delete [] pageTable;
 }
 
 /// Set the initial values for the user-level register set.
