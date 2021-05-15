@@ -9,7 +9,7 @@ int main(int argc, char* argv[]) {
     // Write(str, len, o);
     // Close(o);
 
-    char *args[] = {"test_lib.txt, test_lib2.txt"};
+    char *args[] = {"userland/test", "test_lib.txt, test_lib2.txt"};
     SpaceId proc1 = Exec("userland/cp", args);
     int i = Join(proc1);
     if (i == 1)

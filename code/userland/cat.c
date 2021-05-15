@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
   while (Read(buf, sizeof(buf), file) > 0)
     Write(buf, strlen(buf), CONSOLE_OUTPUT);
 
-  Close(argv[1]);
+  Close(file);
 
   return 0;
 }
