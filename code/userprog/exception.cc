@@ -116,6 +116,12 @@ SyscallHandler(ExceptionType _et)
         }
 
         case SC_EXEC: {
+            // NOTA:
+            // Para cumplir con el plazo de la entrega, dejamos el ejercicio de Exec con argumentos
+            // sin funcionar correctamente. No estamos seguros por que, y probamos debuggeando pero
+            // no encontramos como solucionar el problema que nos pasa. Puede tener que ver con memoria
+            // que se libera y luego es referenciada por otro hilo.
+
             DEBUG('e', "Exec, initiated by user program.\n");
 
             int filenameAddr = machine->ReadRegister(4);
