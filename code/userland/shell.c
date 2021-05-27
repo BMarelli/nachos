@@ -114,7 +114,7 @@ main(void)
             continue;
         }
 
-        if ((parallel = PrepareArguments(line, argv, MAX_ARG_COUNT)) == 0) {
+        if ((parallel = PrepareArguments(line, argv, MAX_ARG_COUNT)) == -1) {
             WriteError("too many arguments.", OUTPUT);
             continue;
         }

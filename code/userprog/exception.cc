@@ -26,7 +26,7 @@
 #include "syscall.h"
 #include "filesys/directory_entry.hh"
 #include "threads/system.hh"
-#include "userprog/args.hh"
+#include "args.hh"
 
 #include <stdio.h>
 
@@ -61,17 +61,16 @@ DefaultHandler(ExceptionType et)
     ASSERT(false);
 }
 
-static void
-ExecDummy(void* dummy) {
+void
+ExecProcess(void* args) {
     currentThread->space->InitRegisters();
     currentThread->space->RestoreState();
 
-    if (dummy) {
-        machine->WriteRegister(4, WriteArgs((char**) dummy));
-        int stack_reg = machine->ReadRegister(STACK_REG);
-
-        machine->WriteRegister(5, stack_reg);
-        machine->WriteRegister(STACK_REG, stack_reg - 16);
+    if (args) {
+        machine->WriteRegister(4, WriteArgs((char**) args));
+        int sp = machine->ReadRegister(STACK_REG);
+        machine->WriteRegister(5, sp);
+        machine->WriteRegister(STACK_REG, sp - 16);
     }
 
     machine->Run();
@@ -164,8 +163,9 @@ SyscallHandler(ExceptionType _et)
 
             machine->WriteRegister(2, pid);
 
-            char** args = SaveArgs(argsAddr);
-            newThread->Fork(ExecDummy, args);
+            // char** args = SaveArgs(argsAddr);
+            // newThread->Fork(ExecProcess, args);
+            newThread->Fork(ExecProcess, nullptr);
             break;
         }
 

@@ -75,9 +75,6 @@ Thread::~Thread()
                                        STACK_SIZE * sizeof *stack);
     }
 
-    if (joinable) delete joinChannel;
-
-
 #ifdef USER_PROGRAM
     if (space) delete space;
     delete openFiles;
@@ -122,6 +119,8 @@ int Thread::Join()
 
     int exitValue;
     joinChannel->Receive(&exitValue);
+
+    delete joinChannel;
 
     threadToBeDestroyed = this;
 

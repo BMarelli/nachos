@@ -14,3 +14,9 @@ sort
 tiny_shell
 touch
 *.coff
+cat
+cp
+exectarget
+exectest
+lib
+rm

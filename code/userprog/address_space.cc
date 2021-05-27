@@ -69,12 +69,10 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
         uint32_t virtualAddr = exe.GetCodeAddr();
         DEBUG('a', "Initializing code segment. Size: %u.\n", codeSize);
 
-        for (unsigned i = 0; i < codeSize; i++) {
-          int page = (virtualAddr + i) / PAGE_SIZE;
-          int offset = (virtualAddr + i) % PAGE_SIZE;
-          int frame = pageTable[page].physicalPage;
-
-          int physAddr = frame * PAGE_SIZE + offset;
+        for (uint32_t i = 0; i < codeSize; i++) {
+          uint32_t frame = pageTable[DivRoundDown(virtualAddr + i, PAGE_SIZE)].physicalPage;
+          uint32_t offset = (virtualAddr + i) % PAGE_SIZE;
+          uint32_t physAddr = frame * PAGE_SIZE + offset;
 
           exe.ReadCodeBlock(&(mainMemory[physAddr]), 1, i);
         }
@@ -83,12 +81,10 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
         uint32_t virtualAddr = exe.GetInitDataAddr();
         DEBUG('a', "Initializing data segment. Size %u\n", initDataSize);
 
-        for (unsigned i = 0; i < initDataSize; i++) {
-          int page = (virtualAddr + i) / PAGE_SIZE;
-          int offset = (virtualAddr + i) % PAGE_SIZE;
-          int frame = pageTable[page].physicalPage;
-
-          int physAddr = frame * PAGE_SIZE + offset;
+        for (uint32_t i = 0; i < initDataSize; i++) {
+          uint32_t frame = pageTable[DivRoundDown(virtualAddr + i, PAGE_SIZE)].physicalPage;
+          uint32_t offset = (virtualAddr + i) % PAGE_SIZE;
+          uint32_t physAddr = frame * PAGE_SIZE + offset;
 
           exe.ReadDataBlock(&(mainMemory[physAddr]), 1, i);
         }
