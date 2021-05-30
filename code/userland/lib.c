@@ -1,4 +1,4 @@
-#include "lib.h"
+#include "../userprog/syscall.h"
 
 unsigned strlen(const char *s)
 {
@@ -8,7 +8,7 @@ unsigned strlen(const char *s)
 }
 
 void puts2(const char *s) {
-  Write(s, sizeof(s), CONSOLE_OUTPUT);
+  Write(s, strlen(s), CONSOLE_OUTPUT);
 }
 
 void reverse(char s[]) {

@@ -1,4 +1,4 @@
-#include "lib.h"
+#include "lib.c"
 
 int main(int argc, char *argv[])
 {
@@ -10,11 +10,13 @@ int main(int argc, char *argv[])
   OpenFileId file = Open(argv[1]);
   if (file == -1) {
     puts2("Error: el archivo no existe.\n");
+    return 1;
   }
 
   char buf[128];
-  while (Read(buf, sizeof(buf), file) > 0)
-    Write(buf, strlen(buf), CONSOLE_OUTPUT);
+  while (Read(buf, sizeof(buf), file) > 0) {
+    puts2(buf);
+  }
 
   Close(file);
 

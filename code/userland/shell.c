@@ -1,4 +1,5 @@
-#include "syscall.h"
+#include "../userprog/syscall.h"
+#include "lib.c"
 
 
 #define MAX_LINE_SIZE  60
@@ -7,15 +8,15 @@
 
 #define NULL  ((void *) 0)
 
-static inline unsigned
-strlen(const char *s)
-{
-    // TODO: how to make sure that `s` is not `NULL`?
+// static inline unsigned
+// strlen(const char *s)
+// {
+//     // TODO: how to make sure that `s` is not `NULL`?
 
-    unsigned i;
-    for (i = 0; s[i] != '\0'; i++) {}
-    return i;
-}
+//     unsigned i;
+//     for (i = 0; s[i] != '\0'; i++) {}
+//     return i;
+// }
 
 static inline void
 WritePrompt(OpenFileId output)
@@ -123,16 +124,12 @@ main(void)
         // are given in the system call or not.
         // const SpaceId newProc = Exec(line);
         // const SpaceId newProc = Exec(line, argv);
-        if (parallel) {
-            for (int i = 0; i < strlen(line); i++)
-                line[i] = line[i + 1];
-        }
-        const SpaceId newProc = Exec(line, argv);
+        const SpaceId newProc = Exec(parallel ? line + 1 : line, argv);
 
         // TODO: check for errors when calling `Exec`; this depends on how
         //       errors are reported.
 
-        if (!parallel) Join(newProc);
+        if (!parallel & newProc != -1) Join(newProc);
         // TODO: is it necessary to check for errors after `Join` too, or
         //       can you be sure that, with the implementation of the system
         //       call handler you made, it will never give an error?; what

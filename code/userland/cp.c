@@ -1,4 +1,4 @@
-#include "lib.h"
+#include "lib.c"
 
 int main(int argc, char *argv[])
 {

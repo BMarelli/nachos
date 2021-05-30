@@ -163,9 +163,8 @@ SyscallHandler(ExceptionType _et)
 
             machine->WriteRegister(2, pid);
 
-            // char** args = SaveArgs(argsAddr);
-            // newThread->Fork(ExecProcess, args);
-            newThread->Fork(ExecProcess, nullptr);
+            char** args = SaveArgs(argsAddr);
+            newThread->Fork(ExecProcess, args);
             break;
         }
 
@@ -334,7 +333,7 @@ SyscallHandler(ExceptionType _et)
                 case CONSOLE_INPUT: {
                     DEBUG('e', "Reading %d bytes from stdin.\n", size);
 
-                    char buffer[size + 1];
+                    char buffer[size];
 
                     int i;
                     for(i = 0; i < size; i++) {
@@ -359,8 +358,9 @@ SyscallHandler(ExceptionType _et)
                     if (currentThread->openFiles->HasKey(fid - 2)) {
                         OpenFile* file = currentThread->openFiles->Get(fid - 2);
 
-                        char buffer[size + 1];
+                        char buffer[size];
                         int read = file->Read(buffer, sizeof buffer);
+                        WriteStringToUser(buffer, bufferAddr);
                         machine->WriteRegister(2, read);
                     } else {
                         machine->WriteRegister(2, -1);
