@@ -7,9 +7,7 @@
 #include "lib/utility.hh"
 #include "threads/system.hh"
 
-void ReadBufferFromUser(int userAddress, char *outBuffer,
-                        unsigned byteCount)
-{
+void ReadBufferFromUser(int userAddress, char *outBuffer, unsigned byteCount) {
     ASSERT(userAddress != 0);
     ASSERT(outBuffer != nullptr);
     ASSERT(byteCount != 0);
@@ -22,9 +20,7 @@ void ReadBufferFromUser(int userAddress, char *outBuffer,
     }
 }
 
-bool ReadStringFromUser(int userAddress, char *outString,
-                        unsigned maxByteCount)
-{
+bool ReadStringFromUser(int userAddress, char *outString, unsigned maxByteCount){
     ASSERT(userAddress != 0);
     ASSERT(outString != nullptr);
     ASSERT(maxByteCount != 0);
@@ -40,28 +36,22 @@ bool ReadStringFromUser(int userAddress, char *outString,
     return *(outString - 1) == '\0';
 }
 
-void WriteBufferToUser(const char *buffer, int userAddress,
-                       unsigned byteCount)
-{
+void WriteBufferToUser(const char *buffer, int userAddress, unsigned byteCount) {
     ASSERT(userAddress != 0);
     ASSERT(buffer != nullptr);
     ASSERT(byteCount != 0);
 
     for(unsigned i = 0; i < byteCount; i++) {
-        ASSERT(machine->WriteMem(userAddress, 1, (int) buffer[i]));
-        buffer++;
+        ASSERT(machine->WriteMem(userAddress++, 1, buffer[i]));
     }
-
 }
 
-void WriteStringToUser(const char *string, int userAddress)
-{
+void WriteStringToUser(const char *string, int userAddress) {
     ASSERT(string != nullptr);
     ASSERT(userAddress != 0);
 
     unsigned i = 0;
     do {
-        ASSERT(machine->WriteMem(userAddress, 1, (int) string[i]));
-        userAddress++;
+        ASSERT(machine->WriteMem(userAddress++, 1, (int) string[i]));
     } while (*string++ != '\0');
 }

@@ -333,7 +333,7 @@ SyscallHandler(ExceptionType _et)
                 case CONSOLE_INPUT: {
                     DEBUG('e', "Reading %d bytes from stdin.\n", size);
 
-                    char buffer[size];
+                    char buffer[size + 1];
 
                     int i;
                     for(i = 0; i < size; i++) {
@@ -358,9 +358,9 @@ SyscallHandler(ExceptionType _et)
                     if (currentThread->openFiles->HasKey(fid - 2)) {
                         OpenFile* file = currentThread->openFiles->Get(fid - 2);
 
-                        char buffer[size];
+                        char buffer[size + 1];
                         int read = file->Read(buffer, sizeof buffer);
-                        WriteStringToUser(buffer, bufferAddr);
+                        if (read > 0) WriteBufferToUser(buffer, bufferAddr, read);
                         machine->WriteRegister(2, read);
                     } else {
                         machine->WriteRegister(2, -1);
