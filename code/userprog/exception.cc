@@ -450,6 +450,8 @@ PageFaultHandler(ExceptionType _et) {
     TranslationEntry *entry = &currentThread->space->GetPageTable()[page];
     entry->valid = true;
 
+    stats->tlbMisses++;
+
     DEBUG('e', "Page Fault in thread <%s> VPN: %d\n", currentThread->GetName(), page);
 
     machine->GetMMU()->LoadTLBEntry(*entry);

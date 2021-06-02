@@ -99,6 +99,11 @@ Machine::ReadMem(unsigned addr, unsigned size, int *value)
         RaiseException(e, addr);
         return false;
     }
+
+#ifdef USE_TLB
+    stats->tlbHits++;
+#endif
+
     return true;
 }
 
@@ -110,6 +115,11 @@ Machine::WriteMem(unsigned addr, unsigned size, int value)
         RaiseException(e, addr);
         return false;
     }
+
+#ifdef USE_TLB
+    stats->tlbHits++;
+#endif
+
     return true;
 }
 

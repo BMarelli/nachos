@@ -153,7 +153,7 @@ AddressSpace::RestoreState()
     machine->GetMMU()->pageTableSize = numPages;
 #else
     MMU* mmu = machine->GetMMU();
-    for (int i = 0; i < TLB_SIZE; i++) {
+    for (unsigned i = 0; i < TLB_SIZE; i++) {
       mmu->tlb[i].valid = false;
     }
 #endif
