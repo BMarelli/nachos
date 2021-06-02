@@ -14,7 +14,12 @@ void ReadBufferFromUser(int userAddress, char *outBuffer, unsigned byteCount) {
 
     for(unsigned i = 0; i < byteCount; i++) {
         int temp;
-        ASSERT(machine->ReadMem(userAddress++, 1, &temp));
+        if (!machine->ReadMem(userAddress++, 1, &temp));
+#ifdef USE_TLB
+            machine->ReadMem(userAddress - 1, 1, &temp);
+#else
+            ASSERT(false);
+#endif
         *outBuffer = (unsigned char) temp;
         outBuffer++;
     }
@@ -29,7 +34,12 @@ bool ReadStringFromUser(int userAddress, char *outString, unsigned maxByteCount)
     do {
         int temp;
         count++;
-        ASSERT(machine->ReadMem(userAddress++, 1, &temp));
+        if (!machine->ReadMem(userAddress++, 1, &temp));
+#ifdef USE_TLB
+            machine->ReadMem(userAddress - 1, 1, &temp);
+#else
+            ASSERT(false);
+#endif
         *outString = (unsigned char) temp;
     } while (*outString++ != '\0' && count < maxByteCount);
 
@@ -42,7 +52,12 @@ void WriteBufferToUser(const char *buffer, int userAddress, unsigned byteCount) 
     ASSERT(byteCount != 0);
 
     for(unsigned i = 0; i < byteCount; i++) {
-        ASSERT(machine->WriteMem(userAddress++, 1, buffer[i]));
+        if (!machine->WriteMem(userAddress++, 1, buffer[i]));
+#ifdef USE_TLB
+            machine->WriteMem(userAddress - 1, 1, buffer[i]);
+#else
+            ASSERT(false);
+#endif
     }
 }
 
@@ -52,6 +67,11 @@ void WriteStringToUser(const char *string, int userAddress) {
 
     unsigned i = 0;
     do {
-        ASSERT(machine->WriteMem(userAddress++, 1, (int) string[i]));
+        if (!machine->WriteMem(userAddress++, 1, (int) string[i]));
+#ifdef USE_TLB
+            machine->WriteMem(userAddress - 1, 1, (int) string[i]);
+#else
+            ASSERT(false);
+#endif
     } while (*string++ != '\0');
 }

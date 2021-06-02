@@ -17,6 +17,7 @@ int main(int argc, char *argv[])
   while (Read(buf, sizeof(buf), file) > 0) {
     puts2(buf);
   }
+  puts2("\n");
 
   Close(file);
 

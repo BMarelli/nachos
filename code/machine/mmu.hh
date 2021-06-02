@@ -47,6 +47,8 @@ public:
 
     void PrintTLB() const;
 
+    void LoadTLBEntry(TranslationEntry entry);
+
     /// Data structures -- all of these are accessible to Nachos kernel code.
     /// “Public” for convenience.
     ///
@@ -95,6 +97,8 @@ private:
     /// completed.
     ExceptionType Translate(unsigned virtAddr, unsigned *physAddr,
                             unsigned size, bool writing);
+
+    int tlbFIFO = 0;
 };
 
 
