@@ -148,6 +148,18 @@ AddressSpace::SaveState()
 void
 AddressSpace::RestoreState()
 {
+#ifndef USE_TLB
     machine->GetMMU()->pageTable     = pageTable;
     machine->GetMMU()->pageTableSize = numPages;
+#else
+    MMU* mmu = machine->GetMMU();
+    for (unsigned i = 0; i < TLB_SIZE; i++) {
+      mmu->tlb[i].valid = false;
+    }
+#endif
+}
+
+TranslationEntry*
+AddressSpace::GetPageTable() {
+  return pageTable;
 }

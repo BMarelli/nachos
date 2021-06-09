@@ -8,7 +8,8 @@
             "defines": [
                 "USER_PROGRAM=1",
                 "FILESYS=1",
-                "FILESYS_NEEDED=1"
+                "FILESYS_NEEDED=1",
+                "USE_TLB=1"
             ],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "gnu17",

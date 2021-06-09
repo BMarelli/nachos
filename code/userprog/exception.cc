@@ -127,8 +127,8 @@ SyscallHandler(ExceptionType _et)
                 break;
             }
 
-            char filename[FILE_NAME_MAX_LEN + 1];
-            if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
+            char *filename = new char[FILE_NAME_MAX_LEN + 1];
+            if (!ReadStringFromUser(filenameAddr, filename, FILE_NAME_MAX_LEN + 1)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",  FILE_NAME_MAX_LEN);
                 machine->WriteRegister(2, -1);
                 break;
@@ -442,6 +442,27 @@ SyscallHandler(ExceptionType _et)
     IncrementPC();
 }
 
+static void
+PageFaultHandler(ExceptionType _et) {
+    int virtualAddress = machine->ReadRegister(BAD_VADDR_REG);
+    int page = virtualAddress / PAGE_SIZE;
+
+    TranslationEntry *entry = &currentThread->space->GetPageTable()[page];
+    entry->valid = true;
+
+    stats->tlbMisses++;
+
+    DEBUG('e', "Page Fault in thread <%s> VPN: %d\n", currentThread->GetName(), page);
+
+    machine->GetMMU()->LoadTLBEntry(*entry);
+}
+
+static void
+ReadOnlyHandler(ExceptionType _et) {
+    // TODO: que hacer aqui
+
+    currentThread->Finish(-1);
+}
 
 /// By default, only system calls have their own handler.  All other
 /// exception types are assigned the default handler.
@@ -450,8 +471,8 @@ SetExceptionHandlers()
 {
     machine->SetHandler(NO_EXCEPTION,            &DefaultHandler);
     machine->SetHandler(SYSCALL_EXCEPTION,       &SyscallHandler);
-    machine->SetHandler(PAGE_FAULT_EXCEPTION,    &DefaultHandler);
-    machine->SetHandler(READ_ONLY_EXCEPTION,     &DefaultHandler);
+    machine->SetHandler(PAGE_FAULT_EXCEPTION,    &PageFaultHandler);
+    machine->SetHandler(READ_ONLY_EXCEPTION,     &ReadOnlyHandler);
     machine->SetHandler(BUS_ERROR_EXCEPTION,     &DefaultHandler);
     machine->SetHandler(ADDRESS_ERROR_EXCEPTION, &DefaultHandler);
     machine->SetHandler(OVERFLOW_EXCEPTION,      &DefaultHandler);

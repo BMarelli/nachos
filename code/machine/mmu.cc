@@ -79,6 +79,13 @@ MMU::PrintTLB() const
 #endif
 }
 
+void MMU::LoadTLBEntry(TranslationEntry entry) {
+    tlb[tlbFIFO] = entry;
+
+    tlbFIFO++;
+    tlbFIFO %= TLB_SIZE;
+}
+
 /// Read `size` (1, 2, or 4) bytes of virtual memory at `addr` into
 /// the location pointed to by `value`.
 ///
