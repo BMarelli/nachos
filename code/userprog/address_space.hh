@@ -47,6 +47,10 @@ public:
     void SaveState();
     void RestoreState();
 
+    #ifdef DEMAND_LOADING
+    TranslationEntry* LoadPage(unsigned vpn);
+    #endif
+
     TranslationEntry* GetPageTable();
 
 private:
@@ -56,7 +60,8 @@ private:
 
     /// Number of pages in the virtual address space.
     unsigned numPages;
-
+    
+    OpenFile *executable
 };
 
 

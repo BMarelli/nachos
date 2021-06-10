@@ -448,6 +448,14 @@ PageFaultHandler(ExceptionType _et) {
     int page = virtualAddress / PAGE_SIZE;
 
     TranslationEntry *entry = &currentThread->space->GetPageTable()[page];
+
+    #ifdef DEMAND_LOADING
+    if (entry->physicalPage == -1)) {
+        entry->physicalPage = currentThread->space->LoadPage(page);
+        entry->virtualPage = page;
+        entry->valid = true;
+    }
+    #endif
     entry->valid = true;
 
     stats->tlbMisses++;
