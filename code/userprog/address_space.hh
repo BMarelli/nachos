@@ -49,6 +49,10 @@ public:
 
     TranslationEntry* GetPageTable();
 
+#ifdef DEMAND_LOADING
+    void LoadPage(unsigned vpn);
+#endif
+
 private:
 
     /// Assume linear page table translation for now!
@@ -56,6 +60,10 @@ private:
 
     /// Number of pages in the virtual address space.
     unsigned numPages;
+
+#ifdef DEMAND_LOADING
+    OpenFile* exec_file;
+#endif
 
 };
 

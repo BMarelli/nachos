@@ -450,6 +450,14 @@ PageFaultHandler(ExceptionType _et) {
     TranslationEntry *entry = &currentThread->space->GetPageTable()[page];
     entry->valid = true;
 
+#ifdef DEMAND_LOADING
+    if (entry->virtualPage == -1) {
+        currentThread->space->LoadPage(page);
+        entry->virtualPage = page;
+        stats->tlbMisses--;
+    }
+#endif
+
     stats->tlbMisses++;
 
     DEBUG('e', "Page Fault in thread <%s> VPN: %d\n", currentThread->GetName(), page);
@@ -459,8 +467,7 @@ PageFaultHandler(ExceptionType _et) {
 
 static void
 ReadOnlyHandler(ExceptionType _et) {
-    // TODO: que hacer aqui
-
+    fprintf(stderr, "Cannot write on readonly memory. Terminating thread <%s>\n", currentThread->GetName());
     currentThread->Finish(-1);
 }
 

@@ -18,50 +18,59 @@
 /// and we have a single unsegmented page table.
 AddressSpace::AddressSpace(OpenFile *executable_file)
 {
-    ASSERT(executable_file != nullptr);
+  ASSERT(executable_file != nullptr);
 
-    Executable exe (executable_file);
-    ASSERT(exe.CheckMagic());
+  Executable exe (executable_file);
+  ASSERT(exe.CheckMagic());
 
-    // How big is address space?
+#ifdef DEMAND_LOADING
+  exec_file = executable_file;
+#endif
 
-    unsigned size = exe.GetSize() + USER_STACK_SIZE;
-      // We need to increase the size to leave room for the stack.
-    numPages = DivRoundUp(size, PAGE_SIZE);
-    size = numPages * PAGE_SIZE;
+  // How big is address space?
+  unsigned size = exe.GetSize() + USER_STACK_SIZE;
+    // We need to increase the size to leave room for the stack.
+  numPages = DivRoundUp(size, PAGE_SIZE);
+  size = numPages * PAGE_SIZE;
 
-    ASSERT(numPages <= memoryBitmap->CountClear());
+  // TODO: only if no demand loading / swap
+  ASSERT(numPages <= memoryBitmap->CountClear());
 
-    DEBUG('a', "Initializing address space, num pages %u, size %u\n",
-          numPages, size);
+  DEBUG('a', "Initializing address space, num pages %u, size %u\n",
+        numPages, size);
 
-    char *mainMemory = machine->GetMMU()->mainMemory;
+  char *mainMemory = machine->GetMMU()->mainMemory;
 
-    // First, set up the translation.
+  // First, set up the translation.
 
-    pageTable = new TranslationEntry[numPages];
-    for (unsigned i = 0; i < numPages; i++) {
-        int free = memoryBitmap->Find();
+  pageTable = new TranslationEntry[numPages];
+  for (unsigned i = 0; i < numPages; i++) {
+#ifdef DEMAND_LOADING
+    pageTable[i].virtualPage  = -1;
+    pageTable[i].physicalPage = -1;
+#else
+    int free = memoryBitmap->Find();
 
-        if (free < 0) {
-          DEBUG('a', "Error: could not find a free physical page");
-          break;
+    if (free < 0) {
+      DEBUG('a', "Error: could not find a free physical page");
+      break;
 
-          // TODO: swap???
-        }
+      // TODO: swap???
+    }
+    pageTable[i].virtualPage  = i;
+    pageTable[i].physicalPage = free;
+    memset(mainMemory + free * PAGE_SIZE, 0, PAGE_SIZE);
+#endif
+    pageTable[i].valid        = true;
+    pageTable[i].use          = false;
+    pageTable[i].dirty        = false;
+    pageTable[i].readOnly     = false;
+      // If the code segment was entirely on a separate page, we could
+      // set its pages to be read-only.
 
-        pageTable[i].virtualPage  = i;
-        pageTable[i].physicalPage = free;
-        pageTable[i].valid        = true;
-        pageTable[i].use          = false;
-        pageTable[i].dirty        = false;
-        pageTable[i].readOnly     = false;
-          // If the code segment was entirely on a separate page, we could
-          // set its pages to be read-only.
-
-        memset(mainMemory + free * PAGE_SIZE, 0, PAGE_SIZE);
     }
 
+#ifndef DEMAND_LOADING
     // Then, copy in the code and data segments into memory.
     uint32_t codeSize = exe.GetCodeSize();
     uint32_t initDataSize = exe.GetInitDataSize();
@@ -89,7 +98,7 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
           exe.ReadDataBlock(&(mainMemory[physAddr]), 1, i);
         }
    }
-
+#endif
 }
 
 /// Deallocate an address space.
@@ -163,3 +172,44 @@ TranslationEntry*
 AddressSpace::GetPageTable() {
   return pageTable;
 }
+
+#ifdef DEMAND_LOADING
+void AddressSpace::LoadPage(unsigned vpn) {
+  int free = memoryBitmap->Find();
+  if (free < 0) {
+    DEBUG('e', "Error: could not find a free physical page\n");
+    // TODO: swap???
+  }
+
+  char *mainMemory = machine->GetMMU()->mainMemory;
+  memset(mainMemory + free * PAGE_SIZE, 0, PAGE_SIZE);
+
+  Executable exe (exec_file);
+
+  unsigned physAddr = free * PAGE_SIZE;
+  unsigned virtualAddr = vpn * PAGE_SIZE;
+  uint32_t codeSize = exe.GetCodeSize();
+
+  unsigned read = 0;
+  if (codeSize > 0 && virtualAddr < codeSize) {
+    unsigned size = codeSize - virtualAddr < PAGE_SIZE ? codeSize - virtualAddr : PAGE_SIZE;
+    exe.ReadCodeBlock(&mainMemory[physAddr], size, virtualAddr);
+
+    read += size;
+  }
+
+  uint32_t initDataSize = exe.GetInitDataSize();
+  uint32_t initDataAddr = exe.GetInitDataAddr();
+  if (read < PAGE_SIZE && initDataSize > 0 && virtualAddr + read < initDataAddr + initDataSize) {
+    unsigned size = (initDataSize - virtualAddr < PAGE_SIZE ? initDataSize - virtualAddr : PAGE_SIZE) - read;
+    exe.ReadDataBlock(&mainMemory[physAddr + read], size, virtualAddr + read);
+
+    read += size;
+  }
+
+  ASSERT(read <= PAGE_SIZE);
+
+  pageTable[vpn].physicalPage = free;
+  pageTable[vpn].valid = true;
+}
+#endif
