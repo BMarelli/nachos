@@ -7,7 +7,6 @@
 #include "thread_test_simple.hh"
 
 #include <stdio.h>
-#include <string.h>
 
 #include "system.hh"
 
@@ -34,10 +33,12 @@ void SimpleThread(void *name_) {
 /// Do it by launching one thread which calls `SimpleThread`, and finally
 /// calling `SimpleThread` on the current thread.
 void ThreadTestSimple() {
-    char *name = new char[64];
-    strncpy(name, "2nd", 64);
-    Thread *newThread = new Thread(name);
-    newThread->Fork(SimpleThread, (void *)name);
+    for (unsigned i = 2; i <= 5; i++) {
+        char *name = new char[64];
+        sprintf(name, "%u", i);
+        Thread *newThread = new Thread(name);
+        newThread->Fork(SimpleThread, (void *)name);
+    }
 
-    SimpleThread((void *)"1st");
+    SimpleThread((void *)"1");
 }
