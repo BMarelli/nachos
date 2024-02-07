@@ -14,3 +14,4 @@ sort
 tiny_shell
 touch
 *.coff
+.cache
