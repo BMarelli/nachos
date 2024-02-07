@@ -24,6 +24,7 @@ void SimpleThread(void *name_) {
     // Reinterpret arg `name` as a string.
     char *name = (char *) name_;
     #ifdef SEMAPHORE_TEST
+    DEBUG('t', "<thread %s> calling P()\n", name);
     sem->P();
     #endif
 
@@ -37,6 +38,7 @@ void SimpleThread(void *name_) {
     printf("!!! Thread `%s` has finished\n", name);
 
     #ifdef SEMAPHORE_TEST
+    DEBUG('t', "<thread %s> calling V()\n", name);
     sem->V();
     #endif
 }
