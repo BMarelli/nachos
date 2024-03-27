@@ -14,7 +14,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "machine/system_dep.hh"
 #include "utility.hh"
 
 Debug::Debug() { flags = ""; }

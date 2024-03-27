@@ -14,6 +14,8 @@
 
 #include <stddef.h>
 
+#include "lib/utility.hh"
+
 namespace SystemDep {
 /// Check file to see if there are any characters to be read.
 ///
