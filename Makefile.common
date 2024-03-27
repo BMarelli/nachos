@@ -34,49 +34,51 @@ LDFLAGS  =
 # Name of the final executable file in each subdirectory.
 PROGRAM = nachos
 
-THREAD_HDR = threads/condition.hh             \
-             threads/copyright.h              \
-             threads/lock.hh                  \
-             threads/scheduler.hh             \
-             threads/semaphore.hh             \
-             threads/synch_list.hh            \
-             threads/sys_info.hh              \
-             threads/system.hh                \
-             threads/thread.hh                \
-             threads/thread_test.hh           \
-             threads/thread_test_garden.hh    \
-             threads/thread_test_prod_cons.hh \
-             threads/thread_test_simple.hh    \
-             lib/assert.hh                    \
-             lib/debug.hh                     \
-             lib/debug_opts.hh                \
-             lib/list.hh                      \
-             lib/utility.hh                   \
-             machine/interrupt.hh             \
-             machine/system_dep.hh            \
-             machine/statistics.hh            \
-             machine/timer.hh                 \
+THREAD_HDR = threads/condition.hh              \
+             threads/copyright.h               \
+             threads/lock.hh                   \
+             threads/scheduler.hh              \
+             threads/semaphore.hh              \
+             threads/synch_list.hh             \
+             threads/sys_info.hh               \
+             threads/system.hh                 \
+             threads/thread.hh                 \
+             threads/thread_test.hh            \
+             threads/thread_test_garden.hh     \
+             threads/thread_test_garden_sem.hh \
+             threads/thread_test_prod_cons.hh  \
+             threads/thread_test_simple.hh     \
+             lib/assert.hh                     \
+             lib/debug.hh                      \
+             lib/debug_opts.hh                 \
+             lib/list.hh                       \
+             lib/utility.hh                    \
+             machine/interrupt.hh              \
+             machine/system_dep.hh             \
+             machine/statistics.hh             \
+             machine/timer.hh                  \
              threads/preemptive.hh
-THREAD_SRC = threads/main.cc                  \
-             threads/condition.cc             \
-             threads/lock.cc                  \
-             threads/scheduler.cc             \
-             threads/semaphore.cc             \
-             threads/sys_info.cc              \
-             threads/system.cc                \
-             threads/switch.S                 \
-             threads/thread.cc                \
-             threads/thread_test.cc           \
-             threads/thread_test_garden.cc    \
-             threads/thread_test_prod_cons.cc \
-             threads/thread_test_simple.cc    \
-             lib/assert.cc                    \
-             lib/debug.cc                     \
-             lib/utility.cc                   \
-             machine/interrupt.cc             \
-             machine/system_dep.cc            \
-             machine/statistics.cc            \
-             machine/timer.cc                 \
+THREAD_SRC = threads/main.cc                   \
+             threads/condition.cc              \
+             threads/lock.cc                   \
+             threads/scheduler.cc              \
+             threads/semaphore.cc              \
+             threads/sys_info.cc               \
+             threads/system.cc                 \
+             threads/switch.S                  \
+             threads/thread.cc                 \
+             threads/thread_test.cc            \
+             threads/thread_test_garden.cc     \
+             threads/thread_test_garden_sem.cc \
+             threads/thread_test_prod_cons.cc  \
+             threads/thread_test_simple.cc     \
+             lib/assert.cc                     \
+             lib/debug.cc                      \
+             lib/utility.cc                    \
+             machine/interrupt.cc              \
+             machine/system_dep.cc             \
+             machine/statistics.cc             \
+             machine/timer.cc                  \
              threads/preemptive.cc
 
 USERPROG_HDR = userprog/address_space.hh            \
