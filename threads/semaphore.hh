@@ -19,10 +19,8 @@
 #ifndef NACHOS_THREADS_SEMAPHORE__HH
 #define NACHOS_THREADS_SEMAPHORE__HH
 
-
-#include "thread.hh"
 #include "lib/list.hh"
-
+#include "thread.hh"
 
 /// This class defines a “semaphore”, which has a positive integer as its
 /// value.
@@ -37,8 +35,7 @@
 /// because meanwhile another thread could have modified the semaphore, in
 /// case you have lost the CPU for some time.
 class Semaphore {
-public:
-
+   public:
     /// Constructor: give an initial value to the semaphore.
     ///
     /// Set initial value.
@@ -55,8 +52,7 @@ public:
     void P();
     void V();
 
-private:
-
+   private:
     /// For debugging.
     const char *name;
 
@@ -65,8 +61,6 @@ private:
 
     /// Queue of threads waiting on `P` because the value is zero.
     List<Thread *> *queue;
-
 };
-
 
 #endif

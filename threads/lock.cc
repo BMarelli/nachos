@@ -14,39 +14,25 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
 #include "lock.hh"
-
 
 /// Dummy functions -- so we can compile our later assignments.
 
-Lock::Lock(const char *debugName)
-{}
+Lock::Lock(const char *debugName) {}
 
-Lock::~Lock()
-{}
+Lock::~Lock() {}
 
-const char *
-Lock::GetName() const
-{
-    return name;
-}
+const char *Lock::GetName() const { return name; }
 
-void
-Lock::Acquire()
-{
+void Lock::Acquire() {
     // TODO
 }
 
-void
-Lock::Release()
-{
+void Lock::Release() {
     // TODO
 }
 
-bool
-Lock::IsHeldByCurrentThread() const
-{
+bool Lock::IsHeldByCurrentThread() const {
     // TODO
     return false;
 }

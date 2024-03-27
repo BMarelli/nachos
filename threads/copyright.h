@@ -21,12 +21,12 @@
 /// ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION
 /// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
-
 static const char *PROGRAM = "Nachos";
 
 static const char *VERSION = "unr22a";
 
-static const char *COPYRIGHT = "\
+static const char *COPYRIGHT =
+    "\
 Copyright (c) 1992-1993 The Regents of the University of California.\n\
               1998-2010 Universidad de Las Palmas de Gran Canaria.\n\
               2016-2021 Docentes de la Universidad Nacional de Rosario.\n";

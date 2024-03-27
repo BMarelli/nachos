@@ -38,7 +38,6 @@
 #ifndef NACHOS_THREADS_THREAD__HH
 #define NACHOS_THREADS_THREAD__HH
 
-
 #include "lib/utility.hh"
 
 #ifdef USER_PROGRAM
@@ -47,7 +46,6 @@
 #endif
 
 #include <stdint.h>
-
 
 /// CPU register state to be saved on context switch.
 ///
@@ -62,15 +60,8 @@ const unsigned MACHINE_STATE_SIZE = 17;
 /// WATCH OUT IF THIS IS NOT BIG ENOUGH!!!!!
 const unsigned STACK_SIZE = 4 * 1024;
 
-
 /// Thread state.
-enum ThreadStatus {
-    JUST_CREATED,
-    RUNNING,
-    READY,
-    BLOCKED,
-    NUM_THREAD_STATUS
-};
+enum ThreadStatus { JUST_CREATED, RUNNING, READY, BLOCKED, NUM_THREAD_STATUS };
 
 /// The following class defines a “thread control block” -- which represents
 /// a single thread of execution.
@@ -83,8 +74,7 @@ enum ThreadStatus {
 ///  Some threads also belong to a user address space; threads that only run
 ///  in the kernel have a null address space.
 class Thread {
-private:
-
+   private:
     // NOTE: DO NOT CHANGE the order of these first two members.
     // THEY MUST be in this position for `SWITCH` to work.
 
@@ -94,8 +84,7 @@ private:
     /// All registers except for `stackTop`.
     uintptr_t machineState[MACHINE_STATE_SIZE];
 
-public:
-
+   public:
     /// Initialize a `Thread`.
     Thread(const char *debugName);
 
@@ -128,7 +117,7 @@ public:
 
     void Print() const;
 
-private:
+   private:
     // Some of the private data for this class is listed above.
 
     /// Bottom of the stack.
@@ -152,8 +141,7 @@ private:
     /// state while executing kernel code.
     int userRegisters[NUM_TOTAL_REGS];
 
-public:
-
+   public:
     // Save user-level register state.
     void SaveUserState();
 
@@ -168,16 +156,15 @@ public:
 /// Magical machine-dependent routines, defined in `switch.s`.
 
 extern "C" {
-    /// First frame on thread execution stack.
-    ///
-    /// 1. Enable interrupts.
-    /// 2. Call `func`.
-    /// 3. (When func returns, if ever) call `ThreadFinish`.
-    void ThreadRoot();
+/// First frame on thread execution stack.
+///
+/// 1. Enable interrupts.
+/// 2. Call `func`.
+/// 3. (When func returns, if ever) call `ThreadFinish`.
+void ThreadRoot();
 
-    // Stop running `oldThread` and start running `newThread`.
-    void SWITCH(Thread *oldThread, Thread *newThread);
+// Stop running `oldThread` and start running `newThread`.
+void SWITCH(Thread *oldThread, Thread *newThread);
 }
-
 
 #endif

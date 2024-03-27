@@ -6,14 +6,12 @@
 #ifndef NACHOS_FILESYS_RAWDIRECTORY__HH
 #define NACHOS_FILESYS_RAWDIRECTORY__HH
 
-
 class DirectoryEntry;
 
 struct RawDirectory {
-    unsigned tableSize;  ///< Number of directory entries.
+    unsigned tableSize;     ///< Number of directory entries.
     DirectoryEntry *table;  ///< Table of pairs:
                             ///< *<file name, file header location>*.
 };
-
 
 #endif

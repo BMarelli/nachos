@@ -22,15 +22,12 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
 #ifndef NACHOS_NETWORK_POST__HH
 #define NACHOS_NETWORK_POST__HH
-
 
 #include "network.hh"
 #include "threads/semaphore.hh"
 #include "threads/synch_list.hh"
-
 
 /// Mailbox address -- uniquely identifies a mailbox on a given machine.
 ///
@@ -42,16 +39,16 @@ typedef int MailBoxAddress;
 /// This is prepended to the message by the `PostOffice`, before the message
 /// is sent to the `Network`.
 class MailHeader {
-public:
-    MailBoxAddress to;      ///< Destination mail box.
-    MailBoxAddress from;    ///< Mail box to reply to.
-    unsigned       length;  ///< Bytes of message data (excluding the mail
-                            ///< header).
+   public:
+    MailBoxAddress to;    ///< Destination mail box.
+    MailBoxAddress from;  ///< Mail box to reply to.
+    unsigned length;      ///< Bytes of message data (excluding the mail
+                          ///< header).
 };
 
 /// Maximum “payload” -- real data -- that can included in a single message.
 /// Excluding the `MailHeader` and the `PacketHeader`.
-const unsigned MAX_MAIL_SIZE = MAX_PACKET_SIZE - sizeof (MailHeader);
+const unsigned MAX_MAIL_SIZE = MAX_PACKET_SIZE - sizeof(MailHeader);
 
 /// The following class defines the format of an incoming/outgoing `Mail`
 /// message.
@@ -61,14 +58,13 @@ const unsigned MAX_MAIL_SIZE = MAX_PACKET_SIZE - sizeof (MailHeader);
 /// 2. post office header (`MailHeader`);
 /// 3. data.
 class Mail {
-public:
-
+   public:
     /// Initialize a mail message by concatenating the headers to the data.
     Mail(PacketHeader pktH, MailHeader mailH, const char *msgData);
 
-    PacketHeader pktHdr;               ///< Header appended by `Network`.
-    MailHeader   mailHdr;              ///< Header appended by `PostOffice`.
-    char         data[MAX_MAIL_SIZE];  ///< Payload -- message data.
+    PacketHeader pktHdr;       ///< Header appended by `Network`.
+    MailHeader mailHdr;        ///< Header appended by `PostOffice`.
+    char data[MAX_MAIL_SIZE];  ///< Payload -- message data.
 };
 
 /// The following class defines a single mailbox, or temporary storage
@@ -78,8 +74,7 @@ public:
 /// mailbox, and these messages can then be retrieved by threads on this
 /// machine.
 class MailBox {
-public:
-
+   public:
     /// Allocate and initialize mail box.
     MailBox();
 
@@ -93,11 +88,9 @@ public:
     /// message to get!).
     void Get(PacketHeader *pktHdr, MailHeader *mailHdr, char *data);
 
-private:
-
+   private:
     /// A mailbox is just a list of arrived messages.
     SynchList<Mail *> *messages;
-
 };
 
 /// The following class defines a “post office”, or a collection of
@@ -111,8 +104,7 @@ private:
 /// Incoming messages are put by the `PostOffice` into the appropriate
 /// mailbox, waking up any threads waiting on `Receive`.
 class PostOffice {
-public:
-
+   public:
     /// Allocate and initialize post office.
     ///
     /// * `reliability` is how many packets get dropped by the underlying
@@ -130,8 +122,8 @@ public:
     // Retrieve a message from `box`.
     //
     // Wait if there is no message in the box.
-    void Receive(int box, PacketHeader *pktHdr,
-                 MailHeader *mailHdr, char *data);
+    void Receive(int box, PacketHeader *pktHdr, MailHeader *mailHdr,
+                 char *data);
 
     // Wait for incoming messages, and then put them in the correct mailbox.
     void PostalDelivery();
@@ -144,8 +136,7 @@ public:
     /// pulled off of network (i.e., time to call `PostalDelivery`).
     void IncomingPacket();
 
-private:
-
+   private:
     /// Physical network connection.
     Network *network;
 
@@ -166,8 +157,6 @@ private:
 
     // Only one outgoing message at a time.
     Lock *sendLock;
-
 };
-
 
 #endif

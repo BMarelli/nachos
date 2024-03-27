@@ -5,13 +5,11 @@
 #ifndef NACHOS_USERPROG_DEBUGGER__HH
 #define NACHOS_USERPROG_DEBUGGER__HH
 
-
 #include "debugger_command_manager.hh"
 #include "machine/machine.hh"
 
-
 class Debugger : public SingleStepper {
-public:
+   public:
     Debugger();
 
     virtual ~Debugger();
@@ -21,7 +19,7 @@ public:
     /// Returns whether to continue single-stepping or not.
     virtual bool Step();
 
-private:
+   private:
     static const unsigned BUFFER_SIZE = 80;
 
     char buffer[BUFFER_SIZE];
@@ -30,6 +28,5 @@ private:
     unsigned runUntilTime;  ///< Drop back into the debugger when simulated
                             ///< time reaches this value.
 };
-
 
 #endif

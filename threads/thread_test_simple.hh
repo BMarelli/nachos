@@ -7,8 +7,6 @@
 #ifndef NACHOS_THREADS_THREADTESTSIMPLE__HH
 #define NACHOS_THREADS_THREADTESTSIMPLE__HH
 
-
 void ThreadTestSimple();
-
 
 #endif

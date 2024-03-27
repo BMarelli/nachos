@@ -15,14 +15,12 @@
 #ifndef NACHOS_USERPROG_EXECUTABLE__HH
 #define NACHOS_USERPROG_EXECUTABLE__HH
 
-
 #include "bin/noff.h"
 #include "filesys/open_file.hh"
 
-
 /// Assumes that the object code file is in NOFF format.
 class Executable {
-public:
+   public:
     Executable(OpenFile *new_file);
 
     /// Check if the executable is valid and fix endianness if necessary.
@@ -62,10 +60,9 @@ public:
     int ReadCodeBlock(char *dest, uint32_t size, uint32_t offset);
     int ReadDataBlock(char *dest, uint32_t size, uint32_t offset);
 
-private:
+   private:
     OpenFile *file;
     noffHeader header;
 };
-
 
 #endif

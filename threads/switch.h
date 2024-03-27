@@ -16,14 +16,12 @@
 #ifndef NACHOS_THREADS_SWITCH__H
 #define NACHOS_THREADS_SWITCH__H
 
-
 #if defined(HOST_i386)
-    #include "switch_i386.h"
+#include "switch_i386.h"
 #elif defined(HOST_x86_64)
-    #include "switch_x86-64.h"
+#include "switch_x86-64.h"
 #else
-    #error "Unknown CPU architecture."
+#error "Unknown CPU architecture."
 #endif
-
 
 #endif

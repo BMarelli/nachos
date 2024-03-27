@@ -8,11 +8,9 @@
 #ifndef NACHOS_FILESYS_SYNCHDISK__HH
 #define NACHOS_FILESYS_SYNCHDISK__HH
 
-
 #include "machine/disk.hh"
 #include "threads/lock.hh"
 #include "threads/semaphore.hh"
-
 
 /// The following class defines a "synchronous" disk abstraction.
 ///
@@ -25,8 +23,7 @@
 /// This class provides the abstraction that for any individual thread making
 /// a request, it waits around until the operation finishes before returning.
 class SynchDisk {
-public:
-
+   public:
     /// Initialize a synchronous disk, by initializing the raw Disk.
     SynchDisk(const char *name);
 
@@ -44,13 +41,12 @@ public:
     /// current disk operation is complete.
     void RequestDone();
 
-private:
-    Disk *disk;  ///< Raw disk device.
+   private:
+    Disk *disk;            ///< Raw disk device.
     Semaphore *semaphore;  ///< To synchronize requesting thread with the
                            ///< interrupt handler.
     Lock *lock;  ///< Only one read/write request can be sent to the disk at
                  ///< a time.
 };
-
 
 #endif

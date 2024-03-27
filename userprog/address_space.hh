@@ -13,17 +13,13 @@
 #ifndef NACHOS_USERPROG_ADDRESSSPACE__HH
 #define NACHOS_USERPROG_ADDRESSSPACE__HH
 
-
 #include "filesys/file_system.hh"
 #include "machine/translation_entry.hh"
 
-
 const unsigned USER_STACK_SIZE = 1024;  ///< Increase this as necessary!
 
-
 class AddressSpace {
-public:
-
+   public:
     /// Create an address space to run a user program.
     ///
     /// The address space is initialized from an already opened file.
@@ -47,15 +43,12 @@ public:
     void SaveState();
     void RestoreState();
 
-private:
-
+   private:
     /// Assume linear page table translation for now!
     TranslationEntry *pageTable;
 
     /// Number of pages in the virtual address space.
     unsigned numPages;
-
 };
-
 
 #endif

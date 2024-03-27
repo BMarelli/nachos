@@ -20,14 +20,11 @@
 #ifndef NACHOS_MACHINE_TIMER__HH
 #define NACHOS_MACHINE_TIMER__HH
 
-
 #include "lib/utility.hh"
-
 
 /// The following class defines a hardware timer.
 class Timer {
-public:
-
+   public:
     /// Initialize the timer, to call the interrupt handler `timerHandler`
     /// every time slice.
     Timer(VoidFunctionPtr timerHandler, void *callArg, bool doRandom);
@@ -42,12 +39,10 @@ public:
     /// Figure out when the timer will generate its next interrupt.
     int TimeOfNextInterrupt();
 
-private:
-    bool randomize;  ///< Set if we need to use a random timeout delay.
+   private:
+    bool randomize;           ///< Set if we need to use a random timeout delay.
     VoidFunctionPtr handler;  ///< Timer interrupt handler.
-    void *arg;  ///< Argument to pass to interrupt handler.
-
+    void *arg;                ///< Argument to pass to interrupt handler.
 };
-
 
 #endif

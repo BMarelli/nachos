@@ -11,32 +11,27 @@
 /// Assumes coff file compiled with -N -T 0 to make sure it is not shared
 /// text.
 
-
-#include "coff_reader.h"
-#include "coff_section.h"
-#include "threads/copyright.h"
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-
 #include <assert.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
+#include "coff_reader.h"
+#include "coff_section.h"
+#include "threads/copyright.h"
 
 // NOTE -- once you have implemented large files, it is ok to make this
 // bigger!
-#define STACK_SIZE              1024  // In bytes.
-#define ReadStructOrDie(f, s)  ReadOrDie(f, (char *) &(s), sizeof (s))
+#define STACK_SIZE 1024  // In bytes.
+#define ReadStructOrDie(f, s) ReadOrDie(f, (char *)&(s), sizeof(s))
 
-static inline void
-Die(const char *format, ...)
-{
+static inline void Die(const char *format, ...) {
     assert(format != NULL);
 
     va_list args;
@@ -49,9 +44,7 @@ Die(const char *format, ...)
 }
 
 /// Read and check for error.
-static void
-ReadOrDie(FILE *f, char *buffer, size_t numBytes)
-{
+static void ReadOrDie(FILE *f, char *buffer, size_t numBytes) {
     assert(f != NULL);
     assert(buffer != NULL);
 
@@ -61,9 +54,7 @@ ReadOrDie(FILE *f, char *buffer, size_t numBytes)
 }
 
 /// Write and check for error.
-static void
-WriteOrDie(FILE *f, const char *buffer, size_t numBytes)
-{
+static void WriteOrDie(FILE *f, const char *buffer, size_t numBytes) {
     assert(f != NULL);
     assert(buffer != NULL);
 
@@ -73,16 +64,13 @@ WriteOrDie(FILE *f, const char *buffer, size_t numBytes)
 }
 
 /// Do the real work.
-void
-main(int argc, char *argv[])
-{
+void main(int argc, char *argv[]) {
     FILE *in, *out;
-    int   top, tmp;
+    int top, tmp;
     char *buffer;
 
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s <coffFileName> <flatFileName>\n",
-                argv[0]);
+        fprintf(stderr, "Usage: %s <coffFileName> <flatFileName>\n", argv[0]);
         exit(1);
     }
 
@@ -135,7 +123,7 @@ main(int argc, char *argv[])
     printf("Adding stack of size: %u\n", STACK_SIZE);
     fseek(out, top + STACK_SIZE - 4, SEEK_SET);
     tmp = 0;
-    WriteOrDie(out, (const char *) &tmp, 4);
+    WriteOrDie(out, (const char *)&tmp, 4);
 
     fclose(in);
     fclose(out);

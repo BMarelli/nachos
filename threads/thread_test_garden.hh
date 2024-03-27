@@ -7,8 +7,6 @@
 #ifndef NACHOS_THREADS_THREADTESTGARDEN__HH
 #define NACHOS_THREADS_THREADTESTGARDEN__HH
 
-
 void ThreadTestGarden();
-
 
 #endif

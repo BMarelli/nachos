@@ -10,7 +10,6 @@
 #ifndef NACHOS_USERPROG_ARGS__HH
 #define NACHOS_USERPROG_ARGS__HH
 
-
 /// Save command-line arguments from the memory of a user process.
 ///
 /// It moves an `argv`-like array from user memory to kernel memory, and
@@ -62,6 +61,5 @@ char **SaveArgs(int address);
 /// Returns the count of arguments, not including the trailing null (the
 /// same as `argc`).  Frees everything allocated by `SaveArgs`.
 unsigned WriteArgs(char **args);
-
 
 #endif

@@ -13,14 +13,11 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
 #ifndef NACHOS_LIB_BITMAP__HH
 #define NACHOS_LIB_BITMAP__HH
 
-
-#include "utility.hh"
 #include "filesys/open_file.hh"
-
+#include "utility.hh"
 
 /// A “bitmap” -- an array of bits, each of which can be independently set,
 /// cleared, and tested.
@@ -31,8 +28,7 @@
 /// Each bit represents whether the corresponding sector or page is in use
 /// or free.
 class Bitmap {
-public:
-
+   public:
     /// Initialize a bitmap with `nitems` bits; all bits are cleared.
     ///
     /// * `nitems` is the number of items in the bitmap.
@@ -73,8 +69,7 @@ public:
     /// need to read and write the bitmap to a file.
     void WriteBack(OpenFile *file) const;
 
-private:
-
+   private:
     /// Number of bits in the bitmap.
     unsigned numBits;
 
@@ -84,8 +79,6 @@ private:
 
     /// Bit storage.
     unsigned *map;
-
 };
-
 
 #endif

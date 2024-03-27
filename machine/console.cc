@@ -13,28 +13,23 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
 #include "console.hh"
-#include "threads/system.hh"
 
 #include <stdio.h>
 
+#include "threads/system.hh"
 
 /// Dummy functions because C++ is weird about pointers to member functions.
 
-static void
-ConsoleReadPoll(void *c)
-{
+static void ConsoleReadPoll(void *c) {
     ASSERT(c != nullptr);
-    Console *console = (Console *) c;
+    Console *console = (Console *)c;
     console->CheckCharAvail();
 }
 
-static void
-ConsoleWriteDone(void *c)
-{
+static void ConsoleWriteDone(void *c) {
     ASSERT(c != nullptr);
-    Console *console = (Console *) c;
+    Console *console = (Console *)c;
     console->WriteDone();
 }
 
@@ -49,9 +44,8 @@ ConsoleWriteDone(void *c)
 /// * `writeDone` is the interrupt handler called when a character has been
 ///   output, so that it is ok to request the next char be output.
 Console::Console(const char *readFile, const char *writeFile,
-        VoidFunctionPtr readAvail,
-        VoidFunctionPtr writeDone, void *callArg)
-{
+                 VoidFunctionPtr readAvail, VoidFunctionPtr writeDone,
+                 void *callArg) {
     ASSERT(readAvail != nullptr);
     ASSERT(writeDone != nullptr);
 
@@ -69,19 +63,17 @@ Console::Console(const char *readFile, const char *writeFile,
 
     // Set up the stuff to emulate asynchronous interrupts.
     writeHandler = writeDone;
-    readHandler  = readAvail;
-    handlerArg   = callArg;
-    putBusy      = false;
-    incoming     = EOF;
+    readHandler = readAvail;
+    handlerArg = callArg;
+    putBusy = false;
+    incoming = EOF;
 
     // Start polling for incoming packets.
-    interrupt->Schedule(ConsoleReadPoll, this,
-                        CONSOLE_TIME, CONSOLE_READ_INT);
+    interrupt->Schedule(ConsoleReadPoll, this, CONSOLE_TIME, CONSOLE_READ_INT);
 }
 
 /// Clean up console emulation.
-Console::~Console()
-{
+Console::~Console() {
     if (readFileNo != 0) {
         SystemDep::Close(readFileNo);
     }
@@ -97,14 +89,11 @@ Console::~Console()
 /// character has been grabbed out of the buffer by the Nachos kernel).
 /// Invoke the “read” interrupt handler, once the character has been put into
 /// the buffer.
-    void
-Console::CheckCharAvail()
-{
+void Console::CheckCharAvail() {
     char c;
 
     // Schedule the next time to poll for a packet.
-    interrupt->Schedule(ConsoleReadPoll, this,
-            CONSOLE_TIME, CONSOLE_READ_INT);
+    interrupt->Schedule(ConsoleReadPoll, this, CONSOLE_TIME, CONSOLE_READ_INT);
 
     // Do nothing if character is already buffered, or none to be read.
     if (incoming != EOF || !SystemDep::PollFile(readFileNo)) {
@@ -120,9 +109,7 @@ Console::CheckCharAvail()
 
 /// Internal routine called when it is time to invoke the interrupt handler
 /// to tell the Nachos kernel that the output character has completed.
-void
-Console::WriteDone()
-{
+void Console::WriteDone() {
     putBusy = false;
     stats->numConsoleCharsWritten++;
     (*writeHandler)(handlerArg);
@@ -130,9 +117,7 @@ Console::WriteDone()
 
 /// Read a character from the input buffer, if there is any there.
 /// Either return the character, or EOF if none buffered.
-char
-Console::GetChar()
-{
+char Console::GetChar() {
     char ch = incoming;
 
     incoming = EOF;
@@ -141,12 +126,10 @@ Console::GetChar()
 
 /// Write a character to the simulated display, schedule an interrupt to
 /// occur in the future, and return.
-void
-Console::PutChar(char ch)
-{
+void Console::PutChar(char ch) {
     ASSERT(!putBusy);
-    SystemDep::WriteFile(writeFileNo, &ch, sizeof (char));
+    SystemDep::WriteFile(writeFileNo, &ch, sizeof(char));
     putBusy = true;
-    interrupt->Schedule(ConsoleWriteDone, this,
-                        CONSOLE_TIME, CONSOLE_WRITE_INT);
+    interrupt->Schedule(ConsoleWriteDone, this, CONSOLE_TIME,
+                        CONSOLE_WRITE_INT);
 }

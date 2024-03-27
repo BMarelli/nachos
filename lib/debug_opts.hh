@@ -7,7 +7,6 @@
 #ifndef NACHOS_LIB_DEBUGOPTS__HH
 #define NACHOS_LIB_DEBUGOPTS__HH
 
-
 /// Options that control the behavior when printing debugging messages.
 struct DebugOpts {
     /// Whether to print a debug message's location along with itself.
@@ -26,14 +25,12 @@ struct DebugOpts {
     /// Whether to wait for user input right after each debug message.
     bool interactive;
 
-    DebugOpts()
-    {
+    DebugOpts() {
         location = false;
         function = false;
         sleep = false;
         interactive = false;
     }
 };
-
 
 #endif

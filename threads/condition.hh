@@ -17,9 +17,7 @@
 #ifndef NACHOS_THREADS_CONDITION__HH
 #define NACHOS_THREADS_CONDITION__HH
 
-
 #include "lock.hh"
-
 
 /// This class defines a “condition variable”.
 ///
@@ -54,8 +52,7 @@
 /// guarantee that the woken thread recover the control of the lock
 /// immediately.
 class Condition {
-public:
-
+   public:
     /// Constructor: indicate which lock the condition variable belongs to.
     Condition(const char *debugName, Lock *conditionLock);
 
@@ -72,12 +69,10 @@ public:
     void Signal();
     void Broadcast();
 
-private:
-
+   private:
     const char *name;
 
     // Other needed fields are to be added here.
 };
-
 
 #endif

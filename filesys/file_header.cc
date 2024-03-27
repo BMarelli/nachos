@@ -22,13 +22,12 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
 #include "file_header.hh"
-#include "threads/system.hh"
 
 #include <ctype.h>
 #include <stdio.h>
 
+#include "threads/system.hh"
 
 /// Initialize a fresh file header for a newly created file.  Allocate data
 /// blocks for the file out of the map of free disk blocks.  Return false if
@@ -36,9 +35,7 @@
 ///
 /// * `freeMap` is the bit map of free disk sectors.
 /// * `fileSize` is the bit map of free disk sectors.
-bool
-FileHeader::Allocate(Bitmap *freeMap, unsigned fileSize)
-{
+bool FileHeader::Allocate(Bitmap *freeMap, unsigned fileSize) {
     ASSERT(freeMap != nullptr);
 
     if (fileSize > MAX_FILE_SIZE) {
@@ -60,9 +57,7 @@ FileHeader::Allocate(Bitmap *freeMap, unsigned fileSize)
 /// De-allocate all the space allocated for data blocks for this file.
 ///
 /// * `freeMap` is the bit map of free disk sectors.
-void
-FileHeader::Deallocate(Bitmap *freeMap)
-{
+void FileHeader::Deallocate(Bitmap *freeMap) {
     ASSERT(freeMap != nullptr);
 
     for (unsigned i = 0; i < raw.numSectors; i++) {
@@ -74,19 +69,15 @@ FileHeader::Deallocate(Bitmap *freeMap)
 /// Fetch contents of file header from disk.
 ///
 /// * `sector` is the disk sector containing the file header.
-void
-FileHeader::FetchFrom(unsigned sector)
-{
-    synchDisk->ReadSector(sector, (char *) &raw);
+void FileHeader::FetchFrom(unsigned sector) {
+    synchDisk->ReadSector(sector, (char *)&raw);
 }
 
 /// Write the modified contents of the file header back to disk.
 ///
 /// * `sector` is the disk sector to contain the file header.
-void
-FileHeader::WriteBack(unsigned sector)
-{
-    synchDisk->WriteSector(sector, (char *) &raw);
+void FileHeader::WriteBack(unsigned sector) {
+    synchDisk->WriteSector(sector, (char *)&raw);
 }
 
 /// Return which disk sector is storing a particular byte within the file.
@@ -95,25 +86,17 @@ FileHeader::WriteBack(unsigned sector)
 /// is stored).
 ///
 /// * `offset` is the location within the file of the byte in question.
-unsigned
-FileHeader::ByteToSector(unsigned offset)
-{
+unsigned FileHeader::ByteToSector(unsigned offset) {
     return raw.dataSectors[offset / SECTOR_SIZE];
 }
 
 /// Return the number of bytes in the file.
-unsigned
-FileHeader::FileLength() const
-{
-    return raw.numBytes;
-}
+unsigned FileHeader::FileLength() const { return raw.numBytes; }
 
 /// Print the contents of the file header, and the contents of all the data
 /// blocks pointed to by the file header.
-void
-FileHeader::Print(const char *title)
-{
-    char *data = new char [SECTOR_SIZE];
+void FileHeader::Print(const char *title) {
+    char *data = new char[SECTOR_SIZE];
 
     if (title == nullptr) {
         printf("File header:\n");
@@ -121,9 +104,10 @@ FileHeader::Print(const char *title)
         printf("%s file header:\n", title);
     }
 
-    printf("    size: %u bytes\n"
-           "    block indexes: ",
-           raw.numBytes);
+    printf(
+        "    size: %u bytes\n"
+        "    block indexes: ",
+        raw.numBytes);
 
     for (unsigned i = 0; i < raw.numSectors; i++) {
         printf("%u ", raw.dataSectors[i]);
@@ -137,16 +121,12 @@ FileHeader::Print(const char *title)
             if (isprint(data[j])) {
                 printf("%c", data[j]);
             } else {
-                printf("\\%X", (unsigned char) data[j]);
+                printf("\\%X", (unsigned char)data[j]);
             }
         }
         printf("\n");
     }
-    delete [] data;
+    delete[] data;
 }
 
-const RawFileHeader *
-FileHeader::GetRaw() const
-{
-    return &raw;
-}
+const RawFileHeader *FileHeader::GetRaw() const { return &raw; }
