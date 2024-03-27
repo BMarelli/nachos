@@ -22,11 +22,11 @@ Semaphore *sem = new Semaphore("semaphore", 3);
 ///   purposes.
 void SimpleThread(void *name_) {
     // Reinterpret arg `name` as a string.
-    char *name = (char *) name_;
-    #ifdef SEMAPHORE_TEST
+    char *name = (char *)name_;
+#ifdef SEMAPHORE_TEST
     DEBUG('t', "<thread %s> calling P()\n", name);
     sem->P();
-    #endif
+#endif
 
     // If the lines dealing with interrupts are commented, the code will
     // behave incorrectly, because printf execution may cause race
@@ -37,25 +37,23 @@ void SimpleThread(void *name_) {
     }
     printf("!!! Thread `%s` has finished\n", name);
 
-    #ifdef SEMAPHORE_TEST
+#ifdef SEMAPHORE_TEST
     DEBUG('t', "<thread %s> calling V()\n", name);
     sem->V();
-    #endif
+#endif
 }
 
 /// Set up a ping-pong between several threads.
 ///
 /// Do it by launching one thread which calls `SimpleThread`, and finally
 /// calling `SimpleThread` on the current thread.
-void
-ThreadTestSimple()
-{
+void ThreadTestSimple() {
     for (unsigned i = 2; i <= 5; i++) {
-        char *name = new char [64];
+        char *name = new char[64];
         sprintf(name, "%u", i);
         Thread *newThread = new Thread(name);
-        newThread->Fork(SimpleThread, (void *) name);
+        newThread->Fork(SimpleThread, (void *)name);
     }
 
-    SimpleThread((void *) "1");
+    SimpleThread((void *)"1");
 }
