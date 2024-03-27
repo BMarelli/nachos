@@ -20,30 +20,28 @@
 #ifndef NACHOS_MACHINE_MACHINE__HH
 #define NACHOS_MACHINE_MACHINE__HH
 
-
 #include "exception_type.hh"
+#include "lib/utility.hh"
 #include "mmu.hh"
 #include "single_stepper.hh"
-#include "lib/utility.hh"
-
 
 // User program CPU state.  The full set of MIPS registers, plus a few
 // more because we need to be able to start/stop a user program between
 // any two instructions (thus we need to keep track of things like load
 // delay slots, etc.)
 enum {
-    STACK_REG      = 29,  ///< User's stack pointer.
-    RET_ADDR_REG   = 31,  ///< Holds return address for procedure calls.
-    HI_REG         = 32,  ///< Double register to hold multiply result.
-    LO_REG         = 33,
-    PC_REG         = 34,  ///< Current program counter.
-    NEXT_PC_REG    = 35,  ///< Next program counter (for branch delay).
-    PREV_PC_REG    = 36,  ///< Previous program counter (for debugging).
-    LOAD_REG       = 37,  ///< The register target of a delayed load.
+    STACK_REG = 29,     ///< User's stack pointer.
+    RET_ADDR_REG = 31,  ///< Holds return address for procedure calls.
+    HI_REG = 32,        ///< Double register to hold multiply result.
+    LO_REG = 33,
+    PC_REG = 34,          ///< Current program counter.
+    NEXT_PC_REG = 35,     ///< Next program counter (for branch delay).
+    PREV_PC_REG = 36,     ///< Previous program counter (for debugging).
+    LOAD_REG = 37,        ///< The register target of a delayed load.
     LOAD_VALUE_REG = 38,  ///< The value to be loaded by a delayed load.
-    BAD_VADDR_REG  = 39,  ///< The failing virtual address on an exception.
+    BAD_VADDR_REG = 39,   ///< The failing virtual address on an exception.
 
-    NUM_GP_REGS    = 32,  ///< 32 general purpose registers on MIPS.
+    NUM_GP_REGS = 32,  ///< 32 general purpose registers on MIPS.
     NUM_TOTAL_REGS = 40
 };
 
@@ -65,8 +63,7 @@ typedef void (*ExceptionHandler)(ExceptionType);
 /// The procedures in this class are defined in `machine.cc` and
 /// `mips_sim.cc`.
 class Machine {
-public:
-
+   public:
     /// Initialize the simulation of the hardware for running user programs.
     Machine(SingleStepper *st);
 
@@ -120,7 +117,7 @@ public:
     /// can be assigned to multiple exception types.
     void SetHandler(ExceptionType et, ExceptionHandler handler);
 
-private:
+   private:
     SingleStepper *singleStepper;  ///< Drop back into the method of a
                                    ///< provided object (may be a debugger)
                                    ///< after each simulated instruction.
@@ -129,10 +126,9 @@ private:
     int registers[NUM_TOTAL_REGS];  ///< CPU registers, for executing user
                                     ///< programs.
 
-    MMU mmu; ///< Memory management unit.
+    MMU mmu;  ///< Memory management unit.
 
     ExceptionHandler handlers[NUM_EXCEPTION_TYPES];  ///< Exception handlers.
 };
-
 
 #endif

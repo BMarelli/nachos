@@ -12,17 +12,13 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
 #include "synch_disk.hh"
-
 
 /// Disk interrupt handler.  Need this to be a C routine, because C++ cannot
 /// handle pointers to member functions.
-static void
-DiskRequestDone(void *arg)
-{
+static void DiskRequestDone(void *arg) {
     ASSERT(arg != nullptr);
-    SynchDisk *disk = (SynchDisk *) arg;
+    SynchDisk *disk = (SynchDisk *)arg;
     disk->RequestDone();
 }
 
@@ -31,16 +27,14 @@ DiskRequestDone(void *arg)
 ///
 /// * `name` is a UNIX file name to be used as storage for the disk data
 ///   (usually, `DISK`).
-SynchDisk::SynchDisk(const char *name)
-{
+SynchDisk::SynchDisk(const char *name) {
     semaphore = new Semaphore("synch disk", 0);
     lock = new Lock("synch disk lock");
     disk = new Disk(name, DiskRequestDone, this);
 }
 
 /// De-allocate data structures needed for the synchronous disk abstraction.
-SynchDisk::~SynchDisk()
-{
+SynchDisk::~SynchDisk() {
     delete disk;
     delete lock;
     delete semaphore;
@@ -51,14 +45,12 @@ SynchDisk::~SynchDisk()
 ///
 /// * `sectorNumber` is the disk sector to read.
 /// * `data` is the buffer to hold the contents of the disk sector.
-void
-SynchDisk::ReadSector(int sectorNumber, char *data)
-{
+void SynchDisk::ReadSector(int sectorNumber, char *data) {
     ASSERT(data != nullptr);
 
     lock->Acquire();  // Only one disk I/O at a time.
     disk->ReadRequest(sectorNumber, data);
-    semaphore->P();   // Wait for interrupt.
+    semaphore->P();  // Wait for interrupt.
     lock->Release();
 }
 
@@ -67,21 +59,15 @@ SynchDisk::ReadSector(int sectorNumber, char *data)
 ///
 /// * `sectorNumber` is the disk sector to be written.
 /// * `data` are the new contents of the disk sector.
-void
-SynchDisk::WriteSector(int sectorNumber, const char *data)
-{
+void SynchDisk::WriteSector(int sectorNumber, const char *data) {
     ASSERT(data != nullptr);
 
     lock->Acquire();  // only one disk I/O at a time
     disk->WriteRequest(sectorNumber, data);
-    semaphore->P();   // wait for interrupt
+    semaphore->P();  // wait for interrupt
     lock->Release();
 }
 
 /// Disk interrupt handler.  Wake up any thread waiting for the disk
 /// request to finish.
-void
-SynchDisk::RequestDone()
-{
-    semaphore->V();
-}
+void SynchDisk::RequestDone() { semaphore->V(); }

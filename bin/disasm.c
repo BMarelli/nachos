@@ -5,23 +5,19 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
+#include <include/filehdr.h>
+#include <include/ldfcn.h>
+#include <include/scnhdr.h>
+#include <include/syms.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "copyright.h"
 #include "int.h"
 
-#include <include/filehdr.h>
-#include <include/scnhdr.h>
-#include <include/syms.h>
-#include <include/ldfcn.h>
-
-#include <stdio.h>
-#include <string.h>
-
-
-static FILE   *fp;
+static FILE *fp;
 static LDFILE *ldPtr;
-static SCNHDR textHeader, rdataHeader, dataHeader,
-              sdataHeader, sbssHeader, bssHeader;
+static SCNHDR textHeader, rdataHeader, dataHeader, sdataHeader, sbssHeader, bssHeader;
 
 static char filename[1000] = "a.out";  // Default a.out file.
 static char self[256];                 // Name of invoking program.
@@ -32,9 +28,7 @@ static int ASSOC = 1, RAND = 0, LRD = 0;
 static unsigned NROWS = 64, LINESIZE = 4;
 static unsigned pc;
 
-void
-main(int argc, char *argv[])
-{
+void main(int argc, char *argv[]) {
     char *fakeargv[3];
 
     strncpy(self, argv[0], sizeof self);
@@ -65,14 +59,12 @@ main(int argc, char *argv[])
     Disasm(memoffset, argc - 1, argv + 1);  // Where things normally start.
 }
 
-#define LOADSECTION(head)  LoadSection(&head);
+#define LOADSECTION(head) LoadSection(&head);
 
-static void
-LoadSection(SCNHDR *hd)
-{
+static void LoadSection(SCNHDR *hd) {
     unsigned pc;
     if (hd->s_scnptr != 0) {
-        //printf("loading %s\n", hd->s_name);
+        // printf("loading %s\n", hd->s_name);
         pc = hd->s_vaddr;
         FSEEK(ldptr, hd->s_scnptr, 0);
         for (unsigned i = 0; i < hd->s_size; ++i) {
@@ -80,22 +72,19 @@ LoadSection(SCNHDR *hd)
                 printf("MEMSIZE too small. Fix and recompile.\n");
                 exit(1);
             }
-            *(char *) (mem - memoffset + pc++) = getc(fp);
+            *(char *)(mem - memoffset + pc++) = getc(fp);
         }
     }
 }
 
-static void
-LoadProgram(char *filename)
-{
+static void LoadProgram(char *filename) {
     ldptr = ldopen(filename, NULL);
     if (ldptr == NULL) {
         fprintf(stderr, "%s: Load read error on %s\n", self, filename);
         exit(0);
     }
     if (TYPE(ldptr) != 0x162) {
-        fprintf(stderr,
-                "big-endian object file (little-endian interp)\n");
+        fprintf(stderr, "big-endian object file (little-endian interp)\n");
         exit(0);
     }
 
@@ -139,9 +128,7 @@ LoadProgram(char *filename)
     // ignores relocation information.
 }
 
-static void
-Disasm(unsigned startpc, int argc, char *argv[])
-{
+static void Disasm(unsigned startpc, int argc, char *argv[]) {
     pc = memoffset;
     for (unsigned i = 0; i < textHeader.s_size; i += 4) {
         Dis1(pc);
@@ -149,9 +136,7 @@ Disasm(unsigned startpc, int argc, char *argv[])
     }
 }
 
-static void
-Dis1(int xpc)
-{
+static void Dis1(int xpc) {
     unsigned instruction;
 
     instruction = Fetch(pc);

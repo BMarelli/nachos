@@ -3,34 +3,22 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
-#include "instr.h"
-#include "encode.h"
-
 #include <stdbool.h>
 
+#include "encode.h"
+#include "instr.h"
 
 static const bool LONG_OUTPUT = true;
 
 extern char *NORMAL_OPS[], *SPECIAL_OPS[];
 
+static const char *REG_STRINGS[] = {"0",   "r1",  "r2",  "r3",  "r4",  "r5",  "r6",  "r7",  "r8",  "r9",  "r10",
+                                    "r11", "r12", "r13", "r14", "r15", "r16", "r17", "r18", "r19", "r20", "r21",
+                                    "r22", "r23", "r24", "r25", "r26", "r27", "gp",  "sp",  "r30", "r31"};
 
-static const char *REG_STRINGS[] = {
-    "0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9",
-    "r10", "r11", "r12", "r13", "r14", "r15", "r16", "r17", "r18", "r19",
-    "r20", "r21", "r22", "r23", "r24", "r25", "r26", "r27", "gp", "sp",
-    "r30", "r31"
-};
+const char *R(unsigned i) { return REG_STRINGS[i]; }
 
-const char *
-R(unsigned i)
-{
-    return REG_STRINGS[i];
-}
-
-static void
-DumpAscii(unsigned instruction, unsigned pc)
-{
+static void DumpAscii(unsigned instruction, unsigned pc) {
     int addr;
     char *s;
     unsigned opcode;
@@ -47,25 +35,18 @@ DumpAscii(unsigned instruction, unsigned pc)
         printf("%s\t", SPECIAL_OPS[opcode]);
 
         switch (opcode) {
-
             // rd, rt, shamt
             case I_SLL:
             case I_SRL:
             case I_SRA:
-                printf("%s, %s, 0x%X",
-                       R(rd(instruction)),
-                       R(rt(instruction)),
-                       shamt(instruction));
+                printf("%s, %s, 0x%X", R(rd(instruction)), R(rt(instruction)), shamt(instruction));
                 break;
 
             // rd, rt, rs
             case I_SLLV:
             case I_SRLV:
             case I_SRAV:
-                printf("%s, %s, %s",
-                       R(rd(instruction)),
-                       R(rt(instruction)),
-                       R(rs(instruction)));
+                printf("%s, %s, %s", R(rd(instruction)), R(rt(instruction)), R(rs(instruction)));
                 break;
 
             // rs
@@ -91,9 +72,7 @@ DumpAscii(unsigned instruction, unsigned pc)
             case I_MULTU:
             case I_DIV:
             case I_DIVU:
-                printf("%s, %s",
-                       R(rs(instruction)),
-                       R(rt(instruction)));
+                printf("%s, %s", R(rs(instruction)), R(rt(instruction)));
                 break;
 
             // rd, rs, rt
@@ -107,12 +86,8 @@ DumpAscii(unsigned instruction, unsigned pc)
             case I_NOR:
             case I_SLT:
             case I_SLTU:
-                printf("%s, %s, %s",
-                       R(rd(instruction)),
-                       R(rs(instruction)),
-                       R(rt(instruction)));
+                printf("%s, %s, %s", R(rd(instruction)), R(rs(instruction)), R(rt(instruction)));
                 break;
-
         }
     } else if (opcode == I_BCOND) {
         switch (rt(instruction)) {  // This field encodes the op.
@@ -131,9 +106,7 @@ DumpAscii(unsigned instruction, unsigned pc)
             default:
                 printf("BCOND");
         }
-        printf("\t%s, %08x",
-               R(rs(instruction)),
-               off16(instruction) + pc + 4);
+        printf("\t%s, %08x", R(rs(instruction)), off16(instruction) + pc + 4);
     } else {
         printf("%s\t", NORMAL_OPS[opcode]);
 
@@ -147,10 +120,7 @@ DumpAscii(unsigned instruction, unsigned pc)
             // rs, rt, 16-bit offset
             case I_BEQ:
             case I_BNE:
-                printf("%s, %s, %08X",
-                       R(rt(instruction)),
-                       R(rs(instruction)),
-                       off16(instruction) + pc + 4);
+                printf("%s, %s, %08X", R(rt(instruction)), R(rs(instruction)), off16(instruction) + pc + 4);
                 break;
 
             // rt, rs, immediate
@@ -161,17 +131,12 @@ DumpAscii(unsigned instruction, unsigned pc)
             case I_ANDI:
             case I_ORI:
             case I_XORI:
-                printf("%s, %s, 0x%X",
-                       R(rt(instruction)),
-                       R(rs(instruction)),
-                       immed(instruction));
+                printf("%s, %s, 0x%X", R(rt(instruction)), R(rs(instruction)), immed(instruction));
                 break;
 
             // rt, immediate
             case I_LUI:
-                printf("%s, 0x%X",
-                       R(rt(instruction)),
-                       immed(instruction));
+                printf("%s, 0x%X", R(rt(instruction)), immed(instruction));
                 break;
 
             // Coprocessor garbage
@@ -202,10 +167,7 @@ DumpAscii(unsigned instruction, unsigned pc)
             case I_SWC1:
             case I_SWC2:
             case I_SWC3:
-                printf("%s, 0x%X(%s)",
-                       R(rt(instruction)),
-                       immed(instruction),
-                       R(rs(instruction)));
+                printf("%s, 0x%X(%s)", R(rt(instruction)), immed(instruction), R(rs(instruction)));
                 break;
         }
     }

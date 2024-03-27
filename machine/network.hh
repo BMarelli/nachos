@@ -16,9 +16,7 @@
 #ifndef NACHOS_MACHINE_NETWORK__HH
 #define NACHOS_MACHINE_NETWORK__HH
 
-
 #include "lib/utility.hh"
-
 
 /// Network address -- uniquely identifies a machine.
 ///
@@ -33,20 +31,19 @@ typedef int NetworkAddress;
 /// 1. packet header (`PacketHeader`);
 /// 2. data (containing `MailHeader` from the `PostOffice`!).
 class PacketHeader {
-public:
-    NetworkAddress to;  ///< Destination machine ID.
+   public:
+    NetworkAddress to;    ///< Destination machine ID.
     NetworkAddress from;  ///< source machine ID.
-    unsigned length;  ///< Bytes of packet data, excluding the packet header
-                      ///< (but including the `MailHeader` prepended by the
-                      ///< by the post office).
+    unsigned length;      ///< Bytes of packet data, excluding the packet header
+                          ///< (but including the `MailHeader` prepended by the
+                          ///< by the post office).
 };
 
 /// Largest packet that can go out on the wire.
 const unsigned MAX_WIRE_SIZE = 64;
 
 /// Data “payload” of the largest packet.
-const unsigned MAX_PACKET_SIZE = MAX_WIRE_SIZE - sizeof (PacketHeader);
-
+const unsigned MAX_PACKET_SIZE = MAX_WIRE_SIZE - sizeof(PacketHeader);
 
 /// The following class defines a physical network device.
 ///
@@ -59,12 +56,9 @@ const unsigned MAX_PACKET_SIZE = MAX_WIRE_SIZE - sizeof (PacketHeader);
 /// generator, by changing the arguments to `RandomInit` in `Initialize`.
 /// The random number generator is used to choose which packets to drop.
 class Network {
-public:
-
+   public:
     /// Allocate and initialize network driver.
-    Network(NetworkAddress addr, double reliability,
-            VoidFunctionPtr readAvail, VoidFunctionPtr writeDone,
-            void *callArg);
+    Network(NetworkAddress addr, double reliability, VoidFunctionPtr readAvail, VoidFunctionPtr writeDone, void *callArg);
 
     /// De-allocate the network driver data.
     ~Network();
@@ -92,8 +86,7 @@ public:
     /// Check if there is an incoming packet.
     void CheckPktAvail();
 
-private:
-
+   private:
     /// This machine's network address.
     NetworkAddress ident;
 
@@ -127,6 +120,5 @@ private:
     /// Data for arrived packet.
     char inbox[MAX_PACKET_SIZE];
 };
-
 
 #endif

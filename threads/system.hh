@@ -8,14 +8,12 @@
 #ifndef NACHOS_THREADS_SYSTEM__HH
 #define NACHOS_THREADS_SYSTEM__HH
 
-
-#include "thread.hh"
-#include "scheduler.hh"
 #include "lib/utility.hh"
 #include "machine/interrupt.hh"
 #include "machine/statistics.hh"
 #include "machine/timer.hh"
-
+#include "scheduler.hh"
+#include "thread.hh"
 
 /// Initialization and cleanup routines.
 
@@ -24,7 +22,6 @@ extern void Initialize(int argc, char **argv);
 
 // Cleanup, called when Nachos is done.
 extern void Cleanup();
-
 
 extern Thread *currentThread;        ///< The thread holding the CPU.
 extern Thread *threadToBeDestroyed;  ///< The thread that just finished.
@@ -52,6 +49,5 @@ extern SynchDisk *synchDisk;
 #include "network/post.hh"
 extern PostOffice *postOffice;
 #endif
-
 
 #endif

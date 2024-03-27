@@ -11,10 +11,8 @@
 #ifndef NACHOS_THREADS_SYNCHLIST__HH
 #define NACHOS_THREADS_SYNCHLIST__HH
 
-
 #include "condition.hh"
 #include "lib/list.hh"
-
 
 /// The following class defines a "synchronized list" -- a list for which
 /// these constraints hold:
@@ -24,8 +22,7 @@
 /// 2. One thread at a time can access list data structures.
 template <class Item>
 class SynchList {
-public:
-
+   public:
     /// Initialize a synchronized list.
     SynchList();
 
@@ -43,8 +40,7 @@ public:
     /// Apply function to every item in the list.
     void Apply(void (*func)(Item));
 
-private:
-
+   private:
     // The unsynchronized list.
     List<Item> *list;
 
@@ -53,7 +49,6 @@ private:
 
     // Wait in `Pop` if the list is empty.
     Condition *listEmpty;
-
 };
 
 /// Allocate and initialize the data structures needed for a synchronized
@@ -61,18 +56,16 @@ private:
 ///
 /// Elements can now be added to the list.
 template <class Item>
-SynchList<Item>::SynchList()
-{
-    list      = new List<Item>;
-    lock      = new Lock("list lock");
+SynchList<Item>::SynchList() {
+    list = new List<Item>;
+    lock = new Lock("list lock");
     listEmpty = new Condition("list empty cond", lock);
     // original // listEmpty = new Condition("list empty cond");
 }
 
 /// De-allocate the data structures created for synchronizing a list.
 template <class Item>
-SynchList<Item>::~SynchList()
-{
+SynchList<Item>::~SynchList() {
     delete list;
     delete lock;
     delete listEmpty;
@@ -83,10 +76,8 @@ SynchList<Item>::~SynchList()
 ///
 /// * `item` is the thing to put on the list
 template <class Item>
-void
-SynchList<Item>::Append(Item item)
-{
-    lock->Acquire();      // Enforce mutual exclusive access to the list.
+void SynchList<Item>::Append(Item item) {
+    lock->Acquire();  // Enforce mutual exclusive access to the list.
     list->Append(item);
     listEmpty->Signal();  // Wake up a waiter, if any.
     // original // listEmpty->Signal(lock);    // wake up a waiter, if any
@@ -98,18 +89,16 @@ SynchList<Item>::Append(Item item)
 ///
 /// Returns the removed item.
 template <class Item>
-Item
-SynchList<Item>::Pop()
-{
+Item SynchList<Item>::Pop() {
     Item item;
 
-    lock->Acquire();    // Enforce mutual exclusion.
+    lock->Acquire();  // Enforce mutual exclusion.
     while (list->IsEmpty()) {
         listEmpty->Wait();  // Wait until list is not empty.
     }
     // Original: //listEmpty->Wait(lock);  // Wait until list is not empty.
     item = list->Pop();
-    //ASSERT(item != nullptr);
+    // ASSERT(item != nullptr);
     lock->Release();
     return item;
 }
@@ -120,14 +109,11 @@ SynchList<Item>::Pop()
 ///
 /// * `func` is the procedure to be applied.
 template <class Item>
-void
-SynchList<Item>::Apply(void (*func)(Item))
-{
+void SynchList<Item>::Apply(void (*func)(Item)) {
     ASSERT(func != nullptr);
     lock->Acquire();
     list->Apply(func);
     lock->Release();
 }
-
 
 #endif

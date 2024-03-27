@@ -35,9 +35,7 @@
 #ifndef NACHOS_FILESYS_FILESYSTEM__HH
 #define NACHOS_FILESYS_FILESYSTEM__HH
 
-
 #include "open_file.hh"
-
 
 #ifdef FILESYS_STUB  // Temporarily implement file system calls as calls to
                      // UNIX, until the real file system implementation is
@@ -50,16 +48,13 @@ static const unsigned FREE_MAP_FILE_SIZE = 0;
 static const unsigned NUM_DIR_ENTRIES = 0;
 static const unsigned DIRECTORY_FILE_SIZE = 0;
 
-
 class FileSystem {
-public:
-
+   public:
     FileSystem(bool format) {}
 
     ~FileSystem() {}
 
-    bool Create(const char *name, unsigned initialSize)
-    {
+    bool Create(const char *name, unsigned initialSize) {
         ASSERT(name != nullptr);
 
         int fileDescriptor = SystemDep::OpenForWrite(name);
@@ -70,8 +65,7 @@ public:
         return true;
     }
 
-    OpenFile *Open(const char *name)
-    {
+    OpenFile *Open(const char *name) {
         ASSERT(name != nullptr);
 
         int fileDescriptor = SystemDep::OpenForReadWrite(name, false);
@@ -81,33 +75,26 @@ public:
         return new OpenFile(fileDescriptor);
     }
 
-    bool Remove(const char *name)
-    {
+    bool Remove(const char *name) {
         ASSERT(name != nullptr);
         return SystemDep::Unlink(name) == 0;
     }
-
 };
 
 #else  // FILESYS
 
-
 #include "directory_entry.hh"
 #include "machine/disk.hh"
-
 
 /// Initial file sizes for the bitmap and directory; until the file system
 /// supports extensible files, the directory size sets the maximum number of
 /// files that can be loaded onto the disk.
 static const unsigned FREE_MAP_FILE_SIZE = NUM_SECTORS / BITS_IN_BYTE;
 static const unsigned NUM_DIR_ENTRIES = 10;
-static const unsigned DIRECTORY_FILE_SIZE
-  = sizeof (DirectoryEntry) * NUM_DIR_ENTRIES;
-
+static const unsigned DIRECTORY_FILE_SIZE = sizeof(DirectoryEntry) * NUM_DIR_ENTRIES;
 
 class FileSystem {
-public:
-
+   public:
     /// Initialize the file system.  Must be called *after* `synchDisk` has
     /// been initialized.
     ///
@@ -135,14 +122,13 @@ public:
     /// List all the files and their contents.
     void Print();
 
-private:
-    OpenFile *freeMapFile;  ///< Bit map of free disk blocks, represented as a
-                            ///< file.
+   private:
+    OpenFile *freeMapFile;    ///< Bit map of free disk blocks, represented as a
+                              ///< file.
     OpenFile *directoryFile;  ///< “Root” directory -- list of file names,
                               ///< represented as a file.
 };
 
 #endif
-
 
 #endif

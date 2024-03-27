@@ -5,22 +5,19 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
 #include "instruction.hh"
-#include "encoding.hh"
-#include "../lib/utility.hh"
 
+#include "../lib/utility.hh"
+#include "encoding.hh"
 
 /// Decode a MIPS instruction.
-void
-Instruction::Decode()
-{
+void Instruction::Decode() {
     const OpInfo *opPtr;
 
     rs = value >> 21 & 0x1F;
     rt = value >> 16 & 0x1F;
     rd = value >> 11 & 0x1F;
-    opPtr  = &OP_TABLE[value >> 26 & 0x3F];
+    opPtr = &OP_TABLE[value >> 26 & 0x3F];
     opCode = opPtr->opCode;
     if (opPtr->format == IFMT) {
         extra = value & 0xFFFF;
@@ -38,17 +35,11 @@ Instruction::Decode()
     } else if (opCode == BCOND) {
         int i = value & 0x1F0000;
 
-        opCode = (i == 0)        ? OP_BLTZ :
-                 (i == 0x10000)  ? OP_BGEZ :
-                 (i == 0x100000) ? OP_BLTZAL :
-                 (i == 0x110000) ? OP_BGEZAL :
-                                   OP_UNIMP;
+        opCode = (i == 0) ? OP_BLTZ : (i == 0x10000) ? OP_BGEZ : (i == 0x100000) ? OP_BLTZAL : (i == 0x110000) ? OP_BGEZAL : OP_UNIMP;
     }
 }
 
-int
-Instruction::RegFromType(RegType t) const
-{
+int Instruction::RegFromType(RegType t) const {
     switch (t) {
         case RS:
             return rs;

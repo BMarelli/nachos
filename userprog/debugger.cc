@@ -2,33 +2,28 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
 #include "debugger.hh"
-#include "lib/utility.hh"
-#include "machine/interrupt.hh"
-#include "machine/statistics.hh"
-#include "threads/system.hh"
 
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "lib/utility.hh"
+#include "machine/interrupt.hh"
+#include "machine/statistics.hh"
+#include "threads/system.hh"
 
 typedef DebuggerCommandManager DCM;
 
-static inline void
-PrintPrompt()
-{
+static inline void PrintPrompt() {
     const char PROMPT[] = "%lu> ";
 
     printf(PROMPT, stats->totalTicks);
     fflush(stdout);
 }
 
-static inline char *
-GetLine(char *buffer, unsigned size)
-{
+static inline char *GetLine(char *buffer, unsigned size) {
     ASSERT(buffer != nullptr);
 
     if (fgets(buffer, size, stdin) == nullptr) {
@@ -37,30 +32,24 @@ GetLine(char *buffer, unsigned size)
 
     // Remove trailing spaces.
     char *p;
-    for (p = buffer + strlen(buffer) - 1; isspace(*p); p--) {}
+    for (p = buffer + strlen(buffer) - 1; isspace(*p); p--) {
+    }
     *(p + 1) = '\0';
 
     // Remove leading spaces.
-    for (p = buffer; isspace(*p); p++) {}
+    for (p = buffer; isspace(*p); p++) {
+    }
     return p;
 }
 
-static inline const char *
-GetGPRegisterName(unsigned i)
-{
-    static const char *NAMES[] = {
-        "ZE", "AT", "V0", "V1", "A0", "A1", "A2", "A3",
-        "T0", "T1", "T2", "T3", "T4", "T5", "T6", "T7",
-        "S0", "S1", "S2", "S3", "S4", "S5", "S6", "S7",
-        "T8", "T9", "K0", "K1", "GP", "SP", "FP", "RA"
-    };
+static inline const char *GetGPRegisterName(unsigned i) {
+    static const char *NAMES[] = {"ZE", "AT", "V0", "V1", "A0", "A1", "A2", "A3", "T0", "T1", "T2", "T3", "T4", "T5", "T6", "T7",
+                                  "S0", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "T8", "T9", "K0", "K1", "GP", "SP", "FP", "RA"};
 
     return (i < sizeof NAMES / sizeof *NAMES) ? NAMES[i] : nullptr;
 }
 
-static inline void
-PrintGPRegister(const int *registers, unsigned i)
-{
+static inline void PrintGPRegister(const int *registers, unsigned i) {
     ASSERT(registers != nullptr);
 
     const char *name = GetGPRegisterName(i);
@@ -73,13 +62,11 @@ PrintGPRegister(const int *registers, unsigned i)
 
 /// Print the user program's CPU state.  We might print the contents of
 /// memory, but that seemed like overkill.
-static inline void
-DumpMachineState(int *previousRegisters)
-{
+static inline void DumpMachineState(int *previousRegisters) {
     ASSERT(previousRegisters != nullptr);
 
     const char COLOR_CHANGED_BEGINNING[] = "\033[34m";
-    const char COLOR_CHANGED_END[]       = "\033[0m";
+    const char COLOR_CHANGED_END[] = "\033[0m";
 
     const int *registers = machine->GetRegisters();
 
@@ -100,27 +87,21 @@ DumpMachineState(int *previousRegisters)
         }
     }
 
-    printf("\tHi:\t0x%X",       registers[HI_REG]);
-    printf("\tLo:\t0x%X\n",     registers[LO_REG]);
-    printf("\tPC:\t0x%X",       registers[PC_REG]);
-    printf("\tNextPC:\t0x%X",   registers[NEXT_PC_REG]);
+    printf("\tHi:\t0x%X", registers[HI_REG]);
+    printf("\tLo:\t0x%X\n", registers[LO_REG]);
+    printf("\tPC:\t0x%X", registers[PC_REG]);
+    printf("\tNextPC:\t0x%X", registers[NEXT_PC_REG]);
     printf("\tPrevPC:\t0x%X\n", registers[PREV_PC_REG]);
-    printf("\tLoad:\t0x%X",     registers[LOAD_REG]);
-    printf("\tLoadV:\t0x%X\n",  registers[LOAD_VALUE_REG]);
+    printf("\tLoad:\t0x%X", registers[LOAD_REG]);
+    printf("\tLoadV:\t0x%X\n", registers[LOAD_VALUE_REG]);
     printf("\n");
 
-    memcpy(previousRegisters, registers, NUM_TOTAL_REGS * sizeof (int));
+    memcpy(previousRegisters, registers, NUM_TOTAL_REGS * sizeof(int));
 }
 
-static DCM::RunResult
-CommandContinue(char **args, void *extra)
-{
-    return DCM::RUN_RESULT_NORMALIZE;
-}
+static DCM::RunResult CommandContinue(char **args, void *extra) { return DCM::RUN_RESULT_NORMALIZE; }
 
-static DCM::RunResult
-CommandDump(char **args, void *extra)
-{
+static DCM::RunResult CommandDump(char **args, void *extra) {
     const char *path = DCM::FetchArg(args);
     if (path == nullptr) {
         fprintf(stderr, "ERROR: missing argument.\n");
@@ -135,8 +116,7 @@ CommandDump(char **args, void *extra)
 
     int rv = fwrite(machine->GetMMU()->mainMemory, 1, MEMORY_SIZE, f);
     if (rv != MEMORY_SIZE) {
-        fprintf(stderr, "ERROR: write to file `%s` did not succeed.\n",
-                path);
+        fprintf(stderr, "ERROR: write to file `%s` did not succeed.\n", path);
         return DCM::RUN_RESULT_STAY;
     }
 
@@ -145,9 +125,7 @@ CommandDump(char **args, void *extra)
     return DCM::RUN_RESULT_STAY;
 }
 
-static DCM::RunResult
-CommandFlags(char **args, void *extra)
-{
+static DCM::RunResult CommandFlags(char **args, void *extra) {
     const char *flags = debug.GetFlags();
     if (flags[0] == '\0') {
         printf("Debug flags empty.\n");
@@ -157,10 +135,9 @@ CommandFlags(char **args, void *extra)
     return DCM::RUN_RESULT_STAY;
 }
 
-static DCM::RunResult
-CommandHelp(char **args, void *extra)
-{
-    printf("\
+static DCM::RunResult CommandHelp(char **args, void *extra) {
+    printf(
+        "\
 Debugger commands:\n\
     continue, c             Run until completion.\n\
     dump <path>             Dump the simulated machine's main memory into\n\
@@ -181,9 +158,7 @@ Debugger commands:\n\
     return DCM::RUN_RESULT_STAY;
 }
 
-static void
-PrintChar(char c)
-{
+static void PrintChar(char c) {
     if (isprint(c)) {
         printf("%hhu ('%c')\n", c, c);
     } else {
@@ -195,9 +170,7 @@ PrintChar(char c)
 /// Nachos (as in normal execution).  However, the use bit in the
 /// corresponding translation entry does get enabled when reading a virtual
 /// address.
-static DCM::RunResult
-CommandPrint(char **args, void *extra)
-{
+static DCM::RunResult CommandPrint(char **args, void *extra) {
     const char *arg;
     while ((arg = DCM::FetchArg(args)) != nullptr) {
         char *end;
@@ -221,8 +194,7 @@ CommandPrint(char **args, void *extra)
             PrintChar(machine->GetMMU()->mainMemory[address]);
 
         } else {
-            fprintf(stderr,
-                    "ERROR: argument `%s` is not an address.\n", arg);
+            fprintf(stderr, "ERROR: argument `%s` is not an address.\n", arg);
             return DCM::RUN_RESULT_STAY;
         }
     }
@@ -230,16 +202,12 @@ CommandPrint(char **args, void *extra)
     return DCM::RUN_RESULT_STAY;
 }
 
-static DCM::RunResult
-CommandQuit(char **args, void *extra)
-{
+static DCM::RunResult CommandQuit(char **args, void *extra) {
     interrupt->Halt();
     return DCM::RUN_RESULT_NORMALIZE;
 }
 
-static DCM::RunResult
-CommandSetFlags(char **args, void *extra)
-{
+static DCM::RunResult CommandSetFlags(char **args, void *extra) {
     const char *flags = DCM::FetchArg(args);
     if (flags == nullptr) {
         fprintf(stderr, "ERROR: missing argument.\n");
@@ -255,15 +223,9 @@ CommandSetFlags(char **args, void *extra)
     return DCM::RUN_RESULT_STAY;
 }
 
-static DCM::RunResult
-CommandStep(char **args, void *extra)
-{
-    return DCM::RUN_RESULT_STEP;
-}
+static DCM::RunResult CommandStep(char **args, void *extra) { return DCM::RUN_RESULT_STEP; }
 
-static DCM::RunResult
-CommandTick(char **args, void *runUntilTime_)
-{
+static DCM::RunResult CommandTick(char **args, void *runUntilTime_) {
     ASSERT(runUntilTime_ != nullptr);
 
     const char *num_s = DCM::FetchArg(args);
@@ -275,51 +237,43 @@ CommandTick(char **args, void *runUntilTime_)
     char *end;
     unsigned num = strtoul(num_s, &end, 10);
     if (*end != '\0') {
-        fprintf(stderr,
-                "ERROR: argument `%s` is not an integer number.\n", num_s);
+        fprintf(stderr, "ERROR: argument `%s` is not an integer number.\n", num_s);
         return DCM::RUN_RESULT_STAY;
     }
 
-    unsigned *runUntilTime = (unsigned *) runUntilTime_;
+    unsigned *runUntilTime = (unsigned *)runUntilTime_;
     *runUntilTime = stats->totalTicks + num;
     return DCM::RUN_RESULT_STEP;
 }
 
-static DCM::RunResult
-HandleEmpty()
-{
-    return DCM::RUN_RESULT_STEP;
-}
+static DCM::RunResult HandleEmpty() { return DCM::RUN_RESULT_STEP; }
 
-static DCM::RunResult
-HandleUnknown(const char *name)
-{
+static DCM::RunResult HandleUnknown(const char *name) {
     fprintf(stderr, "ERROR: `%s` is not a valid command.\n", name);
     return CommandHelp(nullptr, nullptr);
 }
 
-Debugger::Debugger()
-{
+Debugger::Debugger() {
     runUntilTime = 0;
     memset(previousRegisters, 0, sizeof previousRegisters);
     manager.AddCommand("continue", &CommandContinue, nullptr);
-    manager.AddCommand("c",        &CommandContinue, nullptr);
-    manager.AddCommand("dump",     &CommandDump,     nullptr);
-    manager.AddCommand("flags",    &CommandFlags,    nullptr);
-    manager.AddCommand("f",        &CommandFlags,    nullptr);
-    manager.AddCommand("help",     &CommandHelp,     nullptr);
-    manager.AddCommand("h",        &CommandHelp,     nullptr);
-    manager.AddCommand("?",        &CommandHelp,     nullptr);
-    manager.AddCommand("print",    &CommandPrint,    nullptr);
-    manager.AddCommand("p",        &CommandPrint,    nullptr);
-    manager.AddCommand("quit",     &CommandQuit,     nullptr);
-    manager.AddCommand("q",        &CommandQuit,     nullptr);
+    manager.AddCommand("c", &CommandContinue, nullptr);
+    manager.AddCommand("dump", &CommandDump, nullptr);
+    manager.AddCommand("flags", &CommandFlags, nullptr);
+    manager.AddCommand("f", &CommandFlags, nullptr);
+    manager.AddCommand("help", &CommandHelp, nullptr);
+    manager.AddCommand("h", &CommandHelp, nullptr);
+    manager.AddCommand("?", &CommandHelp, nullptr);
+    manager.AddCommand("print", &CommandPrint, nullptr);
+    manager.AddCommand("p", &CommandPrint, nullptr);
+    manager.AddCommand("quit", &CommandQuit, nullptr);
+    manager.AddCommand("q", &CommandQuit, nullptr);
     manager.AddCommand("setflags", &CommandSetFlags, nullptr);
-    manager.AddCommand("setf",     &CommandSetFlags, nullptr);
-    manager.AddCommand("step",     &CommandStep,     nullptr);
-    manager.AddCommand("s",        &CommandStep,     nullptr);
-    manager.AddCommand("tick",     &CommandTick,     &runUntilTime);
-    manager.AddCommand("t",        &CommandTick,     &runUntilTime);
+    manager.AddCommand("setf", &CommandSetFlags, nullptr);
+    manager.AddCommand("step", &CommandStep, nullptr);
+    manager.AddCommand("s", &CommandStep, nullptr);
+    manager.AddCommand("tick", &CommandTick, &runUntilTime);
+    manager.AddCommand("t", &CommandTick, &runUntilTime);
     manager.SetEmpty(&HandleEmpty);
     manager.SetUnknown(&HandleUnknown);
 
@@ -330,8 +284,7 @@ Debugger::Debugger()
 /// derived one, there would be a possibility of undefined behavior if only
 /// the superclass destructor were called.  This empty definition of a
 /// virtual destructor avoids a compiler warning.
-Debugger::~Debugger()
-{}
+Debugger::~Debugger() {}
 
 /// Primitive debugger for user programs.  Note that we cannot use GDB to
 /// debug user programs, since GDB does not run on top of Nachos.  It could,
@@ -339,9 +292,7 @@ Debugger::~Debugger()
 /// work!
 ///
 /// So just allow single-stepping, and printing the contents of memory.
-bool
-Debugger::Step()
-{
+bool Debugger::Step() {
     // Wait until the indicated number of ticks has been reached.
     if (runUntilTime > stats->totalTicks) {
         return true;

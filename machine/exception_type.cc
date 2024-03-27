@@ -4,13 +4,11 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
 #include "exception_type.hh"
+
 #include "lib/utility.hh"
 
-
-const char *ExceptionTypeToString(ExceptionType et)
-{
+const char *ExceptionTypeToString(ExceptionType et) {
     switch (et) {
         case NO_EXCEPTION:
             return "no exception";

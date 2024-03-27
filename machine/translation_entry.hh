@@ -17,9 +17,7 @@
 #ifndef NACHOS_MACHINE_TRANSLATIONENTRY__HH
 #define NACHOS_MACHINE_TRANSLATIONENTRY__HH
 
-
 #include "lib/utility.hh"
-
 
 /// The following class defines an entry in a translation table -- either
 /// in a page table or a TLB.
@@ -29,8 +27,7 @@
 /// In addition, there are some extra bits for access control (valid and
 /// read-only) and some bits for usage information (use and dirty).
 class TranslationEntry {
-public:
-
+   public:
     /// The page number in virtual memory.
     unsigned virtualPage;
 
@@ -53,8 +50,6 @@ public:
 
     /// This bit is set by the hardware every time the page is modified.
     bool dirty;
-
 };
-
 
 #endif

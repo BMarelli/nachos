@@ -5,40 +5,36 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
+#include <filehdr.h>
+#include <ldfcn.h>
+#include <scnhdr.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syms.h>
 
 #include "copyright.h"
 #include "int.h"
 
-#include <filehdr.h>
-#include <scnhdr.h>
-#include <syms.h>
-#include <ldfcn.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-
-static FILE   *fp;
+static FILE *fp;
 static LDFILE *ldptr;
-static SCNHDR  texthead, rdatahead, datahead, sdatahead, sbsshead, bsshead;
+static SCNHDR texthead, rdatahead, datahead, sdatahead, sbsshead, bsshead;
 
 static char filename[1000] = "a.out";  // Default a.out file.
 static char self[256];                 // Name of invoking program.
 
 char mem[MEMSIZE];  // Main memory. Use `malloc` later.
-int  TRACE, Traptrace, Regtrace;
-int  NROWS = 64, ASSOC = 1, LINESIZE = 4, RAND = 0, LRD = 0;
+int TRACE, Traptrace, Regtrace;
+int NROWS = 64, ASSOC = 1, LINESIZE = 4, RAND = 0, LRD = 0;
 
-void
-main(int argc, char *argv[])
-{
+void main(int argc, char *argv[]) {
     char *s;
     char *fakeargv[3];
 
     strncpy(self, argv[0], sizeof self);
     while (argc > 1 && argv[1][0] == '-') {
-        --argc; ++argv;
+        --argc;
+        ++argv;
         for (s = argv[0] + 1; *s != '\0'; ++s) {
             switch (*s) {
                 case 't':
@@ -55,9 +51,7 @@ main(int argc, char *argv[])
                     ASSOC = atoi(*++argv);
                     LINESIZE = atoi(*++argv);
                     RAND = (*++argv)[0] == 'r';
-                    LRD = (*argv)[0] == 'l'
-                          && (*argv)[1] == 'r'
-                          && (*argv)[2] == 'd';
+                    LRD = (*argv)[0] == 'l' && (*argv)[1] == 'r' && (*argv)[2] == 'd';
                     argc -= 4;
                     break;
             }
@@ -81,12 +75,10 @@ main(int argc, char *argv[])
         ++argc;
     }
     RunProgram(memoffset, argc - 1, argv + 1);
-      // Where things normally start.
+    // Where things normally start.
 }
 
-static char *
-String(const char *s)
-{
+static char *String(const char *s) {
     char *p;
     size_t size = strlen(s) + 1;
 
@@ -95,26 +87,24 @@ String(const char *s)
     return p;
 }
 
-#define LOADSECTION(head)                                       \
-    if (head.s_scnptr != 0) {                                   \
-        /*printf("loading %s\n", head.s_name);*/                \
-        pc = head.s_vaddr;                                      \
-        FSEEK(ldptr, head.s_scnptr, 0);                         \
-        for (i = 0; i < head.s_size; ++i) {                     \
-            *(char *) ((mem - memoffset) + pc++) = getc(fp);    \
-        }                                                       \
-        if (pc - memoffset >= MEMSIZE) {                        \
-            printf("MEMSIZE too small. Fix and recompile.\n");  \
-            exit(1);                                            \
-        }                                                       \
+#define LOADSECTION(head)                                      \
+    if (head.s_scnptr != 0) {                                  \
+        /*printf("loading %s\n", head.s_name);*/               \
+        pc = head.s_vaddr;                                     \
+        FSEEK(ldptr, head.s_scnptr, 0);                        \
+        for (i = 0; i < head.s_size; ++i) {                    \
+            *(char *)((mem - memoffset) + pc++) = getc(fp);    \
+        }                                                      \
+        if (pc - memoffset >= MEMSIZE) {                       \
+            printf("MEMSIZE too small. Fix and recompile.\n"); \
+            exit(1);                                           \
+        }                                                      \
     }
 
-void
-LoadProgram(char *filename)
-{
-    int  pc, i, j, strindex, stl;
+void LoadProgram(char *filename) {
+    int pc, i, j, strindex, stl;
     char str[1111];
-    int  rc1, rc2;
+    int rc1, rc2;
 
     ldptr = ldopen(filename, NULL);
     if (ldptr == NULL) {
@@ -122,8 +112,7 @@ LoadProgram(char *filename)
         exit(0);
     }
     if (TYPE(ldptr) != 0x162) {
-        fprintf(stderr,
-                "big-endian object file (little-endian interp)\n");
+        fprintf(stderr, "big-endian object file (little-endian interp)\n");
         exit(0);
     }
 

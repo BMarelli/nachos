@@ -6,9 +6,7 @@
 #ifndef NACHOS_MACHINE_INSTRUCTION__HH
 #define NACHOS_MACHINE_INSTRUCTION__HH
 
-
 #include "encoding.hh"
-
 
 /// The following class defines an instruction, represented in both:
 /// * undecoded binary form;
@@ -17,8 +15,7 @@
 ///   * registers to act on;
 ///   * any immediate operand value.
 class Instruction {
-public:
-
+   public:
     /// Decode the binary representation of the instruction.
     void Decode();
 
@@ -27,13 +24,12 @@ public:
 
     unsigned value;  //< Binary representation of the instruction.
 
-    unsigned char opCode;  ///< Type of instruction.  This is NOT the same as
-                           ///< the opcode field from the instruction: see
-                           ///< defs in `encoding.hh`.
+    unsigned char opCode;      ///< Type of instruction.  This is NOT the same as
+                               ///< the opcode field from the instruction: see
+                               ///< defs in `encoding.hh`.
     unsigned char rs, rt, rd;  ///< Three registers from instruction.
-    int extra;  ///< Immediate or target or shamt field or offset.
-                ///< Immediates are sign-extended.
+    int extra;                 ///< Immediate or target or shamt field or offset.
+                               ///< Immediates are sign-extended.
 };
-
 
 #endif

@@ -5,18 +5,14 @@
 /// Ideally, we could read the unsorted array off of the file system,
 /// and store the result back to the file system!
 
-
 #include "syscall.h"
 
-
-#define DIM  1024
+#define DIM 1024
 
 /// Size of physical memory; with code, we will run out of space!
 static int A[DIM];
 
-int
-main(void)
-{
+int main(void) {
     int i, j, tmp;
 
     // First initialize the array, in reverse sorted order.

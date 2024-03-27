@@ -2,26 +2,19 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
 #include "debugger_command_manager.hh"
-#include "lib/utility.hh"
 
 #include <string.h>
 
+#include "lib/utility.hh"
 
 typedef DebuggerCommandManager DCM;
 
 static const char SEPARATOR[] = " ";
 
-const char *
-DCM::FetchArg(char **args)
-{
-    return strtok_r(nullptr, SEPARATOR, args);
-}
+const char *DCM::FetchArg(char **args) { return strtok_r(nullptr, SEPARATOR, args); }
 
-bool
-DCM::AddCommand(const char *name, CommandFunc f, void *extra)
-{
+bool DCM::AddCommand(const char *name, CommandFunc f, void *extra) {
     ASSERT(name != nullptr);
     ASSERT(f != nullptr);
 
@@ -29,26 +22,16 @@ DCM::AddCommand(const char *name, CommandFunc f, void *extra)
         return false;
     }
 
-    Command c = { name, f, extra };
+    Command c = {name, f, extra};
     commands[count++] = c;
     return true;
 }
 
-void
-DCM::SetEmpty(EmptyFunc f)
-{
-    empty = f;
-}
+void DCM::SetEmpty(EmptyFunc f) { empty = f; }
 
-void
-DCM::SetUnknown(UnknownFunc f)
-{
-    unknown = f;
-}
+void DCM::SetUnknown(UnknownFunc f) { unknown = f; }
 
-DCM::RunResult
-DCM::Run(char *line)
-{
+DCM::RunResult DCM::Run(char *line) {
     // Extract the command name from the line.
     char *saved;
     const char *name = strtok_r(line, SEPARATOR, &saved);

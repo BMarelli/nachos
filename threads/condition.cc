@@ -14,45 +14,31 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
 #include "condition.hh"
-
 
 /// Dummy functions -- so we can compile our later assignments.
 ///
 /// Note -- without a correct implementation of `Condition::Wait`, the test
 /// case in the network assignment will not work!
 
-Condition::Condition(const char *debugName, Lock *conditionLock)
-{
+Condition::Condition(const char *debugName, Lock *conditionLock) {
     // TODO
 }
 
-Condition::~Condition()
-{
+Condition::~Condition() {
     // TODO
 }
 
-const char *
-Condition::GetName() const
-{
-    return name;
-}
+const char *Condition::GetName() const { return name; }
 
-void
-Condition::Wait()
-{
+void Condition::Wait() {
     // TODO
 }
 
-void
-Condition::Signal()
-{
+void Condition::Signal() {
     // TODO
 }
 
-void
-Condition::Broadcast()
-{
+void Condition::Broadcast() {
     // TODO
 }

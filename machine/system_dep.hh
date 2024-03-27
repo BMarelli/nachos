@@ -12,76 +12,74 @@
 #ifndef NACHOS_MACHINE_SYSDEP__HH
 #define NACHOS_MACHINE_SYSDEP__HH
 
-
 #include <stddef.h>
 
+#include "lib/utility.hh"
 
 namespace SystemDep {
-    /// Check file to see if there are any characters to be read.
-    ///
-    /// If no characters in the file, return without waiting.
-    bool PollFile(int fd);
+/// Check file to see if there are any characters to be read.
+///
+/// If no characters in the file, return without waiting.
+bool PollFile(int fd);
 
-    /// File operations: `open`/`read`/`write`/`lseek`/`close`, and check for
-    /// error.
-    ///
-    /// For simulating the disk and the console devices.
+/// File operations: `open`/`read`/`write`/`lseek`/`close`, and check for
+/// error.
+///
+/// For simulating the disk and the console devices.
 
-    int OpenForWrite(const char *name);
+int OpenForWrite(const char *name);
 
-    int OpenForReadWrite(const char *name, bool crashOnError);
+int OpenForReadWrite(const char *name, bool crashOnError);
 
-    void Read(int fd, char *buffer, size_t nBytes);
+void Read(int fd, char *buffer, size_t nBytes);
 
-    int ReadPartial(int fd, char *buffer, size_t nBytes);
+int ReadPartial(int fd, char *buffer, size_t nBytes);
 
-    void WriteFile(int fd, const char *buffer, size_t nBytes);
+void WriteFile(int fd, const char *buffer, size_t nBytes);
 
-    void Lseek(int fd, int offset, int whence);
+void Lseek(int fd, int offset, int whence);
 
-    int Tell(int fd);
+int Tell(int fd);
 
-    void Close(int fd);
+void Close(int fd);
 
-    bool Unlink(const char *name);
+bool Unlink(const char *name);
 
-    /// Interprocess communication operations, for simulating the network.
+/// Interprocess communication operations, for simulating the network.
 
-    int OpenSocket();
+int OpenSocket();
 
-    void CloseSocket(int sockID);
+void CloseSocket(int sockID);
 
-    void AssignNameToSocket(const char *socketName, int sockID);
+void AssignNameToSocket(const char *socketName, int sockID);
 
-    void DeAssignNameToSocket(const char *socketName);
+void DeAssignNameToSocket(const char *socketName);
 
-    bool PollSocket(int sockID);
+bool PollSocket(int sockID);
 
-    void ReadFromSocket(int sockID, char *buffer, size_t packetSize);
+void ReadFromSocket(int sockID, char *buffer, size_t packetSize);
 
-    void SendToSocket(int sockID, const char *buffer,
-                      size_t packetSize, const char *toName);
+void SendToSocket(int sockID, const char *buffer, size_t packetSize, const char *toName);
 
-    /// Process control: `sleep`.
+/// Process control: `sleep`.
 
-    void Delay(unsigned seconds);
+void Delay(unsigned seconds);
 
-    /// Initialize system so that `cleanUp` routine is called when user hits
-    /// Ctrl-C.
-    void CallOnUserAbort(VoidNoArgFunctionPtr cleanUp);
+/// Initialize system so that `cleanUp` routine is called when user hits
+/// Ctrl-C.
+void CallOnUserAbort(VoidNoArgFunctionPtr cleanUp);
 
-    /// Initialize the pseudo random number generator.
-    void RandomInit(unsigned seed);
+/// Initialize the pseudo random number generator.
+void RandomInit(unsigned seed);
 
-    int Random();
+int Random();
 
-    /// Allocate, de-allocate an array, such that de-referencing just beyond
-    /// either end of the array will cause an error.
+/// Allocate, de-allocate an array, such that de-referencing just beyond
+/// either end of the array will cause an error.
 
-    char *AllocBoundedArray(unsigned size);
+char *AllocBoundedArray(unsigned size);
 
-    void DeallocBoundedArray(const char *p, unsigned size);
-};
-
+void DeallocBoundedArray(const char *p, unsigned size);
+};  // namespace SystemDep
 
 #endif

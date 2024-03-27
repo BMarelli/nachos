@@ -18,9 +18,7 @@
 #ifndef NACHOS_MACHINE_DISK__HH
 #define NACHOS_MACHINE_DISK__HH
 
-
 #include "lib/utility.hh"
-
 
 /// The following class defines a physical disk I/O device.
 ///
@@ -56,10 +54,10 @@ const unsigned SECTORS_PER_TRACK = 32;  ///< Number of sectors per disk
                                         ///< track.
 const unsigned NUM_TRACKS = 32;         ///< Number of tracks per disk.
 const unsigned NUM_SECTORS = SECTORS_PER_TRACK * NUM_TRACKS;
-  ///< Total # of sectors per disk.
+///< Total # of sectors per disk.
 
 class Disk {
-public:
+   public:
     /// Create a simulated disk.
     ///
     /// Invoke `(*callWhenDone)(callArg)` every time a request completes.
@@ -82,15 +80,15 @@ public:
     ///     (seek + rotational delay + transfer)
     int ComputeLatency(unsigned newSector, bool writing);
 
-private:
-    int fileno;  ///< UNIX file number for simulated disk.
+   private:
+    int fileno;               ///< UNIX file number for simulated disk.
     VoidFunctionPtr handler;  ///< Interrupt handler, to be invoked when any
                               ///< disk request finishes.
-    void *handlerArg;  ///< Argument to interrupt handler.
-    bool active;  ///< Is a disk operation in progress?
-    unsigned lastSector;  ///< The previous disk request.
-    int bufferInit;  ///< When the track buffer started being loaded.
-                     // being loaded
+    void *handlerArg;         ///< Argument to interrupt handler.
+    bool active;              ///< Is a disk operation in progress?
+    unsigned lastSector;      ///< The previous disk request.
+    int bufferInit;           ///< When the track buffer started being loaded.
+                              // being loaded
 
     /// Time to get to the new track.
     unsigned TimeToSeek(unsigned newSector, unsigned *rotate);
@@ -100,6 +98,5 @@ private:
 
     void UpdateLast(unsigned newSector);
 };
-
 
 #endif

@@ -5,8 +5,8 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
 #include "system.hh"
+
 #include "preemptive.hh"
 
 #ifdef USER_PROGRAM
@@ -16,7 +16,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-
 
 /// This defines *all* of the global data structures used by Nachos.
 ///
@@ -43,7 +42,7 @@ SynchDisk *synchDisk;
 #endif
 
 #ifdef USER_PROGRAM  // Requires either *FILESYS* or *FILESYS_STUB*.
-Machine *machine;  ///< User program memory and registers.
+Machine *machine;    ///< User program memory and registers.
 #endif
 
 #ifdef NETWORK
@@ -67,17 +66,13 @@ extern void Cleanup();
 ///
 /// * `dummy` is because every interrupt handler takes one argument, whether
 ///   it needs it or not.
-static void
-TimerInterruptHandler(void *dummy)
-{
+static void TimerInterruptHandler(void *dummy) {
     if (interrupt->GetStatus() != IDLE_MODE) {
         interrupt->YieldOnReturn();
     }
 }
 
-static bool
-ParseDebugOpts(char *s, DebugOpts *out)
-{
+static bool ParseDebugOpts(char *s, DebugOpts *out) {
     ASSERT(s != nullptr);
     ASSERT(out != nullptr);
 
@@ -88,17 +83,13 @@ ParseDebugOpts(char *s, DebugOpts *out)
             break;
         }
 
-        if (strcmp(token, "location") == 0
-              || strcmp(token, "l") == 0) {
+        if (strcmp(token, "location") == 0 || strcmp(token, "l") == 0) {
             out->location = true;
-        } else if (strcmp(token, "function") == 0
-                     || strcmp(token, "f") == 0) {
+        } else if (strcmp(token, "function") == 0 || strcmp(token, "f") == 0) {
             out->function = true;
-        } else if (strcmp(token, "sleep") == 0
-                     || strcmp(token, "s") == 0) {
+        } else if (strcmp(token, "sleep") == 0 || strcmp(token, "s") == 0) {
             out->sleep = true;
-        } else if (strcmp(token, "interactive") == 0
-                     || strcmp(token, "i") == 0) {
+        } else if (strcmp(token, "interactive") == 0 || strcmp(token, "i") == 0) {
             out->interactive = true;
         } else {
             return false;  // Invalid option.
@@ -120,9 +111,7 @@ ParseDebugOpts(char *s, DebugOpts *out)
 /// * `argv` is an array of strings, one for each command line argument.
 ///   Example:
 ///       nachos -d +  ->  argv = {"nachos", "-d", "+"}
-void
-Initialize(int argc, char **argv)
-{
+void Initialize(int argc, char **argv) {
     ASSERT(argc == 0 || argv != nullptr);
 
     int argCount;
@@ -162,7 +151,7 @@ Initialize(int argc, char **argv)
         } else if (!strcmp(*argv, "-rs")) {
             ASSERT(argc > 1);
             SystemDep::RandomInit(atoi(*(argv + 1)));
-              // Initialize pseudo-random number generator.
+            // Initialize pseudo-random number generator.
             randomYield = true;
             argCount = 2;
         }
@@ -172,7 +161,7 @@ Initialize(int argc, char **argv)
             if (argc == 1) {
                 timeSlice = DEFAULT_TIME_SLICE;
             } else {
-                timeSlice = atoi(*(argv+1));
+                timeSlice = atoi(*(argv + 1));
                 argCount = 2;
             }
         }
@@ -245,9 +234,7 @@ Initialize(int argc, char **argv)
 }
 
 /// Nachos is halting.  De-allocate global data structures.
-void
-Cleanup()
-{
+void Cleanup() {
     DEBUG('i', "Cleaning up...\n");
 
     // 2007, Jose Miguel Santos Espino

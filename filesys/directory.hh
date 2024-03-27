@@ -14,10 +14,8 @@
 #ifndef NACHOS_FILESYS_DIRECTORY__HH
 #define NACHOS_FILESYS_DIRECTORY__HH
 
-
-#include "raw_directory.hh"
 #include "open_file.hh"
-
+#include "raw_directory.hh"
 
 /// The following class defines a UNIX-like “directory”.  Each entry in the
 /// directory describes a file, and where to find it on disk.
@@ -29,8 +27,7 @@
 /// `FetchFrom`/`WriteBack` operations shuffle the directory information
 /// from/to disk.
 class Directory {
-public:
-
+   public:
     /// Initialize an empty directory with space for `size` files.
     Directory(unsigned size);
 
@@ -65,12 +62,11 @@ public:
     /// system at a low level.
     const RawDirectory *GetRaw() const;
 
-private:
+   private:
     /// Find the index into the directory table corresponding to `name`.
     int FindIndex(const char *name);
 
     RawDirectory raw;
 };
-
 
 #endif

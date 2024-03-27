@@ -3,14 +3,12 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
-#include "instr.h"
-#include "encode.h"
-#include "int.h"
-
 #include <stdio.h>
 #include <string.h>
 
+#include "encode.h"
+#include "instr.h"
+#include "int.h"
 
 extern char mem[];
 extern int TRACE, Regtrace;
@@ -22,61 +20,46 @@ static int HI, LO;   // mul/div machine registers.
 // Condition-code calculations
 
 // Extract bit 31.
-static inline int
-B31(int z)
-{
-    return z >> 31 & 0x1;
-}
+static inline int B31(int z) { return z >> 31 & 0x1; }
 
 // Code looks funny but is fast thanks to MIPS!
-static inline void
-CcAdd(int rr, int op1, int op2)
-{
+static inline void CcAdd(int rr, int op1, int op2) {
     N = rr < 0;
     Z = rr == 0;
-    C = (unsigned) rr < (unsigned) op2;
+    C = (unsigned)rr < (unsigned)op2;
     V = op1 ^ op2 >= 0 && op1 ^ rr < 0;
 }
 
-static inline void
-CcSub(int rr, int op1, int op2)
-{
+static inline void CcSub(int rr, int op1, int op2) {
     N = rr < 0;
     Z = rr == 0;
     V = B31((op1 & ~op2 & ~rr) | (~op1 & op2 & rr));
-    C = (unsigned) op1 < (unsigned) op2;
-    //C = B31((~op1 & op2) | (rr & (~op1 | op2)));
+    C = (unsigned)op1 < (unsigned)op2;
+    // C = B31((~op1 & op2) | (rr & (~op1 | op2)));
 }
 
-static inline void
-CcLogic(int rr)
-{
+static inline void CcLogic(int rr) {
     N = rr < 0;
     Z = rr == 0;
     V = 0;
     C = 0;
 }
 
-static inline void
-CcMulscc(int rr, int op1, int op2)
-{
+static inline void CcMulscc(int rr, int op1, int op2) {
     N = rr < 0;
     Z = rr == 0;
     V = B31((op1 & op2 & ~rr) | (~op1 & ~op2 & rr));
     C = B31((op1 & op2) | (~rr & (op1 | op2)));
 }
 
-
 // Debug aid.
-void
-DumpReg(void)
-{
+void DumpReg(void) {
     int j;
 
     printf(" 0:");
     for (j = 0; j < 8; j++) {
     }
-        printf(" %08x", Reg[j]);
+    printf(" %08x", Reg[j]);
     printf("\n");
     printf(" 8:");
     for (; j < 16; j++) {
@@ -95,18 +78,13 @@ DumpReg(void)
     printf("\n");
 }
 
-
 /// Unimplemented.
-static void
-Unimplemented(void)
-{
+static void Unimplemented(void) {
     printf("Unimplemented instruction.\n");
     exit(2);
 }
 
-void
-RunProgram(unsigned startpc, int argc, char *argv[])
-{
+void RunProgram(unsigned startpc, int argc, char *argv[]) {
     int aci, ai;
     int instr, pc, xpc, npc;
     int i;  // Temporary for local stuff.
@@ -155,16 +133,16 @@ RunProgram(unsigned startpc, int argc, char *argv[])
     //     |         |
 
     icount = 0;
-    pc = startpc; npc = pc + 4;
+    pc = startpc;
+    npc = pc + 4;
     i = MEMSIZE - 1024 + memoffset;  // Initial SP value.
     Reg[29] = i;                     // Initialize SP.
     // Setup argc and argv stuff (icky!)
     Store(i, argc);
     aci = i + 4;
-    ai  = aci + 32;
+    ai = aci + 32;
     for (unsigned j = 0; j < argc; ++j) {
-        strncpy((mem - memoffset) + ai, argv[j],
-                MEMSIZE + memoffset - ai);
+        strncpy((mem - memoffset) + ai, argv[j], MEMSIZE + memoffset - ai);
         Store(aci, ai);
         aci += 4;
         ai += strlen(argv[j]) + 1;
@@ -180,31 +158,25 @@ RunProgram(unsigned startpc, int argc, char *argv[])
 
         if (instr != 0) {  // Eliminate no-ops.
             switch (instr >> 26 & 0x0000003F) {
-                case I_SPECIAL:
-                {
+                case I_SPECIAL: {
                     switch (instr & 0x0000003F) {
-
                         case I_SLL:
                             Reg[rd(instr)] = Reg[rt(instr)] << shamt(instr);
                             break;
                         case I_SRL:
-                            Reg[rd(instr)] = (unsigned) Reg[rt(instr)]
-                                             >> shamt(instr);
+                            Reg[rd(instr)] = (unsigned)Reg[rt(instr)] >> shamt(instr);
                             break;
                         case I_SRA:
                             Reg[rd(instr)] = Reg[rt(instr)] >> shamt(instr);
                             break;
                         case I_SLLV:
-                            Reg[rd(instr)] = Reg[rt(instr)]
-                                             << Reg[rs(instr)];
+                            Reg[rd(instr)] = Reg[rt(instr)] << Reg[rs(instr)];
                             break;
                         case I_SRLV:
-                            Reg[rd(instr)] =
-                            (unsigned) Reg[rt(instr)] >> Reg[rs(instr)];
+                            Reg[rd(instr)] = (unsigned)Reg[rt(instr)] >> Reg[rs(instr)];
                             break;
                         case I_SRAV:
-                            Reg[rd(instr)] = Reg[rt(instr)]
-                                             >> Reg[rs(instr)];
+                            Reg[rd(instr)] = Reg[rt(instr)] >> Reg[rs(instr)];
                             break;
                         case I_JR:
                             npc = Reg[rs(instr)];
@@ -255,8 +227,7 @@ RunProgram(unsigned startpc, int argc, char *argv[])
                             t1h = (t1 >> 16) & 0xFFFF;
                             t2l = t2 & 0xFFFF;
                             t2h = (t2 >> 16) & 0xFFFF;
-                            HI = t1h * t2h
-                                 + (t1h * t2l >> 16) + (t2h * t1l >> 16);
+                            HI = t1h * t2h + (t1h * t2l >> 16) + (t2h * t1l >> 16);
                             if (neg) {
                                 LO = ~LO;
                                 HI = ~HI;
@@ -278,8 +249,7 @@ RunProgram(unsigned startpc, int argc, char *argv[])
                             t2l = t2 & 0xFFFF;
                             t2h = t2 >> 16 & 0xFFFF;
                             LO = t1 * t2;
-                            HI = t1h * t2h
-                                 + (t1h * t2l >> 16) + (t2h * t1l >> 16);
+                            HI = t1h * t2h + (t1h * t2l >> 16) + (t2h * t1l >> 16);
                             break;
                         }
                         case I_DIV:
@@ -287,10 +257,8 @@ RunProgram(unsigned startpc, int argc, char *argv[])
                             HI = Reg[rs(instr)] % Reg[rt(instr)];
                             break;
                         case I_DIVU:
-                            LO = (unsigned) Reg[rs(instr)]
-                                 / (unsigned) Reg[rt(instr)];
-                            HI = (unsigned) Reg[rs(instr)]
-                                 % (unsigned) Reg[rt(instr)];
+                            LO = (unsigned)Reg[rs(instr)] / (unsigned)Reg[rt(instr)];
+                            HI = (unsigned)Reg[rs(instr)] % (unsigned)Reg[rt(instr)];
                             break;
 
                         case I_ADD:
@@ -311,16 +279,14 @@ RunProgram(unsigned startpc, int argc, char *argv[])
                             Reg[rd(instr)] = Reg[rs(instr)] ^ Reg[rt(instr)];
                             break;
                         case I_NOR:
-                            Reg[rd(instr)] = ~(Reg[rs(instr)]
-                                               | Reg[rt(instr)]);
+                            Reg[rd(instr)] = ~(Reg[rs(instr)] | Reg[rt(instr)]);
                             break;
 
                         case I_SLT:
                             Reg[rd(instr)] = Reg[rs(instr)] < Reg[rt(instr)];
                             break;
                         case I_SLTU:
-                            Reg[rd(instr)] = (unsigned) Reg[rs(instr)]
-                                             < (unsigned) Reg[rt(instr)];
+                            Reg[rd(instr)] = (unsigned)Reg[rs(instr)] < (unsigned)Reg[rt(instr)];
                             break;
                         default:
                             Unimplemented();
@@ -329,8 +295,7 @@ RunProgram(unsigned startpc, int argc, char *argv[])
                     break;
                 }
 
-                case I_BCOND:
-                {
+                case I_BCOND: {
                     switch (rt(instr))  // This field encodes the op.
                     {
                         case I_BLTZ:
@@ -400,8 +365,7 @@ RunProgram(unsigned startpc, int argc, char *argv[])
                     Reg[rt(instr)] = Reg[rs(instr)] < immed(instr);
                     break;
                 case I_SLTIU:
-                    Reg[rt(instr)] = (unsigned) Reg[rs(instr)]
-                                     < (unsigned) immed(instr);
+                    Reg[rt(instr)] = (unsigned)Reg[rs(instr)] < (unsigned)immed(instr);
                     break;
                 case I_ANDI:
                     Reg[rt(instr)] = Reg[rs(instr)] & immed(instr);
@@ -425,8 +389,7 @@ RunProgram(unsigned startpc, int argc, char *argv[])
                 case I_LWL:
                     i = Reg[rs(instr)] + immed(instr);
                     Reg[rt(instr)] &= -1 >> 8 * (-i & 0x03);
-                    Reg[rt(instr)] |= Fetch(i & 0xFFFFFFFC)
-                                      << 8 * (i & 0x03);
+                    Reg[rt(instr)] |= Fetch(i & 0xFFFFFFFC) << 8 * (i & 0x03);
                     break;
                 case I_LW:
                     Reg[rt(instr)] = Fetch(Reg[rs(instr)] + immed(instr));
@@ -443,8 +406,7 @@ RunProgram(unsigned startpc, int argc, char *argv[])
                     if ((i & 0x03) == 0) {
                         Reg[rt(instr)] = 0;
                     }
-                    Reg[rt(instr)] |=
-                      Fetch(i & 0xFFFFFFFC) >> 8 * (-i & 0x03);
+                    Reg[rt(instr)] |= Fetch(i & 0xFFFFFFFC) >> 8 * (-i & 0x03);
                     break;
 
                 case I_SB:
@@ -466,12 +428,18 @@ RunProgram(unsigned startpc, int argc, char *argv[])
                     Unimplemented();
                     break;
 
-                case I_LWC0: case I_LWC1:
-                case I_LWC2: case I_LWC3:
-                case I_SWC0: case I_SWC1:
-                case I_SWC2: case I_SWC3:
-                case I_COP0: case I_COP1:
-                case I_COP2: case I_COP3:
+                case I_LWC0:
+                case I_LWC1:
+                case I_LWC2:
+                case I_LWC3:
+                case I_SWC0:
+                case I_SWC1:
+                case I_SWC2:
+                case I_SWC3:
+                case I_COP0:
+                case I_COP1:
+                case I_COP2:
+                case I_COP3:
                     fprintf(stderr, "Sorry, no coprocessors.\n");
                     exit(2);
                     break;
@@ -483,8 +451,7 @@ RunProgram(unsigned startpc, int argc, char *argv[])
         }
 
 #ifdef DEBUG
-        printf("%d(%X) = %d(%X) op %d(%X)\n",
-               Reg[rd], Reg[rd], op1, op1, op2, op2);
+        printf("%d(%X) = %d(%X) op %d(%X)\n", Reg[rd], Reg[rd], op1, op1, op2, op2);
 #endif
         if (TRACE) {
             DumpAscii(instr, xpc);

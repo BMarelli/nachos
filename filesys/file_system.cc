@@ -41,15 +41,14 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
 #include "file_system.hh"
-#include "directory.hh"
-#include "file_header.hh"
-#include "lib/bitmap.hh"
 
 #include <stdio.h>
 #include <string.h>
 
+#include "directory.hh"
+#include "file_header.hh"
+#include "lib/bitmap.hh"
 
 /// Sectors containing the file headers for the bitmap of free sectors, and
 /// the directory of files.  These file headers are placed in well-known
@@ -66,14 +65,13 @@ static const unsigned DIRECTORY_SECTOR = 1;
 /// bitmap and the directory.
 ///
 /// * `format` -- should we initialize the disk?
-FileSystem::FileSystem(bool format)
-{
+FileSystem::FileSystem(bool format) {
     DEBUG('f', "Initializing the file system.\n");
     if (format) {
-        Bitmap     *freeMap = new Bitmap(NUM_SECTORS);
-        Directory  *dir     = new Directory(NUM_DIR_ENTRIES);
-        FileHeader *mapH    = new FileHeader;
-        FileHeader *dirH    = new FileHeader;
+        Bitmap *freeMap = new Bitmap(NUM_SECTORS);
+        Directory *dir = new Directory(NUM_DIR_ENTRIES);
+        FileHeader *mapH = new FileHeader;
+        FileHeader *dirH = new FileHeader;
 
         DEBUG('f', "Formatting the file system.\n");
 
@@ -101,7 +99,7 @@ FileSystem::FileSystem(bool format)
         // The file system operations assume these two files are left open
         // while Nachos is running.
 
-        freeMapFile   = new OpenFile(FREE_MAP_SECTOR);
+        freeMapFile = new OpenFile(FREE_MAP_SECTOR);
         directoryFile = new OpenFile(DIRECTORY_SECTOR);
 
         // Once we have the files “open”, we can write the initial version of
@@ -111,7 +109,7 @@ FileSystem::FileSystem(bool format)
         // to hold the file data for the directory and bitmap.
 
         DEBUG('f', "Writing bitmap and directory back to disk.\n");
-        freeMap->WriteBack(freeMapFile);     // flush changes to disk
+        freeMap->WriteBack(freeMapFile);  // flush changes to disk
         dir->WriteBack(directoryFile);
 
         if (debug.IsEnabled('f')) {
@@ -127,13 +125,12 @@ FileSystem::FileSystem(bool format)
         // If we are not formatting the disk, just open the files
         // representing the bitmap and directory; these are left open while
         // Nachos is running.
-        freeMapFile   = new OpenFile(FREE_MAP_SECTOR);
+        freeMapFile = new OpenFile(FREE_MAP_SECTOR);
         directoryFile = new OpenFile(DIRECTORY_SECTOR);
     }
 }
 
-FileSystem::~FileSystem()
-{
+FileSystem::~FileSystem() {
     delete freeMapFile;
     delete directoryFile;
 }
@@ -163,9 +160,7 @@ FileSystem::~FileSystem()
 ///
 /// * `name` is the name of file to be created.
 /// * `initialSize` is the size of file to be created.
-bool
-FileSystem::Create(const char *name, unsigned initialSize)
-{
+bool FileSystem::Create(const char *name, unsigned initialSize) {
     ASSERT(name != nullptr);
     ASSERT(initialSize < MAX_FILE_SIZE);
 
@@ -182,7 +177,7 @@ FileSystem::Create(const char *name, unsigned initialSize)
         Bitmap *freeMap = new Bitmap(NUM_SECTORS);
         freeMap->FetchFrom(freeMapFile);
         int sector = freeMap->Find();
-          // Find a sector to hold the file header.
+        // Find a sector to hold the file header.
         if (sector == -1) {
             success = false;  // No free block for file header.
         } else if (!dir->Add(name, sector)) {
@@ -190,7 +185,7 @@ FileSystem::Create(const char *name, unsigned initialSize)
         } else {
             FileHeader *h = new FileHeader;
             success = h->Allocate(freeMap, initialSize);
-              // Fails if no space on disk for data.
+            // Fails if no space on disk for data.
             if (success) {
                 // Everything worked, flush all changes back to disk.
                 h->WriteBack(sector);
@@ -212,13 +207,11 @@ FileSystem::Create(const char *name, unsigned initialSize)
 /// 2. Bring the header into memory.
 ///
 /// * `name` is the text name of the file to be opened.
-OpenFile *
-FileSystem::Open(const char *name)
-{
+OpenFile *FileSystem::Open(const char *name) {
     ASSERT(name != nullptr);
 
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
-    OpenFile  *openFile = nullptr;
+    OpenFile *openFile = nullptr;
 
     DEBUG('f', "Opening file %s\n", name);
     dir->FetchFrom(directoryFile);
@@ -242,17 +235,15 @@ FileSystem::Open(const char *name)
 /// file system.
 ///
 /// * `name` is the text name of the file to be removed.
-bool
-FileSystem::Remove(const char *name)
-{
+bool FileSystem::Remove(const char *name) {
     ASSERT(name != nullptr);
 
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(directoryFile);
     int sector = dir->Find(name);
     if (sector == -1) {
-       delete dir;
-       return false;  // file not found
+        delete dir;
+        return false;  // file not found
     }
     FileHeader *fileH = new FileHeader;
     fileH->FetchFrom(sector);
@@ -273,9 +264,7 @@ FileSystem::Remove(const char *name)
 }
 
 /// List all the files in the file system directory.
-void
-FileSystem::List()
-{
+void FileSystem::List() {
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
 
     dir->FetchFrom(directoryFile);
@@ -283,9 +272,7 @@ FileSystem::List()
     delete dir;
 }
 
-static bool
-AddToShadowBitmap(unsigned sector, Bitmap *map)
-{
+static bool AddToShadowBitmap(unsigned sector, Bitmap *map) {
     ASSERT(map != nullptr);
 
     if (map->Test(sector)) {
@@ -297,40 +284,31 @@ AddToShadowBitmap(unsigned sector, Bitmap *map)
     return true;
 }
 
-static bool
-CheckForError(bool value, const char *message)
-{
+static bool CheckForError(bool value, const char *message) {
     if (!value) {
         DEBUG('f', "Error: %s\n", message);
     }
     return !value;
 }
 
-static bool
-CheckSector(unsigned sector, Bitmap *shadowMap)
-{
-    if (CheckForError(sector < NUM_SECTORS,
-                      "sector number too big.  Skipping bitmap check.")) {
+static bool CheckSector(unsigned sector, Bitmap *shadowMap) {
+    if (CheckForError(sector < NUM_SECTORS, "sector number too big.  Skipping bitmap check.")) {
         return true;
     }
-    return CheckForError(AddToShadowBitmap(sector, shadowMap),
-                         "sector number already used.");
+    return CheckForError(AddToShadowBitmap(sector, shadowMap), "sector number already used.");
 }
 
-static bool
-CheckFileHeader(const RawFileHeader *rh, unsigned num, Bitmap *shadowMap)
-{
+static bool CheckFileHeader(const RawFileHeader *rh, unsigned num, Bitmap *shadowMap) {
     ASSERT(rh != nullptr);
 
     bool error = false;
 
-    DEBUG('f', "Checking file header %u.  File size: %u bytes, number of sectors: %u.\n",
+    DEBUG('f',
+          "Checking file header %u.  File size: %u bytes, number of sectors: "
+          "%u.\n",
           num, rh->numBytes, rh->numSectors);
-    error |= CheckForError(rh->numSectors >= DivRoundUp(rh->numBytes,
-                                                        SECTOR_SIZE),
-                           "sector count not compatible with file size.");
-    error |= CheckForError(rh->numSectors < NUM_DIRECT,
-                           "too many blocks.");
+    error |= CheckForError(rh->numSectors >= DivRoundUp(rh->numBytes, SECTOR_SIZE), "sector count not compatible with file size.");
+    error |= CheckForError(rh->numSectors < NUM_DIRECT, "too many blocks.");
     for (unsigned i = 0; i < rh->numSectors; i++) {
         unsigned s = rh->dataSectors[i];
         error |= CheckSector(s, shadowMap);
@@ -338,22 +316,16 @@ CheckFileHeader(const RawFileHeader *rh, unsigned num, Bitmap *shadowMap)
     return error;
 }
 
-static bool
-CheckBitmaps(const Bitmap *freeMap, const Bitmap *shadowMap)
-{
+static bool CheckBitmaps(const Bitmap *freeMap, const Bitmap *shadowMap) {
     bool error = false;
     for (unsigned i = 0; i < NUM_SECTORS; i++) {
-        DEBUG('f', "Checking sector %u. Original: %u, shadow: %u.\n",
-              i, freeMap->Test(i), shadowMap->Test(i));
-        error |= CheckForError(freeMap->Test(i) == shadowMap->Test(i),
-                               "inconsistent bitmap.");
+        DEBUG('f', "Checking sector %u. Original: %u, shadow: %u.\n", i, freeMap->Test(i), shadowMap->Test(i));
+        error |= CheckForError(freeMap->Test(i) == shadowMap->Test(i), "inconsistent bitmap.");
     }
     return error;
 }
 
-static bool
-CheckDirectory(const RawDirectory *rd, Bitmap *shadowMap)
-{
+static bool CheckDirectory(const RawDirectory *rd, Bitmap *shadowMap) {
     ASSERT(rd != nullptr);
     ASSERT(shadowMap != nullptr);
 
@@ -372,12 +344,10 @@ CheckDirectory(const RawDirectory *rd, Bitmap *shadowMap)
             }
 
             // Check for repeated filenames.
-            DEBUG('f', "Checking for repeated names.  Name count: %u.\n",
-                  nameCount);
+            DEBUG('f', "Checking for repeated names.  Name count: %u.\n", nameCount);
             bool repeated = false;
             for (unsigned j = 0; j < nameCount; j++) {
-                DEBUG('f', "Comparing \"%s\" and \"%s\".\n",
-                      knownNames[j], e->name);
+                DEBUG('f', "Comparing \"%s\" and \"%s\".\n", knownNames[j], e->name);
                 if (strcmp(knownNames[j], e->name) == 0) {
                     DEBUG('f', "Repeated filename.\n");
                     repeated = true;
@@ -404,9 +374,7 @@ CheckDirectory(const RawDirectory *rd, Bitmap *shadowMap)
     return error;
 }
 
-bool
-FileSystem::Check()
-{
+bool FileSystem::Check() {
     DEBUG('f', "Performing filesystem check\n");
     bool error = false;
 
@@ -419,14 +387,12 @@ FileSystem::Check()
     FileHeader *bitH = new FileHeader;
     const RawFileHeader *bitRH = bitH->GetRaw();
     bitH->FetchFrom(FREE_MAP_SECTOR);
-    DEBUG('f', "  File size: %u bytes, expected %u bytes.\n"
-               "  Number of sectors: %u, expected %u.\n",
-          bitRH->numBytes, FREE_MAP_FILE_SIZE,
-          bitRH->numSectors, FREE_MAP_FILE_SIZE / SECTOR_SIZE);
-    error |= CheckForError(bitRH->numBytes == FREE_MAP_FILE_SIZE,
-                           "bad bitmap header: wrong file size.");
-    error |= CheckForError(bitRH->numSectors == FREE_MAP_FILE_SIZE / SECTOR_SIZE,
-                           "bad bitmap header: wrong number of sectors.");
+    DEBUG('f',
+          "  File size: %u bytes, expected %u bytes.\n"
+          "  Number of sectors: %u, expected %u.\n",
+          bitRH->numBytes, FREE_MAP_FILE_SIZE, bitRH->numSectors, FREE_MAP_FILE_SIZE / SECTOR_SIZE);
+    error |= CheckForError(bitRH->numBytes == FREE_MAP_FILE_SIZE, "bad bitmap header: wrong file size.");
+    error |= CheckForError(bitRH->numSectors == FREE_MAP_FILE_SIZE / SECTOR_SIZE, "bad bitmap header: wrong number of sectors.");
     error |= CheckFileHeader(bitRH, FREE_MAP_SECTOR, shadowMap);
     delete bitH;
 
@@ -452,8 +418,7 @@ FileSystem::Check()
     delete shadowMap;
     delete freeMap;
 
-    DEBUG('f', error ? "Filesystem check failed.\n"
-                     : "Filesystem check succeeded.\n");
+    DEBUG('f', error ? "Filesystem check failed.\n" : "Filesystem check succeeded.\n");
 
     return !error;
 }
@@ -464,13 +429,11 @@ FileSystem::Check()
 /// * for each file in the directory:
 ///   * the contents of the file header;
 ///   * the data in the file.
-void
-FileSystem::Print()
-{
-    FileHeader *bitH    = new FileHeader;
-    FileHeader *dirH    = new FileHeader;
-    Bitmap     *freeMap = new Bitmap(NUM_SECTORS);
-    Directory  *dir     = new Directory(NUM_DIR_ENTRIES);
+void FileSystem::Print() {
+    FileHeader *bitH = new FileHeader;
+    FileHeader *dirH = new FileHeader;
+    Bitmap *freeMap = new Bitmap(NUM_SECTORS);
+    Directory *dir = new Directory(NUM_DIR_ENTRIES);
 
     printf("--------------------------------\n");
     bitH->FetchFrom(FREE_MAP_SECTOR);

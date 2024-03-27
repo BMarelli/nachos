@@ -1,32 +1,26 @@
 #include "syscall.h"
 
+#define MAX_LINE_SIZE 60
+#define MAX_ARG_COUNT 32
+#define ARG_SEPARATOR ' '
 
-#define MAX_LINE_SIZE  60
-#define MAX_ARG_COUNT  32
-#define ARG_SEPARATOR  ' '
+#define NULL ((void *)0)
 
-#define NULL  ((void *) 0)
-
-static inline unsigned
-strlen(const char *s)
-{
+static inline unsigned strlen(const char *s) {
     // TODO: how to make sure that `s` is not `NULL`?
 
     unsigned i;
-    for (i = 0; s[i] != '\0'; i++) {}
+    for (i = 0; s[i] != '\0'; i++) {
+    }
     return i;
 }
 
-static inline void
-WritePrompt(OpenFileId output)
-{
+static inline void WritePrompt(OpenFileId output) {
     static const char PROMPT[] = "--> ";
     Write(PROMPT, sizeof PROMPT - 1, output);
 }
 
-static inline void
-WriteError(const char *description, OpenFileId output)
-{
+static inline void WriteError(const char *description, OpenFileId output) {
     // TODO: how to make sure that `description` is not `NULL`?
 
     static const char PREFIX[] = "Error: ";
@@ -37,9 +31,7 @@ WriteError(const char *description, OpenFileId output)
     Write(SUFFIX, sizeof SUFFIX - 1, output);
 }
 
-static unsigned
-ReadLine(char *buffer, unsigned size, OpenFileId input)
-{
+static unsigned ReadLine(char *buffer, unsigned size, OpenFileId input) {
     // TODO: how to make sure that `buffer` is not `NULL`?
 
     unsigned i;
@@ -55,9 +47,7 @@ ReadLine(char *buffer, unsigned size, OpenFileId input)
     return i;
 }
 
-static int
-PrepareArguments(char *line, char **argv, unsigned argvSize)
-{
+static int PrepareArguments(char *line, char **argv, unsigned argvSize) {
     // TODO: how to make sure that `line` and `argv` are not `NULL`?, and
     //       for `argvSize`, what precondition should be fulfilled?
     //
@@ -97,13 +87,11 @@ PrepareArguments(char *line, char **argv, unsigned argvSize)
     return 1;
 }
 
-int
-main(void)
-{
-    const OpenFileId INPUT  = CONSOLE_INPUT;
+int main(void) {
+    const OpenFileId INPUT = CONSOLE_INPUT;
     const OpenFileId OUTPUT = CONSOLE_OUTPUT;
-    char             line[MAX_LINE_SIZE];
-    char            *argv[MAX_ARG_COUNT];
+    char line[MAX_LINE_SIZE];
+    char *argv[MAX_ARG_COUNT];
 
     for (;;) {
         WritePrompt(OUTPUT);
@@ -120,7 +108,7 @@ main(void)
         // Comment and uncomment according to whether command line arguments
         // are given in the system call or not.
         const SpaceId newProc = Exec(line);
-        //const SpaceId newProc = Exec(line, argv);
+        // const SpaceId newProc = Exec(line, argv);
 
         // TODO: check for errors when calling `Exec`; this depends on how
         //       errors are reported.

@@ -10,35 +10,29 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
-#include "thread_test_garden.hh"
-#include "thread_test_prod_cons.hh"
-#include "thread_test_simple.hh"
-#include "lib/utility.hh"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "lib/utility.hh"
+#include "thread_test_garden.hh"
+#include "thread_test_prod_cons.hh"
+#include "thread_test_simple.hh"
 
 typedef struct {
-    void      (*func)();
+    void (*func)();
     const char *name;
     const char *description;
 } Test;
 
-static const Test TESTS[] = {
-    { &ThreadTestSimple,   "simple",   "Simple thread interleaving" },
-    { &ThreadTestGarden,   "garden",   "Ornamental garden" },
-    { &ThreadTestProdCons, "prodcons", "Producer/Consumer" }
-};
+static const Test TESTS[] = {{&ThreadTestSimple, "simple", "Simple thread interleaving"},
+                             {&ThreadTestGarden, "garden", "Ornamental garden"},
+                             {&ThreadTestProdCons, "prodcons", "Producer/Consumer"}};
 static const unsigned NUM_TESTS = sizeof TESTS / sizeof TESTS[0];
 
 static const unsigned NAME_MAX_LEN = 32;
 
-static bool
-Parse(char *choice, unsigned *index)
-{
+static bool Parse(char *choice, unsigned *index) {
     ASSERT(choice != nullptr);
     ASSERT(index != nullptr);
 
@@ -78,9 +72,7 @@ Parse(char *choice, unsigned *index)
 }
 
 /// Ask the user interactively to choose a test.
-static unsigned
-Choose()
-{
+static unsigned Choose() {
     printf("Available tests:\n");
     for (unsigned i = 0; i < NUM_TESTS; i++) {
         const Test *t = &TESTS[i];
@@ -98,21 +90,16 @@ Choose()
     return index;
 }
 
-static void
-Run(unsigned i)
-{
+static void Run(unsigned i) {
     ASSERT(i < NUM_TESTS);
 
     const Test *t = &TESTS[i];
-    printf("\nRunning thread test %u: %s -- %s.\n",
-           i, t->name, t->description);
+    printf("\nRunning thread test %u: %s -- %s.\n", i, t->name, t->description);
     (*TESTS[i].func)();
     printf("\n");
 }
 
-void
-ThreadTest()
-{
+void ThreadTest() {
     DEBUG('t', "Entering thread test\n");
 
     const unsigned i = Choose();

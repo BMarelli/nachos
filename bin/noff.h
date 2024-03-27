@@ -11,12 +11,11 @@
 #ifndef NACHOS_BIN_NOFF__H
 #define NACHOS_BIN_NOFF__H
 
-
 #include <stdint.h>
 
-
-#define NOFF_MAGIC  0xBADFAD  // Magic number denoting Nachos object code
-                              // file.
+#define NOFF_MAGIC \
+    0xBADFAD  // Magic number denoting Nachos object code
+              // file.
 
 typedef struct noffSegment {
     uint32_t virtualAddr;  // Location of segment in virtual address space.
@@ -31,6 +30,5 @@ typedef struct noffHeader {
     noffSegment uninitData;  // Uninitialized data segment -- should be
                              // zeroed before use.
 } noffHeader;
-
 
 #endif

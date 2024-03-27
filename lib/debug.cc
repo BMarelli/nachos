@@ -8,54 +8,31 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
 #include "debug.hh"
-#include "utility.hh"
-#include "machine/system_dep.hh"
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
+#include "utility.hh"
 
-Debug::Debug()
-{
-    flags = "";
-}
+Debug::Debug() { flags = ""; }
 
-bool
-Debug::IsEnabled(char flag) const
-{
+bool Debug::IsEnabled(char flag) const {
     if (flags != nullptr) {
-        return strchr(flags, flag) != 0
-               || strchr(flags, '+') != 0;
+        return strchr(flags, flag) != 0 || strchr(flags, '+') != 0;
     } else {
         return false;
     }
 }
 
-const char *
-Debug::GetFlags() const
-{
-    return flags;
-}
+const char *Debug::GetFlags() const { return flags; }
 
-void
-Debug::SetFlags(const char *new_flags)
-{
-    flags = new_flags;
-}
+void Debug::SetFlags(const char *new_flags) { flags = new_flags; }
 
-void
-Debug::SetOpts(DebugOpts new_opts)
-{
-    opts = new_opts;
-}
+void Debug::SetOpts(DebugOpts new_opts) { opts = new_opts; }
 
-void
-Debug::Print(const char *file, const unsigned line, const char *func,
-             char flag, const char *format, ...) const
-{
+void Debug::Print(const char *file, const unsigned line, const char *func, char flag, const char *format, ...) const {
     ASSERT(format != nullptr);
 
     if (!IsEnabled(flag)) {
@@ -89,9 +66,7 @@ Debug::Print(const char *file, const unsigned line, const char *func,
     }
 }
 
-void
-Debug::PrintCont(char flag, const char *format, ...) const
-{
+void Debug::PrintCont(char flag, const char *format, ...) const {
     ASSERT(format != nullptr);
 
     if (!IsEnabled(flag)) {

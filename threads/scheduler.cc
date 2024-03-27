@@ -17,32 +17,23 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
 #include "scheduler.hh"
-#include "system.hh"
 
 #include <stdio.h>
 
+#include "system.hh"
 
 /// Initialize the list of ready but not running threads to empty.
-Scheduler::Scheduler()
-{
-    readyList = new List<Thread *>;
-}
+Scheduler::Scheduler() { readyList = new List<Thread *>; }
 
 /// De-allocate the list of ready threads.
-Scheduler::~Scheduler()
-{
-    delete readyList;
-}
+Scheduler::~Scheduler() { delete readyList; }
 
 /// Mark a thread as ready, but not running.
 /// Put it on the ready list, for later scheduling onto the CPU.
 ///
 /// * `thread` is the thread to be put on the ready list.
-void
-Scheduler::ReadyToRun(Thread *thread)
-{
+void Scheduler::ReadyToRun(Thread *thread) {
     ASSERT(thread != nullptr);
 
     DEBUG('t', "Putting thread %s on ready list\n", thread->GetName());
@@ -56,11 +47,7 @@ Scheduler::ReadyToRun(Thread *thread)
 /// If there are no ready threads, return null.
 ///
 /// Side effect: thread is removed from the ready list.
-Thread *
-Scheduler::FindNextToRun()
-{
-    return readyList->Pop();
-}
+Thread *Scheduler::FindNextToRun() { return readyList->Pop(); }
 
 /// Dispatch the CPU to `nextThread`.
 ///
@@ -73,9 +60,7 @@ Scheduler::FindNextToRun()
 /// Side effect: the global variable `currentThread` becomes `nextThread`.
 ///
 /// * `nextThread` is the thread to be put into the CPU.
-void
-Scheduler::Run(Thread *nextThread)
-{
+void Scheduler::Run(Thread *nextThread) {
     ASSERT(nextThread != nullptr);
 
     Thread *oldThread = currentThread;
@@ -91,11 +76,10 @@ Scheduler::Run(Thread *nextThread)
     oldThread->CheckOverflow();  // Check if the old thread had an undetected
                                  // stack overflow.
 
-    currentThread = nextThread;  // Switch to the next thread.
+    currentThread = nextThread;         // Switch to the next thread.
     currentThread->SetStatus(RUNNING);  // `nextThread` is now running.
 
-    DEBUG('t', "Switching from thread \"%s\" to thread \"%s\"\n",
-          oldThread->GetName(), nextThread->GetName());
+    DEBUG('t', "Switching from thread \"%s\" to thread \"%s\"\n", oldThread->GetName(), nextThread->GetName());
 
     // This is a machine-dependent assembly language routine defined in
     // `switch.s`.  You may have to think a bit to figure out what happens
@@ -128,16 +112,12 @@ Scheduler::Run(Thread *nextThread)
 /// list.
 ///
 /// For debugging.
-static void
-ThreadPrint(Thread *t)
-{
+static void ThreadPrint(Thread *t) {
     ASSERT(t != nullptr);
     t->Print();
 }
 
-void
-Scheduler::Print()
-{
+void Scheduler::Print() {
     printf("Ready list contents:\n");
     readyList->Apply(ThreadPrint);
 }
