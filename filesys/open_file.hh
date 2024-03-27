@@ -19,53 +19,42 @@
 #ifndef NACHOS_FILESYS_OPENFILE__HH
 #define NACHOS_FILESYS_OPENFILE__HH
 
-
 #include "lib/utility.hh"
-
 
 #ifdef FILESYS_STUB  // Temporarily implement calls to Nachos file system as
                      // calls to UNIX!  See definitions listed under `#else`.
 class OpenFile {
-public:
-
+   public:
     /// Open the file.
-    OpenFile(int f)
-    {
+    OpenFile(int f) {
         file = f;
         currentOffset = 0;
     }
 
     /// Close the file.
-    ~OpenFile()
-    {
-        SystemDep::Close(file);
-    }
+    ~OpenFile() { SystemDep::Close(file); }
 
-    int ReadAt(char *into, unsigned numBytes, unsigned position)
-    {
+    int ReadAt(char *into, unsigned numBytes, unsigned position) {
         ASSERT(into != nullptr);
         ASSERT(numBytes > 0);
         SystemDep::Lseek(file, position, 0);
         return SystemDep::ReadPartial(file, into, numBytes);
     }
-    int WriteAt(const char *from, unsigned numBytes, unsigned position)
-    {
+    int WriteAt(const char *from, unsigned numBytes, unsigned position) {
         ASSERT(from != nullptr);
         ASSERT(numBytes > 0);
         SystemDep::Lseek(file, position, 0);
         SystemDep::WriteFile(file, from, numBytes);
         return numBytes;
     }
-    int Read(char *into, unsigned numBytes)
-    {
+    int Read(char *into, unsigned numBytes) {
         ASSERT(into != nullptr);
         ASSERT(numBytes > 0);
         int numRead = ReadAt(into, numBytes, currentOffset);
         currentOffset += numRead;
         return numRead;
     }
-    int Write(const char *from, unsigned numBytes)
-    {
+    int Write(const char *from, unsigned numBytes) {
         ASSERT(from != nullptr);
         ASSERT(numBytes > 0);
         int numWritten = WriteAt(from, numBytes, currentOffset);
@@ -73,23 +62,21 @@ public:
         return numWritten;
     }
 
-    unsigned Length() const
-    {
+    unsigned Length() const {
         SystemDep::Lseek(file, 0, 2);
         return SystemDep::Tell(file);
     }
 
-private:
+   private:
     int file;
     unsigned currentOffset;
 };
 
-#else // FILESYS
+#else  // FILESYS
 class FileHeader;
 
 class OpenFile {
-public:
-
+   public:
     /// Open a file whose header is located at `sector` on the disk.
     OpenFile(int sector);
 
@@ -114,12 +101,11 @@ public:
     // the UNIX idiom -- `lseek` to end of file, `tell`, `lseek` back).
     unsigned Length() const;
 
-  private:
-    FileHeader *hdr;  ///< Header for this file.
+   private:
+    FileHeader *hdr;        ///< Header for this file.
     unsigned seekPosition;  ///< Current position within the file.
 };
 
 #endif
-
 
 #endif

@@ -2,12 +2,10 @@
 
 #include "syscall.h"
 
-#define ARGC_ERROR    "Error: missing argument."
-#define CREATE_ERROR  "Error: could not create file."
+#define ARGC_ERROR "Error: missing argument."
+#define CREATE_ERROR "Error: could not create file."
 
-int
-main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     if (argc < 2) {
         Write(ARGC_ERROR, sizeof(ARGC_ERROR) - 1, CONSOLE_OUTPUT);
         Exit(1);

@@ -17,7 +17,6 @@
 #ifndef NACHOS_THREADS_LOCK__HH
 #define NACHOS_THREADS_LOCK__HH
 
-
 /// This class defines a “lock”.
 ///
 /// A lock can have two states: free and busy. Only two operations are
@@ -30,8 +29,7 @@
 /// For convenience, nobody but the thread that holds the lock can free it.
 /// There is no operation for reading the state of the lock.
 class Lock {
-public:
-
+   public:
     /// Constructor: set up the lock as free.
     Lock(const char *debugName);
 
@@ -52,13 +50,11 @@ public:
     /// Useful for checks in `Release` and in condition variables.
     bool IsHeldByCurrentThread() const;
 
-private:
-
+   private:
     /// For debugging.
     const char *name;
 
     // Add other needed fields here.
 };
-
 
 #endif

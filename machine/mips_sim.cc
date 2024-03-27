@@ -10,13 +10,11 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
+#include <stdio.h>
 
 #include "instruction.hh"
 #include "machine.hh"
 #include "threads/system.hh"
-
-#include <stdio.h>
-
 
 /// Simulate the execution of a user-level program on Nachos.
 ///
@@ -24,11 +22,9 @@
 ///
 /// This routine is re-entrant, in that it can be called multiple times
 /// concurrently -- one for each thread executing user code.
-void
-Machine::Run()
-{
+void Machine::Run() {
     Instruction *instr = new Instruction;
-      // Storage for decoded instruction.
+    // Storage for decoded instruction.
 
     if (debug.IsEnabled('m')) {
         printf("Starting to run at time %lu\n", stats->totalTicks);
@@ -50,18 +46,14 @@ Machine::Run()
 ///
 /// NOTE -- `RaiseException`/`CheckInterrupts` must also call `DelayedLoad`,
 /// since any delayed load must get applied before we trap to the kernel.
-void
-Machine::DelayedLoad(unsigned nextReg, int nextValue)
-{
+void Machine::DelayedLoad(unsigned nextReg, int nextValue) {
     registers[registers[LOAD_REG]] = registers[LOAD_VALUE_REG];
     registers[LOAD_REG] = nextReg;
     registers[LOAD_VALUE_REG] = nextValue;
     registers[0] = 0;  // And always make sure R0 stays zero.
 }
 
-bool
-Machine::FetchInstruction(Instruction *instr)
-{
+bool Machine::FetchInstruction(Instruction *instr) {
     ASSERT(instr != nullptr);
 
     int raw;
@@ -77,8 +69,8 @@ Machine::FetchInstruction(Instruction *instr)
         ASSERT(instr->opCode <= MAX_OPCODE);
         DEBUG('m', "At PC = 0x%X: ", registers[PC_REG]);
         DEBUG_CONT('m', str->string, instr->RegFromType(str->args[0]),
-                        instr->RegFromType(str->args[1]),
-                        instr->RegFromType(str->args[2]));
+                   instr->RegFromType(str->args[1]),
+                   instr->RegFromType(str->args[2]));
         DEBUG_CONT('m', "\n");
     }
     return true;
@@ -88,9 +80,7 @@ Machine::FetchInstruction(Instruction *instr)
 ///
 /// The words at `*hiPtr` and `*loPtr` are overwritten with the double-length
 /// result of the multiplication.
-static void
-Mult(int a, int b, bool signedArith, int *hiPtr, int *loPtr)
-{
+static void Mult(int a, int b, bool signedArith, int *hiPtr, int *loPtr) {
     ASSERT(hiPtr != nullptr);
     ASSERT(loPtr != nullptr);
 
@@ -150,8 +140,8 @@ Mult(int a, int b, bool signedArith, int *hiPtr, int *loPtr)
         }
     }
 
-    *hiPtr = (int) hi;
-    *loPtr = (int) lo;
+    *hiPtr = (int)hi;
+    *loPtr = (int)lo;
 }
 
 /// Execute one instruction from a user-level program.
@@ -171,26 +161,23 @@ Mult(int a, int b, bool signedArith, int *hiPtr, int *loPtr)
 /// all data back to the machine registers and memory before leaving.  This
 /// allows the Nachos kernel to control our behavior by controlling the
 /// contents of memory, the translation table, and the register set.
-void
-Machine::ExecInstruction(const Instruction *instr)
-{
+void Machine::ExecInstruction(const Instruction *instr) {
     int nextLoadReg = 0;
     int nextLoadValue = 0;  // Record delayed load operation, to apply in the
                             // future.
 
     // Compute next pc, but do not install in case there is an error or
     // branch.
-    int      pcAfter = registers[NEXT_PC_REG] + 4;
-    int      sum, diff, tmp, value;
+    int pcAfter = registers[NEXT_PC_REG] + 4;
+    int sum, diff, tmp, value;
     unsigned rs, rt, imm;
 
     // Execute the instruction (cf. Kane's book).
     switch (instr->opCode) {
-
         case OP_ADD:
             sum = registers[instr->rs] + registers[instr->rt];
-            if (!((registers[instr->rs] ^ registers[instr->rt]) & SIGN_BIT)
-                  && (registers[instr->rs] ^ sum) & SIGN_BIT) {
+            if (!((registers[instr->rs] ^ registers[instr->rt]) & SIGN_BIT) &&
+                (registers[instr->rs] ^ sum) & SIGN_BIT) {
                 RaiseException(OVERFLOW_EXCEPTION, 0);
                 return;
             }
@@ -199,8 +186,8 @@ Machine::ExecInstruction(const Instruction *instr)
 
         case OP_ADDI:
             sum = registers[instr->rs] + instr->extra;
-            if (!((registers[instr->rs] ^ instr->extra) & SIGN_BIT)
-                  && (instr->extra ^ sum) & SIGN_BIT) {
+            if (!((registers[instr->rs] ^ instr->extra) & SIGN_BIT) &&
+                (instr->extra ^ sum) & SIGN_BIT) {
                 RaiseException(OVERFLOW_EXCEPTION, 0);
                 return;
             }
@@ -212,18 +199,16 @@ Machine::ExecInstruction(const Instruction *instr)
             break;
 
         case OP_ADDU:
-            registers[instr->rd] = registers[instr->rs]
-                                   + registers[instr->rt];
+            registers[instr->rd] = registers[instr->rs] + registers[instr->rt];
             break;
 
         case OP_AND:
-            registers[instr->rd] = registers[instr->rs]
-                                   & registers[instr->rt];
+            registers[instr->rd] = registers[instr->rs] & registers[instr->rt];
             break;
 
         case OP_ANDI:
-            registers[instr->rt] = registers[instr->rs]
-                                   & (instr->extra & 0xFFFF);
+            registers[instr->rt] =
+                registers[instr->rs] & (instr->extra & 0xFFFF);
             break;
 
         case OP_BEQ:
@@ -271,24 +256,22 @@ Machine::ExecInstruction(const Instruction *instr)
                 registers[LO_REG] = 0;
                 registers[HI_REG] = 0;
             } else {
-                registers[LO_REG] = registers[instr->rs]
-                                    / registers[instr->rt];
-                registers[HI_REG] = registers[instr->rs]
-                                    % registers[instr->rt];
+                registers[LO_REG] = registers[instr->rs] / registers[instr->rt];
+                registers[HI_REG] = registers[instr->rs] % registers[instr->rt];
             }
             break;
 
         case OP_DIVU:
-            rs = (unsigned) registers[instr->rs];
-            rt = (unsigned) registers[instr->rt];
+            rs = (unsigned)registers[instr->rs];
+            rt = (unsigned)registers[instr->rt];
             if (rt == 0) {
                 registers[LO_REG] = 0;
                 registers[HI_REG] = 0;
             } else {
                 tmp = rs / rt;
-                registers[LO_REG] = (int) tmp;
+                registers[LO_REG] = (int)tmp;
                 tmp = rs % rt;
-                registers[HI_REG] = (int) tmp;
+                registers[HI_REG] = (int)tmp;
             }
             break;
 
@@ -409,16 +392,16 @@ Machine::ExecInstruction(const Instruction *instr)
             }
             switch (tmp & 0x3) {
                 case 0:
-                    nextLoadValue = (nextLoadValue & 0xFFFFFF00)
-                                    | (value >> 24 & 0xFF);
+                    nextLoadValue =
+                        (nextLoadValue & 0xFFFFFF00) | (value >> 24 & 0xFF);
                     break;
                 case 1:
-                    nextLoadValue = (nextLoadValue & 0xFFFF0000)
-                                    | (value >> 16 & 0xFFFF);
+                    nextLoadValue =
+                        (nextLoadValue & 0xFFFF0000) | (value >> 16 & 0xFFFF);
                     break;
                 case 2:
-                    nextLoadValue = (nextLoadValue & 0xFF000000)
-                                    | (value >> 8 & 0xFFFFFF);
+                    nextLoadValue =
+                        (nextLoadValue & 0xFF000000) | (value >> 8 & 0xFFFFFF);
                     break;
                 case 3:
                     nextLoadValue = value;
@@ -444,40 +427,39 @@ Machine::ExecInstruction(const Instruction *instr)
             break;
 
         case OP_MULT:
-            Mult(registers[instr->rs], registers[instr->rt],
-                 true, &registers[HI_REG], &registers[LO_REG]);
+            Mult(registers[instr->rs], registers[instr->rt], true,
+                 &registers[HI_REG], &registers[LO_REG]);
             break;
 
         case OP_MULTU:
-            Mult(registers[instr->rs], registers[instr->rt],
-                 false, &registers[HI_REG], &registers[LO_REG]);
+            Mult(registers[instr->rs], registers[instr->rt], false,
+                 &registers[HI_REG], &registers[LO_REG]);
             break;
 
         case OP_NOR:
-            registers[instr->rd] = ~(registers[instr->rs]
-                                     | registers[instr->rt]);
+            registers[instr->rd] =
+                ~(registers[instr->rs] | registers[instr->rt]);
             break;
 
         case OP_OR:
-            registers[instr->rd] = registers[instr->rs]
-                                   | registers[instr->rt];
+            registers[instr->rd] = registers[instr->rs] | registers[instr->rt];
             break;
 
         case OP_ORI:
-            registers[instr->rt] = registers[instr->rs]
-                                   | (instr->extra & 0xFFFF);
+            registers[instr->rt] =
+                registers[instr->rs] | (instr->extra & 0xFFFF);
             break;
 
         case OP_SB:
-            if (!WriteMem((unsigned) (registers[instr->rs] + instr->extra),
-                          1, registers[instr->rt])) {
+            if (!WriteMem((unsigned)(registers[instr->rs] + instr->extra), 1,
+                          registers[instr->rt])) {
                 return;
             }
             break;
 
         case OP_SH:
-            if (!WriteMem((unsigned) (registers[instr->rs] + instr->extra),
-                          2, registers[instr->rt])) {
+            if (!WriteMem((unsigned)(registers[instr->rs] + instr->extra), 2,
+                          registers[instr->rt])) {
                 return;
             }
             break;
@@ -493,12 +475,12 @@ Machine::ExecInstruction(const Instruction *instr)
 
         case OP_SLT:
             registers[instr->rd] =
-              (registers[instr->rs] < registers[instr->rt]) ? 1 : 0;
+                (registers[instr->rs] < registers[instr->rt]) ? 1 : 0;
             break;
 
         case OP_SLTI:
             registers[instr->rt] =
-              (registers[instr->rs] < instr->extra) ? 1 : 0;
+                (registers[instr->rs] < instr->extra) ? 1 : 0;
             break;
 
         case OP_SLTIU:
@@ -518,8 +500,8 @@ Machine::ExecInstruction(const Instruction *instr)
             break;
 
         case OP_SRAV:
-            registers[instr->rd] = registers[instr->rt]
-                                   >> (registers[instr->rs] & 0x1F);
+            registers[instr->rd] =
+                registers[instr->rt] >> (registers[instr->rs] & 0x1F);
             break;
 
         case OP_SRL:
@@ -536,8 +518,8 @@ Machine::ExecInstruction(const Instruction *instr)
 
         case OP_SUB:
             diff = registers[instr->rs] - registers[instr->rt];
-            if ((registers[instr->rs] ^ registers[instr->rt]) & SIGN_BIT
-                  && (registers[instr->rs] ^ diff) & SIGN_BIT) {
+            if ((registers[instr->rs] ^ registers[instr->rt]) & SIGN_BIT &&
+                (registers[instr->rs] ^ diff) & SIGN_BIT) {
                 RaiseException(OVERFLOW_EXCEPTION, 0);
                 return;
             }
@@ -545,13 +527,12 @@ Machine::ExecInstruction(const Instruction *instr)
             break;
 
         case OP_SUBU:
-            registers[instr->rd] = registers[instr->rs]
-                                   - registers[instr->rt];
+            registers[instr->rd] = registers[instr->rs] - registers[instr->rt];
             break;
 
         case OP_SW:
-            if (!WriteMem((unsigned) (registers[instr->rs] + instr->extra),
-                          4, registers[instr->rt])) {
+            if (!WriteMem((unsigned)(registers[instr->rs] + instr->extra), 4,
+                          registers[instr->rt])) {
                 return;
             }
             break;
@@ -571,16 +552,16 @@ Machine::ExecInstruction(const Instruction *instr)
                     value = registers[instr->rt];
                     break;
                 case 1:
-                    value = (value & 0xFF000000)
-                            | (registers[instr->rt] >> 8 & 0xFFFFFF);
+                    value = (value & 0xFF000000) |
+                            (registers[instr->rt] >> 8 & 0xFFFFFF);
                     break;
                 case 2:
-                    value = (value & 0xFFFF0000)
-                            | (registers[instr->rt] >> 16 & 0xFFFF);
+                    value = (value & 0xFFFF0000) |
+                            (registers[instr->rt] >> 16 & 0xFFFF);
                     break;
                 case 3:
-                    value = (value & 0xFFFFFF00)
-                            | (registers[instr->rt] >> 24 & 0xFF);
+                    value = (value & 0xFFFFFF00) |
+                            (registers[instr->rt] >> 24 & 0xFF);
                     break;
             }
             if (!WriteMem(tmp & ~0x3, 4, value)) {
@@ -600,12 +581,10 @@ Machine::ExecInstruction(const Instruction *instr)
             }
             switch (tmp & 0x3) {
                 case 0:
-                    value = (value & 0xFFFFFF)
-                            | registers[instr->rt] << 24;
+                    value = (value & 0xFFFFFF) | registers[instr->rt] << 24;
                     break;
                 case 1:
-                    value = (value & 0xFFFF)
-                            | registers[instr->rt] << 16;
+                    value = (value & 0xFFFF) | registers[instr->rt] << 16;
                     break;
                 case 2:
                     value = (value & 0xFF) | registers[instr->rt] << 8;
@@ -624,13 +603,12 @@ Machine::ExecInstruction(const Instruction *instr)
             return;
 
         case OP_XOR:
-            registers[instr->rd] = registers[instr->rs]
-                                   ^ registers[instr->rt];
+            registers[instr->rd] = registers[instr->rs] ^ registers[instr->rt];
             break;
 
         case OP_XORI:
-            registers[instr->rt] = registers[instr->rs]
-                                   ^ (instr->extra & 0xFFFF);
+            registers[instr->rt] =
+                registers[instr->rs] ^ (instr->extra & 0xFFFF);
             break;
 
         case OP_RES:
@@ -649,7 +627,7 @@ Machine::ExecInstruction(const Instruction *instr)
 
     // Advance program counters.
     registers[PREV_PC_REG] = registers[PC_REG];
-      // For debugging, in case we are jumping into lala-land.
+    // For debugging, in case we are jumping into lala-land.
     registers[PC_REG] = registers[NEXT_PC_REG];
     registers[NEXT_PC_REG] = pcAfter;
 }

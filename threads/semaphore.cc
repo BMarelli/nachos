@@ -20,18 +20,16 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
 #include "semaphore.hh"
-#include "system.hh"
 
+#include "system.hh"
 
 /// Initialize a semaphore, so that it can be used for synchronization.
 ///
 /// * `debugName` is an arbitrary name, useful for debugging.
 /// * `initialValue` is the initial value of the semaphore.
-Semaphore::Semaphore(const char *debugName, int initialValue)
-{
-    name  = debugName;
+Semaphore::Semaphore(const char *debugName, int initialValue) {
+    name = debugName;
     value = initialValue;
     queue = new List<Thread *>;
 }
@@ -39,16 +37,9 @@ Semaphore::Semaphore(const char *debugName, int initialValue)
 /// De-allocate semaphore, when no longer needed.
 ///
 /// Assume no one is still waiting on the semaphore!
-Semaphore::~Semaphore()
-{
-    delete queue;
-}
+Semaphore::~Semaphore() { delete queue; }
 
-const char *
-Semaphore::GetName() const
-{
-    return name;
-}
+const char *Semaphore::GetName() const { return name; }
 
 /// Wait until semaphore `value > 0`, then decrement.
 ///
@@ -57,13 +48,11 @@ Semaphore::GetName() const
 ///
 /// Note that `Thread::Sleep` assumes that interrupts are disabled when it is
 /// called.
-void
-Semaphore::P()
-{
+void Semaphore::P() {
     IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
-      // Disable interrupts.
+    // Disable interrupts.
 
-    while (value == 0) {  // Semaphore not available.
+    while (value == 0) {               // Semaphore not available.
         queue->Append(currentThread);  // So go to sleep.
         currentThread->Sleep();
     }
@@ -77,9 +66,7 @@ Semaphore::P()
 /// As with `P`, this operation must be atomic, so we need to disable
 /// interrupts.  `Scheduler::ReadyToRun` assumes that threads are disabled
 /// when it is called.
-void
-Semaphore::V()
-{
+void Semaphore::V() {
     IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
 
     Thread *thread = queue->Pop();

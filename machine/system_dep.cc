@@ -23,19 +23,18 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
 #include "interrupt.hh"
 #include "threads/system.hh"
 
 extern "C" {
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#include <signal.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/file.h>
-#include <sys/un.h>
 #include <sys/mman.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/un.h>
 #ifdef HOST_i386
 #include <sys/time.h>
 #endif
@@ -47,13 +46,11 @@ extern "C" {
 /// UNIX routines called by procedures in this file
 
 #include <stdlib.h>  // rand(), srand(), etc.
-#include <unistd.h>  // unlink(), open(), close(), sleep(), etc.
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/mman.h>
-
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>  // unlink(), open(), close(), sleep(), etc.
 }
-
 
 namespace SystemDep {
 
@@ -70,10 +67,8 @@ namespace SystemDep {
 ///     re-scheduled (sort of like a Yield, but cast in terms of UNIX).
 ///
 ///     "fd" -- the file descriptor of the file to be polled
-bool
-PollFile(int fd)
-{
-    int            rfd = (1 << fd), wfd = 0, xfd = 0, retVal;
+bool PollFile(int fd) {
+    int rfd = (1 << fd), wfd = 0, xfd = 0, retVal;
     struct timeval pollTime;
 
     // Decide how long to wait if there are no characters on the file.
@@ -81,13 +76,13 @@ PollFile(int fd)
     if (interrupt->GetStatus() == IDLE_MODE) {
         pollTime.tv_usec = 20000;  // Delay to let other nachos run.
     } else {
-        pollTime.tv_usec = 0;      // No delay.
+        pollTime.tv_usec = 0;  // No delay.
     }
 
     // Poll file or socket.
 #ifdef HOST_LINUX
-    retVal = select(32, (fd_set *) &rfd, (fd_set *) &wfd, (fd_set *) &xfd,
-                    &pollTime);
+    retVal =
+        select(32, (fd_set *)&rfd, (fd_set *)&wfd, (fd_set *)&xfd, &pollTime);
 #else
     retVal = select(32, &rfd, &wfd, &xfd, &pollTime);
 #endif
@@ -102,9 +97,7 @@ PollFile(int fd)
 /// Return the file descriptor.
 ///
 /// * `name` is the file name.
-int
-OpenForWrite(const char *name)
-{
+int OpenForWrite(const char *name) {
     ASSERT(name != nullptr);
     int fd = open(name, O_RDWR | O_CREAT | O_TRUNC, 0666);
     ASSERT(fd >= 0);
@@ -116,9 +109,7 @@ OpenForWrite(const char *name)
 /// Return the file descriptor, or error if it does not exist.
 ///
 /// * `name` is the file name.
-int
-OpenForReadWrite(const char *name, bool crashOnError)
-{
+int OpenForReadWrite(const char *name, bool crashOnError) {
     ASSERT(name != nullptr);
     int fd = open(name, O_RDWR, 0);
     ASSERT(!crashOnError || fd >= 0);
@@ -128,51 +119,40 @@ OpenForReadWrite(const char *name, bool crashOnError)
 /// Read characters from an open file.
 ///
 /// Abort if read fails.
-void
-Read(int fd, char *buffer, size_t nBytes)
-{
+void Read(int fd, char *buffer, size_t nBytes) {
     ASSERT(buffer != nullptr);
     ASSERT(nBytes > 0);
     ssize_t retVal = read(fd, buffer, nBytes);
-    ASSERT(retVal > 0 && retVal == (ssize_t) nBytes);
+    ASSERT(retVal > 0 && retVal == (ssize_t)nBytes);
 }
 
 /// Read characters from an open file, returning as many as are available.
-int
-ReadPartial(int fd, char *buffer, size_t nBytes)
-{
+int ReadPartial(int fd, char *buffer, size_t nBytes) {
     ASSERT(buffer != nullptr);
     ASSERT(nBytes > 0);
     return read(fd, buffer, nBytes);
 }
 
-
 /// Write characters to an open file.
 ///
 /// Abort if write fails.
-void
-WriteFile(int fd, const char *buffer, size_t nBytes)
-{
+void WriteFile(int fd, const char *buffer, size_t nBytes) {
     ASSERT(buffer != nullptr);
     ASSERT(nBytes > 0);
     ssize_t retVal = write(fd, buffer, nBytes);
-    ASSERT(retVal > 0 && retVal == (ssize_t) nBytes);
+    ASSERT(retVal > 0 && retVal == (ssize_t)nBytes);
 }
 
 /// Change the location within an open file.
 ///
 /// Abort on error.
-void
-Lseek(int fd, int offset, int whence)
-{
+void Lseek(int fd, int offset, int whence) {
     int retVal = lseek(fd, offset, whence);
     ASSERT(retVal >= 0);
 }
 
 /// Report the current location within an open file.
-int
-Tell(int fd)
-{
+int Tell(int fd) {
 #if defined(HOST_i386) || defined(HOST_LINUX)
     // 386BSD does not have the `tell` system call.
     return lseek(fd, 0, SEEK_CUR);
@@ -184,17 +164,13 @@ Tell(int fd)
 /// Close a file.
 ///
 /// Abort on error.
-void
-Close(int fd)
-{
+void Close(int fd) {
     int retVal = close(fd);
     ASSERT(retVal >= 0);
 }
 
 /// Delete a file.
-bool
-Unlink(const char *name)
-{
+bool Unlink(const char *name) {
     ASSERT(name != nullptr);
     return unlink(name);
 }
@@ -203,9 +179,7 @@ Unlink(const char *name)
 ///
 /// For now, just open a datagram port where other Nachos (simulating
 /// workstations on a network) can send messages to this Nachos.
-int
-OpenSocket()
-{
+int OpenSocket() {
     int sockID;
 
     sockID = socket(AF_UNIX, SOCK_DGRAM, 0);
@@ -215,16 +189,10 @@ OpenSocket()
 }
 
 /// Close the IPC connection.
-void
-CloseSocket(int sockID)
-{
-    close(sockID);
-}
+void CloseSocket(int sockID) { close(sockID); }
 
 /// Initialize a UNIX socket address -- magical!
-static void
-InitSocketName(struct sockaddr_un *uname, const char *name)
-{
+static void InitSocketName(struct sockaddr_un *uname, const char *name) {
     ASSERT(uname != nullptr);
     ASSERT(name != nullptr);
 
@@ -234,59 +202,51 @@ InitSocketName(struct sockaddr_un *uname, const char *name)
 
 /// Give a UNIX file name to the IPC port, so other instances of Nachos can
 /// locate the port.
-void
-AssignNameToSocket(const char *socketName, int sockID)
-{
+void AssignNameToSocket(const char *socketName, int sockID) {
     ASSERT(socketName != nullptr);
 
     struct sockaddr_un uName;
-    int                retVal;
+    int retVal;
 
     unlink(socketName);  // In case it is still around from last time.
 
     InitSocketName(&uName, socketName);
-    retVal = bind(sockID, (struct sockaddr *) &uName, sizeof uName);
+    retVal = bind(sockID, (struct sockaddr *)&uName, sizeof uName);
     ASSERT(retVal >= 0);
     DEBUG('n', "Created socket %s\n", socketName);
 }
 
 /// Delete the UNIX file name we assigned to our IPC port, on cleanup.
-void
-DeAssignNameToSocket(const char *socketName)
-{
+void DeAssignNameToSocket(const char *socketName) {
     ASSERT(socketName != nullptr);
     unlink(socketName);
 }
 
 /// Return true if there are any messages waiting to arrive on the IPC port.
-bool
-PollSocket(int sockID)
-{
+bool PollSocket(int sockID) {
     return PollFile(sockID);  // On UNIX, socket ID's are just file ID's.
 }
 
 /// Read a fixed size packet off the IPC port.
 ///
 /// Abort on error.
-void
-ReadFromSocket(int sockID, char *buffer, size_t packetSize)
-{
+void ReadFromSocket(int sockID, char *buffer, size_t packetSize) {
     ASSERT(buffer != nullptr);
     ASSERT(packetSize > 0);
 
     ssize_t retVal;
     // Comentado para evitar error de compilacion Red Hat 9 (2004)
-    //extern int errno;
+    // extern int errno;
     struct sockaddr_un uName;
     size_t size = sizeof uName;
 
-    retVal = recvfrom(sockID, buffer, packetSize, 0,
-                      (struct sockaddr *) &uName, (socklen_t *) &size);
+    retVal = recvfrom(sockID, buffer, packetSize, 0, (struct sockaddr *)&uName,
+                      (socklen_t *)&size);
 
-    if (retVal <= 0 || retVal != (ssize_t) packetSize) {
+    if (retVal <= 0 || retVal != (ssize_t)packetSize) {
         perror("in recvfrom");
         // Comentado para evitar error de compilacion Red Hat 9 (2004)
-        //printf("called: %X, got back %d, %d\n", buffer, retVal, errno);
+        // printf("called: %X, got back %d, %d\n", buffer, retVal, errno);
         ASSERT(false);
     }
 }
@@ -294,66 +254,49 @@ ReadFromSocket(int sockID, char *buffer, size_t packetSize)
 /// Transmit a fixed size packet to another Nachos' IPC port.
 ///
 /// Abort on error.
-void
-SendToSocket(int sockID, const char *buffer,
-             size_t packetSize, const char *toName)
-{
+void SendToSocket(int sockID, const char *buffer, size_t packetSize,
+                  const char *toName) {
     ASSERT(buffer != nullptr);
     ASSERT(packetSize > 0);
     ASSERT(toName != nullptr);
 
     struct sockaddr_un uName;
-    ssize_t            retVal;
+    ssize_t retVal;
 
     InitSocketName(&uName, toName);
 #ifdef HOST_LINUX
     retVal = sendto(sockID, buffer, packetSize, 0,
-                    (const struct sockaddr *) &uName, sizeof uName);
+                    (const struct sockaddr *)&uName, sizeof uName);
 #else
-    retVal = sendto(sockID, buffer, packetSize, 0,
-                    (char *) &uName, sizeof uName);
+    retVal =
+        sendto(sockID, buffer, packetSize, 0, (char *)&uName, sizeof uName);
 #endif
 
-    ASSERT(retVal > 0 && retVal == (ssize_t) packetSize);
+    ASSERT(retVal > 0 && retVal == (ssize_t)packetSize);
 }
-
 
 /// Arrange that `func` will be called when the user aborts (e.g., by hitting
 /// ctl-C).
-void
-CallOnUserAbort(VoidNoArgFunctionPtr func)
-{
+void CallOnUserAbort(VoidNoArgFunctionPtr func) {
     typedef void (*SignalHandler)(int);
 
     ASSERT(func != nullptr);
-    signal(SIGINT, (SignalHandler) func);
+    signal(SIGINT, (SignalHandler)func);
 }
 
 /// Put the UNIX process running Nachos to sleep for `seconds` seconds, to
 /// give the user time to start up another invocation of Nachos in a
 /// different UNIX shell.
-void
-Delay(unsigned seconds)
-{
-    sleep(seconds);
-}
+void Delay(unsigned seconds) { sleep(seconds); }
 
 /// Initialize the pseudo-random number generator.
 ///
 /// We use the now obsolete `srand` and `rand` because they are more
 /// portable!
-void
-RandomInit(unsigned seed)
-{
-    srand(seed);
-}
+void RandomInit(unsigned seed) { srand(seed); }
 
 /// Return a pseudo-random number.
-int
-Random()
-{
-    return rand();
-}
+int Random() { return rand(); }
 
 /// Return an array, with the two pages just before and after the array
 /// unmapped, to catch illegal references off the end of the array.
@@ -363,11 +306,9 @@ Random()
 /// Note: Just return the useful part!
 ///
 /// * `size` -- amount of useful space needed (in bytes).
-char *
-AllocBoundedArray(unsigned size)
-{
-    int   pgSize = getpagesize();
-    char *ptr    = new char [pgSize * 2 + size];
+char *AllocBoundedArray(unsigned size) {
+    int pgSize = getpagesize();
+    char *ptr = new char[pgSize * 2 + size];
 
 #ifndef HOST_LINUX
     mprotect(ptr, pgSize, 0);
@@ -380,9 +321,7 @@ AllocBoundedArray(unsigned size)
 ///
 /// * `ptr` is the array to be deallocated.
 /// * `size` is the amount of useful space in the array (in bytes).
-void
-DeallocBoundedArray(const char *ptr, unsigned size)
-{
+void DeallocBoundedArray(const char *ptr, unsigned size) {
     ASSERT(ptr != nullptr);
     ASSERT(size > 0);
 
@@ -390,9 +329,9 @@ DeallocBoundedArray(const char *ptr, unsigned size)
 
 #ifndef HOST_LINUX
     mprotect(ptr - pgSize, pgSize, PROT_READ | PROT_WRITE | PROT_EXEC);
-    mprotect(ptr + size,   pgSize, PROT_READ | PROT_WRITE | PROT_EXEC);
+    mprotect(ptr + size, pgSize, PROT_READ | PROT_WRITE | PROT_EXEC);
 #endif
-    delete [] (ptr - pgSize);
+    delete[] (ptr - pgSize);
 }
 
-};
+};  // namespace SystemDep

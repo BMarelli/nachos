@@ -72,19 +72,17 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
+#include <stdio.h>
+#include <string.h>
 
 #include "copyright.h"
+#include "lib/utility.hh"
 #include "sys_info.hh"
 #include "system.hh"
 #include "thread_test.hh"
-#include "lib/utility.hh"
-
-#include <stdio.h>
-#include <string.h>
 #ifdef NETWORK
-    #include <stdlib.h>
+#include <stdlib.h>
 #endif
-
 
 // External functions used by this file.
 
@@ -95,9 +93,7 @@ void StartProcess(const char *file);
 void ConsoleTest(const char *in, const char *out);
 void MailTest(int networkID);
 
-static inline void
-PrintVersion()
-{
+static inline void PrintVersion() {
     printf("%s (%s)\n%s", PROGRAM, VERSION, COPYRIGHT);
 }
 
@@ -114,9 +110,7 @@ PrintVersion()
 /// * `argv` is an array of strings, one for each command line argument.
 ///   Example:
 ///       nachos -d +  ->  argv = {"nachos", "-d", "+"}
-int
-main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     int argCount;  // The number of arguments for a particular command.
 
     Initialize(argc, argv);
@@ -128,18 +122,18 @@ main(int argc, char **argv)
             SysInfo();
             return 0;
         }
-        if (!strcmp(*argv, "-z")) {          // Print version info and exit.
+        if (!strcmp(*argv, "-z")) {  // Print version info and exit.
             PrintVersion();
             return 0;
         }
 #ifdef THREADS
-        if (!strcmp(*argv, "-tt")) {         // Test the threading subsystem.
+        if (!strcmp(*argv, "-tt")) {  // Test the threading subsystem.
             ThreadTest();
             interrupt->Halt();
         }
 #endif
 #ifdef USER_PROGRAM
-        if (!strcmp(*argv, "-x")) {          // Run a user program.
+        if (!strcmp(*argv, "-x")) {  // Run a user program.
             ASSERT(argc > 1);
             StartProcess(*(argv + 1));
             argCount = 2;
@@ -157,7 +151,7 @@ main(int argc, char **argv)
         }
 #endif
 #ifdef FILESYS
-        if (!strcmp(*argv, "-cp")) {         // Copy from UNIX to Nachos.
+        if (!strcmp(*argv, "-cp")) {  // Copy from UNIX to Nachos.
             ASSERT(argc > 2);
             Copy(*(argv + 1), *(argv + 2));
             argCount = 3;
@@ -173,10 +167,10 @@ main(int argc, char **argv)
         } else if (!strcmp(*argv, "-ls")) {  // List Nachos directory.
             fileSystem->List();
             printf("\n");
-        } else if (!strcmp(*argv, "-D")) {   // Print entire filesystem.
+        } else if (!strcmp(*argv, "-D")) {  // Print entire filesystem.
             fileSystem->Print();
             printf("\n");
-        } else if (!strcmp(*argv, "-c")) {   // Check the filesystem.
+        } else if (!strcmp(*argv, "-c")) {  // Check the filesystem.
             bool result = fileSystem->Check();
             printf("Filesystem check %s.\n", result ? "succeeded" : "failed");
         } else if (!strcmp(*argv, "-tf")) {  // Performance test.
@@ -191,14 +185,14 @@ main(int argc, char **argv)
             MailTest(atoi(*(argv + 1)));
             argCount = 2;
         }
-#endif // NETWORK
+#endif  // NETWORK
     }
 
     currentThread->Finish();
-      // NOTE: if the procedure `main` returns, then the program `nachos`
-      // will exit (as any other normal program would).  But there may be
-      // other threads on the ready list.  We switch to those threads by
-      // saying that the `main` thread is finished, preventing it from
-      // returning.
+    // NOTE: if the procedure `main` returns, then the program `nachos`
+    // will exit (as any other normal program would).  But there may be
+    // other threads on the ready list.  We switch to those threads by
+    // saying that the `main` thread is finished, preventing it from
+    // returning.
     return 0;  // Not reached...
 }

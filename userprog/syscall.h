@@ -13,25 +13,23 @@
 #ifndef NACHOS_USERPROG_SYSCALL__H
 #define NACHOS_USERPROG_SYSCALL__H
 
-
 /// System call codes.
 ///
 /// Used by the stubs to tell the kernel which system call is being asked
 /// for.
 
-#define SC_HALT     0
-#define SC_EXIT     1
-#define SC_EXEC     2
-#define SC_JOIN     3
-#define SC_FORK     4
-#define SC_YIELD    5
-#define SC_CREATE  10
-#define SC_REMOVE  11
-#define SC_OPEN    12
-#define SC_CLOSE   13
-#define SC_READ    14
-#define SC_WRITE   15
-
+#define SC_HALT 0
+#define SC_EXIT 1
+#define SC_EXEC 2
+#define SC_JOIN 3
+#define SC_FORK 4
+#define SC_YIELD 5
+#define SC_CREATE 10
+#define SC_REMOVE 11
+#define SC_OPEN 12
+#define SC_CLOSE 13
+#define SC_READ 14
+#define SC_WRITE 15
 
 #ifndef IN_ASM
 
@@ -46,7 +44,6 @@
 
 /// Stop Nachos, and print out performance stats.
 void Halt();
-
 
 /// Address space control operations: `Exit`, `Exec`, and `Join`.
 
@@ -65,7 +62,6 @@ SpaceId Exec(char *name);
 /// Return the exit status.
 int Join(SpaceId id);
 
-
 /// User-level thread operations: `Fork` and `Yield`.  To allow multiple
 /// threads to run within a user program.
 
@@ -76,7 +72,6 @@ int Fork(void (*func)(void));
 /// Yield the CPU to another runnable thread, whether in this address space
 /// or not.
 void Yield();
-
 
 /// File system operations: `Create`, `Open`, `Read`, `Write`, `Close`.
 ///
@@ -95,8 +90,8 @@ typedef int OpenFileId;
 /// Read and Write can be used directly on these, without first opening the
 /// console device.
 
-#define CONSOLE_INPUT   0
-#define CONSOLE_OUTPUT  1
+#define CONSOLE_INPUT 0
+#define CONSOLE_OUTPUT 1
 
 /// Create a Nachos file, with `name`.
 int Create(const char *name);
@@ -122,8 +117,6 @@ int Read(char *buffer, int size, OpenFileId id);
 /// Close the file, we are done reading and writing to it.
 int Close(OpenFileId id);
 
-
 #endif
-
 
 #endif

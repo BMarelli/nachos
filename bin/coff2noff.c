@@ -18,32 +18,27 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
+#include <assert.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "coff_reader.h"
 #include "coff_section.h"
 #include "noff.h"
 #include "threads/copyright.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-
-#include <assert.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-
-#define ReadStructOrDie(f, s)  ReadOrDie(f, (char *) &(s), sizeof (s))
+#define ReadStructOrDie(f, s) ReadOrDie(f, (char *)&(s), sizeof(s))
 
 static char *outFileName = NULL;
 
-static void
-Die(const char *format, ...)
-{
+static void Die(const char *format, ...) {
     assert(format != NULL);
 
     va_list args;
@@ -57,9 +52,7 @@ Die(const char *format, ...)
 }
 
 /// Read and check for error.
-static void
-ReadOrDie(FILE *f, char *buffer, size_t numBytes)
-{
+static void ReadOrDie(FILE *f, char *buffer, size_t numBytes) {
     assert(f != NULL);
     assert(buffer != NULL);
 
@@ -69,9 +62,7 @@ ReadOrDie(FILE *f, char *buffer, size_t numBytes)
 }
 
 /// Write and check for error.
-static void
-WriteOrDie(FILE *f, const char *buffer, size_t numBytes)
-{
+static void WriteOrDie(FILE *f, const char *buffer, size_t numBytes) {
     assert(f != NULL);
     assert(buffer != NULL);
 
@@ -80,18 +71,15 @@ WriteOrDie(FILE *f, const char *buffer, size_t numBytes)
     }
 }
 
-void
-main(int argc, char *argv[])
-{
-    FILE      *in, *out;
-    int        inNoffFile;
-    unsigned   numSections, i;
-    char      *buffer;
+void main(int argc, char *argv[]) {
+    FILE *in, *out;
+    int inNoffFile;
+    unsigned numSections, i;
+    char *buffer;
     noffHeader noffH;
 
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s <coffFileName> <noffFileName>\n",
-                argv[0]);
+        fprintf(stderr, "Usage: %s <coffFileName> <noffFileName>\n", argv[0]);
         exit(1);
     }
 
@@ -119,9 +107,9 @@ main(int argc, char *argv[])
 
     /// Initialize the NOFF header, in case not all the segments are defined
     /// in the COFF file.
-    noffH.noffMagic       = NOFF_MAGIC;
-    noffH.code.size       = 0;
-    noffH.initData.size   = 0;
+    noffH.noffMagic = NOFF_MAGIC;
+    noffH.code.size = 0;
+    noffH.initData.size = 0;
     noffH.uninitData.size = 0;
 
     /// Copy the segments in.
@@ -142,24 +130,23 @@ main(int argc, char *argv[])
 
         if (!strcmp(name, ".text")) {
             noffH.code.virtualAddr = addr;
-            noffH.code.inFileAddr  = inNoffFile;
-            noffH.code.size        = size;
+            noffH.code.inFileAddr = inNoffFile;
+            noffH.code.size = size;
             if ((buffer = CoffSectionRead(sc, in, &errorS)) == NULL) {
                 Die(errorS);
             }
             WriteOrDie(out, buffer, size);
             free(buffer);
             inNoffFile += size;
-        } else if (!strcmp(name, ".data")
-                     || !strcmp(name, ".rdata")) {
+        } else if (!strcmp(name, ".data") || !strcmp(name, ".rdata")) {
             /// Need to check if we have both `.data` and `.rdata` -- make
             /// sure one or the other is empty!
             if (noffH.initData.size != 0) {
                 Die("Cannot handle both data and rdata");
             }
             noffH.initData.virtualAddr = addr;
-            noffH.initData.inFileAddr  = inNoffFile;
-            noffH.initData.size        = size;
+            noffH.initData.inFileAddr = inNoffFile;
+            noffH.initData.size = size;
             if ((buffer = CoffSectionRead(sc, in, &errorS)) == NULL) {
                 Die(errorS);
             }
@@ -170,35 +157,38 @@ main(int argc, char *argv[])
             /// Need to check if we have both `.bss` and `.sbss` -- make sure
             /// they are contiguous.
             if (noffH.uninitData.size != 0) {
-                if (addr == noffH.uninitData.virtualAddr +
-                            noffH.uninitData.size) {
+                if (addr ==
+                    noffH.uninitData.virtualAddr + noffH.uninitData.size) {
                     Die("Cannot handle both bss and sbss");
                 }
                 noffH.uninitData.size += size;
             } else {
                 noffH.uninitData.virtualAddr = addr;
-                noffH.uninitData.size        = size;
+                noffH.uninitData.size = size;
             }
             // We do not need to copy the uninitialized data!
-        } else if (!strcmp(name, ".comment")) {}
-            // Ignore.  This section contains build information.
-        else if (!strcmp(name, ".pdr")) {}
-            // Ignore.  This section is for debugging.
-            //
-            // For more information, see:
-            // * https://gdb-patches.sourceware.narkive.com/3bt9szEg/rfa-mips-use-pdr-sections-generated-by-gas
-        else if (!strcmp(name, ".reginfo")) {}
-            // Ignore.  This section is specific to the System V MIPS ABI and
-            // nothing really uses it.
-            //
-            // For information about it, see:
-            // * System V Application Binary Interface, MIPS RISC processor
-            //   supplement.
-            //     ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
-            // * Discussion in the linux-mips mailing list.
-            //     https://www.linux-mips.org/archives/linux-mips/2002-12/msg00190.html
+        } else if (!strcmp(name, ".comment")) {
+        }
+        // Ignore.  This section contains build information.
+        else if (!strcmp(name, ".pdr")) {
+        }
+        // Ignore.  This section is for debugging.
+        //
+        // For more information, see:
+        // * https://gdb-patches.sourceware.narkive.com/3bt9szEg/rfa-mips-use-pdr-sections-generated-by-gas
+        else if (!strcmp(name, ".reginfo")) {
+        }
+        // Ignore.  This section is specific to the System V MIPS ABI and
+        // nothing really uses it.
+        //
+        // For information about it, see:
+        // * System V Application Binary Interface, MIPS RISC processor
+        //   supplement.
+        //     ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
+        // * Discussion in the linux-mips mailing list.
+        //     https://www.linux-mips.org/archives/linux-mips/2002-12/msg00190.html
         else {
-            //Die("Unknown segment type: `%s`", name);
+            // Die("Unknown segment type: `%s`", name);
             printf("WARNING: ignoring segment type \"%s\".\n", name);
         }
 
@@ -206,7 +196,7 @@ main(int argc, char *argv[])
     }
 
     fseek(out, 0, SEEK_SET);
-    WriteOrDie(out, (const char *) &noffH, sizeof noffH);
+    WriteOrDie(out, (const char *)&noffH, sizeof noffH);
     fclose(in);
     fclose(out);
     exit(0);

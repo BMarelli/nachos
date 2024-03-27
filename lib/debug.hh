@@ -23,18 +23,14 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
 #ifndef NACHOS_LIB_DEBUG__HH
 #define NACHOS_LIB_DEBUG__HH
 
-
 #include "debug_opts.hh"
-
 
 /// Interface to debugging routines.
 class Debug {
-public:
-
+   public:
     /// No flag is set at the beginning, so no debug message would be
     /// printed until `SetFlags` is called.
     Debug();
@@ -72,12 +68,11 @@ public:
     /// Useful for splitting a call for a `Print` line into multiple calls.
     void PrintCont(char flag, const char *format, ...) const;
 
-private:
+   private:
     /// String that controls which debug messages are printed.
     const char *flags;
 
     DebugOpts opts;
 };
-
 
 #endif

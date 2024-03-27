@@ -5,20 +5,17 @@
 /// is hereby granted, provided that the above copyright notice appear in all
 /// copies of this software.
 
-
 #include "preemptive.hh"
 
 // Access to global objects: `currentThread`, `interrupt`...
 #include "system.hh"
 
 // UNIX and Linux-specific headers.
-#include <unistd.h>
-#include <sys/ptrace.h>
-#include <sys/wait.h>
-#include <sys/user.h>
-
 #include <stdlib.h>
-
+#include <sys/ptrace.h>
+#include <sys/user.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 static void ContextSwitch();
 static void MonitorProcess(int childPid, unsigned long timeSliceLength);
@@ -30,9 +27,7 @@ static bool inContextSwitch = false;
 ///
 /// * `timeSliceLength` means how many machine instructions will last the
 ///   time slice for every kernel thread.
-void
-PreemptiveScheduler::SetUp(unsigned long timeSliceLength)
-{
+void PreemptiveScheduler::SetUp(unsigned long timeSliceLength) {
     int childPid = fork();
     switch (childPid) {
         case -1:
@@ -53,26 +48,21 @@ PreemptiveScheduler::SetUp(unsigned long timeSliceLength)
     }
 }
 
-void
-LetMeBeMonitored()
-{
+void LetMeBeMonitored() {
     // Allow the parent process to ptrace me.
     ptrace(PTRACE_TRACEME, 0, nullptr, nullptr);
 
-    DEBUG ('p', "Preemptive scheduler: child process will be ptraced\n");
+    DEBUG('p', "Preemptive scheduler: child process will be ptraced\n");
 
     // Raise a signal to bring back control to the parent.
     raise(SIGUSR1);
 }
 
-void
-MonitorProcess(int childPid, unsigned long timeSliceLength)
-{
+void MonitorProcess(int childPid, unsigned long timeSliceLength) {
     // Machine instruction counter.
     long long instructionCounter = 1;
 
     while (true) {
-
         // Wait for child process.
         int wait_val;
         wait(&wait_val);
@@ -88,17 +78,18 @@ MonitorProcess(int childPid, unsigned long timeSliceLength)
         if (instructionCounter % timeSliceLength == 0) {
             // Get child value of `inContextSwitch`.
             long incs = ptrace(PTRACE_PEEKDATA, childPid,
-                               (void *) &inContextSwitch, nullptr);
+                               (void *)&inContextSwitch, nullptr);
 
             if (incs == 0) {
-                DEBUG('p', "Preemptive scheduler: "
-                           "forcing a context switch at instruction %lld\n",
+                DEBUG('p',
+                      "Preemptive scheduler: "
+                      "forcing a context switch at instruction %lld\n",
                       instructionCounter);
 
                 struct user_regs_struct regs;
 
                 // Get child process registers.
-                ptrace(PTRACE_GETREGS,  childPid, nullptr, &regs);
+                ptrace(PTRACE_GETREGS, childPid, nullptr, &regs);
 
                 // Build a call stack frame by inserting EIP/RIP on top of
                 // the stack.
@@ -106,12 +97,12 @@ MonitorProcess(int childPid, unsigned long timeSliceLength)
                 regs.esp = regs.esp - 4;
                 ptrace(PTRACE_POKEDATA, childPid, regs.esp, regs.eip);
                 // Force a jump to `ContextSwitch`.
-                regs.eip = (uintptr_t) ContextSwitch;
+                regs.eip = (uintptr_t)ContextSwitch;
 #elif defined(HOST_x86_64)
                 regs.rsp = regs.rsp - 8;
                 ptrace(PTRACE_POKEDATA, childPid, regs.rsp, regs.rip);
                 // Force a jump to ContextSwitch`.
-                regs.rip = (uintptr_t) ContextSwitch;
+                regs.rip = (uintptr_t)ContextSwitch;
 #endif
 
                 // Store new register values in the child process. The child
@@ -128,25 +119,23 @@ MonitorProcess(int childPid, unsigned long timeSliceLength)
     exit(0);
 }
 
-
 /// Force a context switch.
 ///
 /// This call is made asynchronously from the parent process, using `ptrace`
 /// features.
-static void
-ContextSwitch(void)
-{
+static void ContextSwitch(void) {
     // Prevent register loss: save all registers.
 #ifdef HOST_i386
-    __asm__ ("pushal");
-    __asm__ ("subl $8, %esp");
+    __asm__("pushal");
+    __asm__("subl $8, %esp");
 #elif defined(HOST_x86_64)
     // Push all registers.
-    __asm__ ("push %rax; push %rbx; push %rcx; push %rdx");
-    __asm__ ("push %rsi; push %rdi; push %rsp; push %rbp");
-    __asm__ ("push %r8; push %r9; push %r10; push %r11; "
-             "push %r12; push %r13; push %r14; push %r15");
-    __asm__ ("sub $16, %rsp");
+    __asm__("push %rax; push %rbx; push %rcx; push %rdx");
+    __asm__("push %rsi; push %rdi; push %rsp; push %rbp");
+    __asm__(
+        "push %r8; push %r9; push %r10; push %r11; "
+        "push %r12; push %r13; push %r14; push %r15");
+    __asm__("sub $16, %rsp");
 #endif
 
     inContextSwitch = true;
@@ -162,14 +151,15 @@ ContextSwitch(void)
 
     // Restore old register values.
 #ifdef HOST_i386
-    __asm__ ("addl $8, %esp");
-    __asm__ ("popal");
+    __asm__("addl $8, %esp");
+    __asm__("popal");
 #elif defined(HOST_x86_64)
-    __asm__ ("add $16, %rsp");
+    __asm__("add $16, %rsp");
     // Pop all registers.
-    __asm__ ("pop %r15; pop %r14; pop %r13; pop %r12; "
-             "pop %r11; pop %r10; pop %r9; pop %r8");
-    __asm__ ("pop %rbp; pop %rsp; pop %rdi; pop %rsi");
-    __asm__ ("pop %rdx; pop %rcx; pop %rbx; pop %rax");
+    __asm__(
+        "pop %r15; pop %r14; pop %r13; pop %r12; "
+        "pop %r11; pop %r10; pop %r9; pop %r8");
+    __asm__("pop %rbp; pop %rsp; pop %rdi; pop %rsi");
+    __asm__("pop %rdx; pop %rcx; pop %rbx; pop %rax");
 #endif
 }

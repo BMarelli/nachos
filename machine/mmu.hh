@@ -8,11 +8,9 @@
 #ifndef NACHOS_MACHINE_MMU__HH
 #define NACHOS_MACHINE_MMU__HH
 
-
-#include "exception_type.hh"
 #include "disk.hh"
+#include "exception_type.hh"
 #include "translation_entry.hh"
-
 
 /// Definitions related to the size, and format of user memory.
 
@@ -27,11 +25,10 @@ const unsigned MEMORY_SIZE = NUM_PHYS_PAGES * PAGE_SIZE;
 /// If there is a TLB, it will be small compared to page tables.
 const unsigned TLB_SIZE = 4;
 
-
 /// This class simulates an MMU (memory management unit) that can use either
 /// page tables or a TLB.
 class MMU {
-public:
+   public:
     // Initialize the MMU subsystem.
     MMU();
 
@@ -82,8 +79,7 @@ public:
     TranslationEntry *pageTable;
     unsigned pageTableSize;
 
-private:
-
+   private:
     /// Retrieve a page entry either from a page table or the TLB.
     ExceptionType RetrievePageEntry(unsigned vpn,
                                     TranslationEntry **entry) const;
@@ -96,6 +92,5 @@ private:
     ExceptionType Translate(unsigned virtAddr, unsigned *physAddr,
                             unsigned size, bool writing);
 };
-
 
 #endif

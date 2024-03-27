@@ -11,9 +11,7 @@
 #ifndef NACHOS_LIB_LIST__HH
 #define NACHOS_LIB_LIST__HH
 
-
 #include "utility.hh"
-
 
 /// The following class defines a “list element” -- which is used to keep
 /// track of one item on a list.
@@ -22,8 +20,7 @@
 /// them directly.
 template <class Item>
 class ListElement {
-public:
-
+   public:
     // Initialize a list element.
     ListElement(Item itemPtr, int sortKey);
 
@@ -39,8 +36,7 @@ public:
 /// increasing order by `key` in `ListElement`.
 template <class Item>
 class List {
-public:
-
+   public:
     /// Initialize the list.
     List();
 
@@ -78,8 +74,7 @@ public:
     /// Remove first item from list.
     Item SortedPop(int *keyPtr);
 
-private:
-
+   private:
     typedef ListElement<Item> ListNode;
 
     ListNode *first;  ///< Head of the list, null if list is empty.
@@ -91,19 +86,17 @@ private:
 /// * `anItem` is the item to be put on the list.
 /// * `sortKey` is the priority of the item, if any.
 template <class Item>
-ListElement<Item>::ListElement(Item anItem, int sortKey)
-{
-     item = anItem;
-     key  = sortKey;
-     next = nullptr;  // Assume we will put it at the end of the list.
+ListElement<Item>::ListElement(Item anItem, int sortKey) {
+    item = anItem;
+    key = sortKey;
+    next = nullptr;  // Assume we will put it at the end of the list.
 }
 
 /// Initialize a list, empty to start with.
 ///
 /// Elements can now be added to the list.
 template <class Item>
-List<Item>::List()
-{
+List<Item>::List() {
     first = last = nullptr;
 }
 
@@ -115,8 +108,7 @@ List<Item>::List()
 /// of each item, but a given item may be on multiple lists, so we cannot
 /// de-allocate them here.
 template <class Item>
-List<Item>::~List()
-{
+List<Item>::~List() {
     /// Delete all the list elements.
     while (!IsEmpty()) {
         Pop();
@@ -130,9 +122,7 @@ List<Item>::~List()
 //
 // * `item` is the thing to put on the list, it can be a pointer to anything.
 template <class Item>
-void
-List<Item>::Append(Item item)
-{
+void List<Item>::Append(Item item) {
     ListNode *element = new ListNode(item, 0);
 
     if (IsEmpty()) {
@@ -153,9 +143,7 @@ List<Item>::Append(Item item)
 /// * `item` is the thing to put on the list, it can be a pointer to
 ///   anything.
 template <class Item>
-void
-List<Item>::Prepend(Item item)
-{
+void List<Item>::Prepend(Item item) {
     ListNode *element = new ListNode(item, 0);
 
     if (IsEmpty()) {
@@ -173,9 +161,7 @@ List<Item>::Prepend(Item item)
 ///
 /// Returns an item.
 template <class Item>
-Item
-List<Item>::Head()
-{
+Item List<Item>::Head() {
     ASSERT(!IsEmpty());
 
     return first->item;
@@ -185,19 +171,14 @@ List<Item>::Head()
 ///
 /// Returns the removed item, `Item()` if nothing on the list.
 template <class Item>
-Item
-List<Item>::Pop()
-{
+Item List<Item>::Pop() {
     // Same as `SortedPop`, but ignore the key.
     return SortedPop(nullptr);
 }
 
 template <class Item>
-void
-List<Item>::Remove(Item item)
-{
-    for (ListNode *ptr = first, *prev_ptr = nullptr;
-         ptr != nullptr;
+void List<Item>::Remove(Item item) {
+    for (ListNode *ptr = first, *prev_ptr = nullptr; ptr != nullptr;
          prev_ptr = ptr, ptr = ptr->next) {
         if (item == ptr->item) {
             if (prev_ptr) {
@@ -220,20 +201,16 @@ List<Item>::Remove(Item item)
 ///
 /// * `func` is the procedure to apply to each element of the list.
 template <class Item>
-void
-List<Item>::Apply(void (*func)(Item))
-{
+void List<Item>::Apply(void (*func)(Item)) {
     ASSERT(func != nullptr);
 
     for (ListNode *ptr = first; ptr != nullptr; ptr = ptr->next) {
-       func(ptr->item);
+        func(ptr->item);
     }
 }
 
 template <class Item>
-bool
-List<Item>::Has(Item item) const
-{
+bool List<Item>::Has(Item item) const {
     for (ListNode *ptr = first; ptr != nullptr; ptr = ptr->next) {
         if (item == ptr->item) {
             return true;
@@ -244,9 +221,7 @@ List<Item>::Has(Item item) const
 
 /// Returns true if the list is empty (has no items).
 template <class Item>
-bool
-List<Item>::IsEmpty() const
-{
+bool List<Item>::IsEmpty() const {
     return first == nullptr;
 }
 
@@ -261,9 +236,7 @@ List<Item>::IsEmpty() const
 ///   anything.
 /// * `sortKey` is the priority of the item.
 template <class Item>
-void
-List<Item>::SortedInsert(Item item, int sortKey)
-{
+void List<Item>::SortedInsert(Item item, int sortKey) {
     ListNode *element = new ListNode(item, sortKey);
 
     if (IsEmpty()) {  // If list is empty, put.
@@ -296,9 +269,7 @@ List<Item>::SortedInsert(Item item, int sortKey)
 /// * `keyPtr` is a pointer to the location in which to store the priority of
 ///   the removed item.
 template <class Item>
-Item
-List<Item>::SortedPop(int *keyPtr)
-{
+Item List<Item>::SortedPop(int *keyPtr) {
     ListNode *element = first;
 
     if (IsEmpty()) {
@@ -318,6 +289,5 @@ List<Item>::SortedPop(int *keyPtr)
     delete element;
     return thing;
 }
-
 
 #endif

@@ -35,26 +35,15 @@
 #ifndef NACHOS_MACHINE_INTERRUPT__HH
 #define NACHOS_MACHINE_INTERRUPT__HH
 
-
 #include "lib/list.hh"
 
-
 /// Interrupts can be disabled (`INT_OFF`) or enabled (`INT_ON`).
-enum IntStatus {
-    INT_OFF,
-    INT_ON,
-    NUM_INT_STATUS
-};
+enum IntStatus { INT_OFF, INT_ON, NUM_INT_STATUS };
 
 /// Nachos can be running kernel code (`SYSTEM_MODE`), user code
 /// (`USER_MODE`), or there can be no runnable thread, because the ready list
 /// is empty (`IDLE_MODE`).
-enum MachineStatus {
-    IDLE_MODE,
-    SYSTEM_MODE,
-    USER_MODE,
-    NUM_MACHINE_STATUS
-};
+enum MachineStatus { IDLE_MODE, SYSTEM_MODE, USER_MODE, NUM_MACHINE_STATUS };
 
 /// `IntType` records which hardware device generated an interrupt.  In
 /// Nachos, we support a hardware timer device, a disk, a console display and
@@ -75,18 +64,17 @@ enum IntType {
 /// The internal data structures are left public to make it simpler to
 /// manipulate.
 class PendingInterrupt {
-public:
-
+   public:
     /// initialize an interrupt that will occur in the future.
-    PendingInterrupt(VoidFunctionPtr func, void *param,
-                     unsigned long time, IntType kind);
+    PendingInterrupt(VoidFunctionPtr func, void *param, unsigned long time,
+                     IntType kind);
 
     VoidFunctionPtr handler;  ///< The function (in the hardware device
                               ///< emulator) to call when the interrupt
                               ///< occurs.
-    void *arg;  ///< The argument to the function.
-    unsigned long when;  ///< When the interrupt is supposed to fire.
-    IntType type;  ///< For debugging.
+    void *arg;                ///< The argument to the function.
+    unsigned long when;       ///< When the interrupt is supposed to fire.
+    IntType type;             ///< For debugging.
 };
 
 /// The following class defines the data structures for the simulation
@@ -95,8 +83,7 @@ public:
 /// We record whether interrupts are enabled or disabled, and any hardware
 /// interrupts that are scheduled to occur in the future.
 class Interrupt {
-public:
-
+   public:
     /// Initialize the interrupt simulation.
     Interrupt();
 
@@ -130,7 +117,6 @@ public:
     // Print interrupt state.
     void DumpState();
 
-
     /// NOTE: the following are internal to the hardware simulation code.
     /// DO NOT call these directly.  I should make them “private”,
     /// but they need to be public since they are called by the
@@ -139,19 +125,19 @@ public:
     /// Schedule an interrupt to occur at time ``when''.
     ///
     /// This is called by the hardware device simulators.
-    void Schedule(VoidFunctionPtr handler, void *arg,
-                  unsigned long when, IntType type);
+    void Schedule(VoidFunctionPtr handler, void *arg, unsigned long when,
+                  IntType type);
 
     /// Advance simulated time.
     void OneTick();
 
-private:
-    IntStatus level;  ///< Are interrupts enabled or disabled?
+   private:
+    IntStatus level;                    ///< Are interrupts enabled or disabled?
     List<PendingInterrupt *> *pending;  ///< The list of interrupts scheduled
                                         ///< to occur in the future.
-    bool inHandler;  ///< True if we are running an interrupt handler.
-    bool yieldOnReturn;  ///< True if we are to context switch on return from
-                         ///< the interrupt handler.
+    bool inHandler;        ///< True if we are running an interrupt handler.
+    bool yieldOnReturn;    ///< True if we are to context switch on return from
+                           ///< the interrupt handler.
     MachineStatus status;  ///< Idle, kernel mode, user mode.
 
     /// These functions are internal to the interrupt simulation code.
@@ -160,15 +146,12 @@ private:
     bool CheckIfDue(bool advanceClock);
 
     /// SetLevel, without advancing the simulated time.
-    void ChangeLevel(IntStatus old,
-                     IntStatus now);
+    void ChangeLevel(IntStatus old, IntStatus now);
 
 #ifdef DFS_TICKS_FIX
     /// Restart total ticks and the pending interrupt list.
     void RestartTicks();
 #endif
-
 };
-
 
 #endif

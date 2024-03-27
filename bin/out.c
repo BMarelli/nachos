@@ -11,11 +11,6 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
-
-#include "coff.h"
-#include "extern/syms.h"
-#include "threads/copyright.h"
-
 #include <ctype.h>
 #include <inttypes.h>
 #include <stdarg.h>
@@ -24,22 +19,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "coff.h"
+#include "extern/syms.h"
+#include "threads/copyright.h"
 
-#define ReadStruct(f, s) (fread(&(s), sizeof (s), 1, (f)) == 1)
+#define ReadStruct(f, s) (fread(&(s), sizeof(s), 1, (f)) == 1)
 
-#define MAX_DATA    10000
-#define MAX_RELOCS  1000
+#define MAX_DATA 10000
+#define MAX_RELOCS 1000
 
 typedef struct data {
-    uint32_t  data[MAX_DATA];
+    uint32_t data[MAX_DATA];
     coffReloc reloc[MAX_RELOCS];
-    unsigned  length;
-    unsigned  relocs;
+    unsigned length;
+    unsigned relocs;
 } data;
 
-#define MAX_SECTIONS  10
-#define MAX_SYMBOLS   300
-#define MAX_SSPACE    20000
+#define MAX_SECTIONS 10
+#define MAX_SYMBOLS 300
+#define MAX_SSPACE 20000
 
 coffFileHeader fileHeader;
 coffOptHeader optHeader;
@@ -51,21 +49,19 @@ static EXTR symbols[MAX_SYMBOLS];
 static char sspace[MAX_SSPACE];
 
 static const char *SYMBOL_TYPE[] = {
-    "Nil", "Global", "Static", "Param", "Local", "Label", "Proc", "Block",
-    "End", "Member", "Type", "File", "Register", "Forward", "StaticProc",
-    "Constant" };
+    "Nil",      "Global",  "Static",     "Param",   "Local", "Label",
+    "Proc",     "Block",   "End",        "Member",  "Type",  "File",
+    "Register", "Forward", "StaticProc", "Constant"};
 
 static const char *STORAGE_CLASS[] = {
-    "Nil", "Text", "Data", "Bss", "Register", "Abs", "Undefined", "CdbLocal",
-    "Bits", "CdbSystem", "RegImage", "Info", "UserStruct", "SData", "SBss",
-    "RData", "Var", "Common", "SCommon", "VarRegister", "Variant",
-    "SUndefined", "Init" };
+    "Nil",        "Text",        "Data",    "Bss",        "Register", "Abs",
+    "Undefined",  "CdbLocal",    "Bits",    "CdbSystem",  "RegImage", "Info",
+    "UserStruct", "SData",       "SBss",    "RData",      "Var",      "Common",
+    "SCommon",    "VarRegister", "Variant", "SUndefined", "Init"};
 
 static unsigned column = 1;
 
-void
-MyPrintf(const char *format, ...)
-{
+void MyPrintf(const char *format, ...) {
     va_list ap;
     char buffer[100];
 
@@ -86,9 +82,7 @@ MyPrintf(const char *format, ...)
     }
 }
 
-static int
-MyTab(unsigned n)
-{
+static int MyTab(unsigned n) {
     while (column < n) {
         putchar(' ');
         column++;
@@ -96,18 +90,14 @@ MyTab(unsigned n)
     return column == n;
 }
 
-static const char *SECTION_NAME[] = {
-    "(null)", ".text", ".rdata", ".data", ".sdata", ".sbss", ".bss",
-    ".init", ".lit8", ".lit4"
-};
+static const char *SECTION_NAME[] = {"(null)", ".text", ".rdata", ".data",
+                                     ".sdata", ".sbss", ".bss",   ".init",
+                                     ".lit8",  ".lit4"};
 
-static const char *RELOC_TYPE[] = {
-    "abs", "16", "32", "26", "hi16", "lo16", "gpdata", "gplit"
-};
+static const char *RELOC_TYPE[] = {"abs",  "16",   "32",     "26",
+                                   "hi16", "lo16", "gpdata", "gplit"};
 
-static void
-PrintReloc(int vaddr, int i, int j)
-{
+static void PrintReloc(int vaddr, int i, int j) {
     for (unsigned k = 0; k < section[i].relocs; k++) {
         coffReloc *rp;
         rp = &section[i].reloc[k];
@@ -131,12 +121,10 @@ PrintReloc(int vaddr, int i, int j)
     printf("\n");
 }
 
-#define printf  MyPrintf
+#define printf MyPrintf
 #include "d.c"
 
-static void
-PrintSection(int i)
-{
+static void PrintSection(int i) {
     bool is_text;
     long pc;
     long word;
@@ -146,14 +134,14 @@ PrintSection(int i)
            sectionHeader[i].size, section[i].relocs);
     is_text = strncmp(sectionHeader[i].name, ".text", 5) == 0;
 
-    for (unsigned j = 0, pc = sectionHeader[i].virtAddr;
-         j < section[i].length; j++) {
+    for (unsigned j = 0, pc = sectionHeader[i].virtAddr; j < section[i].length;
+         j++) {
         word = section[i].data[j];
         if (is_text) {
             DumpAscii(word, pc);
         } else {
             printf("%08x: %08x  ", pc, word);
-            s = (char *) &word;
+            s = (char *)&word;
             for (unsigned k = 0; k < 4; k++) {
                 if (isprint(s[k])) {
                     printf("%c", s[k]);
@@ -168,13 +156,11 @@ PrintSection(int i)
     }
 }
 
-int
-main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     char *filename = "a.out";
     FILE *f;
     long l;
-/* EXTR filesym; */
+    /* EXTR filesym; */
     char buf[100];
 
     if (argc == 2) {
@@ -185,9 +171,8 @@ main(int argc, char *argv[])
         perror("out");
         exit(1);
     }
-    if (!ReadStruct(f, fileHeader)
-          || !ReadStruct(f, optHeader)
-          || fileHeader.magic != COFF_MIPSELMAGIC) {
+    if (!ReadStruct(f, fileHeader) || !ReadStruct(f, optHeader) ||
+        fileHeader.magic != COFF_MIPSELMAGIC) {
         fprintf(stderr,
                 "out: %s is not a MIPS Little-Endian COFF object file.\n",
                 filename);
@@ -200,9 +185,9 @@ main(int argc, char *argv[])
     }
     for (unsigned i = 0; i < fileHeader.nSections; i++) {
         ReadStruct(f, sectionHeader[i]);
-        if (sectionHeader[i].size > MAX_DATA * sizeof (long)
-              && sectionHeader[i].sectionPtr != 0
-              || sectionHeader[i].nReloc > MAX_RELOCS) {
+        if (sectionHeader[i].size > MAX_DATA * sizeof(long) &&
+                sectionHeader[i].sectionPtr != 0 ||
+            sectionHeader[i].nReloc > MAX_RELOCS) {
             printf("section %s is too big.\n", sectionHeader[i].name);
             exit(1);
         }
@@ -211,11 +196,10 @@ main(int argc, char *argv[])
         if (sectionHeader[i].sectionPtr != 0) {
             section[i].length = sectionHeader[i].size / 4;
             fseek(f, sectionHeader[i].sectionPtr, 0);
-            fread(section[i].data, sizeof (long), section[i].length, f);
+            fread(section[i].data, sizeof(long), section[i].length, f);
             section[i].relocs = sectionHeader[i].nReloc;
             fseek(f, sectionHeader[i].relocPtr, 0);
-            fread(section[i].reloc, sizeof (coffReloc),
-                  section[i].relocs, f);
+            fread(section[i].reloc, sizeof(coffReloc), section[i].relocs, f);
         } else
             section[i].length = 0;
     }

@@ -7,8 +7,6 @@
 #ifndef NACHOS_THREADS_THREADTESTPRODCONS__HH
 #define NACHOS_THREADS_THREADTESTPRODCONS__HH
 
-
 void ThreadTestProdCons();
-
 
 #endif

@@ -17,11 +17,9 @@
 #ifndef NACHOS_MACHINE_ENDIANNESS__HH
 #define NACHOS_MACHINE_ENDIANNESS__HH
 
-
 unsigned WordToHost(unsigned word);
 unsigned short ShortToHost(unsigned short shortword);
 unsigned WordToMachine(unsigned word);
 unsigned short ShortToMachine(unsigned short shortword);
-
 
 #endif

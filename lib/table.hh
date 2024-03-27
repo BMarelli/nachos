@@ -7,13 +7,11 @@
 #ifndef NACHOS_LIB_TABLE__HH
 #define NACHOS_LIB_TABLE__HH
 
-
 #include "list.hh"
-
 
 template <class T>
 class Table {
-public:
+   public:
     static const unsigned SIZE = 20;
 
     /// Construct an empty table.
@@ -46,7 +44,7 @@ public:
     /// Returns the old item.
     T Update(int i, T item);
 
-private:
+   private:
     /// Data items.
     T data[SIZE];
 
@@ -60,18 +58,13 @@ private:
     List<int> freed;
 };
 
-
 template <class T>
-Table<T>::Table()
-{
+Table<T>::Table() {
     current = 0;
 }
 
-
 template <class T>
-int
-Table<T>::Add(T item)
-{
+int Table<T>::Add(T item) {
     int i;
 
     if (!freed.IsEmpty()) {
@@ -88,34 +81,26 @@ Table<T>::Add(T item)
 }
 
 template <class T>
-T
-Table<T>::Get(int i) const
-{
+T Table<T>::Get(int i) const {
     ASSERT(i >= 0);
 
     return HasKey(i) ? data[i] : T();
 }
 
 template <class T>
-bool
-Table<T>::HasKey(int i) const
-{
+bool Table<T>::HasKey(int i) const {
     ASSERT(i >= 0);
 
     return i < current && !freed.Has(i);
 }
 
 template <class T>
-bool
-Table<T>::IsEmpty() const
-{
+bool Table<T>::IsEmpty() const {
     return current == 0;
 }
 
 template <class T>
-T
-Table<T>::Remove(int i)
-{
+T Table<T>::Remove(int i) {
     ASSERT(i >= 0);
 
     if (!HasKey(i)) {
@@ -136,9 +121,7 @@ Table<T>::Remove(int i)
 }
 
 template <class T>
-T
-Table<T>::Update(int i, T item)
-{
+T Table<T>::Update(int i, T item) {
     ASSERT(i >= 0);
     ASSERT(i < current);
     ASSERT(!freed.Has(i));
@@ -147,6 +130,5 @@ Table<T>::Update(int i, T item)
     data[i] = item;
     return previous;
 }
-
 
 #endif

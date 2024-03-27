@@ -12,23 +12,17 @@
 #ifndef NACHOS_THREADS_PREEMPTIVE__HH
 #define NACHOS_THREADS_PREEMPTIVE__HH
 
-
 class PreemptiveScheduler {
-public:
+   public:
+    PreemptiveScheduler() {}
 
-    PreemptiveScheduler()
-    {}
-
-    ~PreemptiveScheduler()
-    {}
+    ~PreemptiveScheduler() {}
 
     /// Set up time slicing between kernel threads.
     ///
     /// * `timeSliceLength` is the time slice duration, measured in native
     ///   x86 machine instructions.
     void SetUp(unsigned long timeSliceLength);
-
 };
-
 
 #endif
