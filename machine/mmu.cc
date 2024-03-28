@@ -63,8 +63,8 @@ void MMU::PrintTLB() const {
     printf("TLB content (%u entries):\n", TLB_SIZE);
     for (unsigned i = 0; i < TLB_SIZE; i++) {
         const TranslationEntry *e = &tlb[i];
-        printf("(%u) valid: %d, virt: %d, frame: %d, flags: %s%s%s\n", i, e->valid, e->virtualPage, e->physicalPage, (e->readOnly) ? "readonly " : "", (e->use) ? "use " : "",
-               (e->dirty) ? "dirty" : "");
+        printf("(%u) valid: %d, virt: %d, frame: %d, flags: %s%s%s\n", i, e->valid, e->virtualPage, e->physicalPage,
+               (e->readOnly) ? "readonly " : "", (e->use) ? "use " : "", (e->dirty) ? "dirty" : "");
     }
 #else
     printf("TLB not present in the machine.\n");
