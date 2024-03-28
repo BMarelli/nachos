@@ -8,8 +8,7 @@
 
 #include "machine/disk.hh"
 
-static const unsigned NUM_DIRECT =
-    (SECTOR_SIZE - 2 * sizeof(int)) / sizeof(int);
+static const unsigned NUM_DIRECT = (SECTOR_SIZE - 2 * sizeof(int)) / sizeof(int);
 const unsigned MAX_FILE_SIZE = NUM_DIRECT * SECTOR_SIZE;
 
 struct RawFileHeader {

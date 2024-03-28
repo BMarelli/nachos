@@ -11,8 +11,7 @@ void ReadBufferFromUser(int userAddress, char *outBuffer, unsigned byteCount) {
     // TODO: implement.
 }
 
-bool ReadStringFromUser(int userAddress, char *outString,
-                        unsigned maxByteCount) {
+bool ReadStringFromUser(int userAddress, char *outString, unsigned maxByteCount) {
     ASSERT(userAddress != 0);
     ASSERT(outString != nullptr);
     ASSERT(maxByteCount != 0);
@@ -28,8 +27,7 @@ bool ReadStringFromUser(int userAddress, char *outString,
     return *(outString - 1) == '\0';
 }
 
-void WriteBufferToUser(const char *buffer, int userAddress,
-                       unsigned byteCount) {
+void WriteBufferToUser(const char *buffer, int userAddress, unsigned byteCount) {
     // TODO: implement.
 }
 

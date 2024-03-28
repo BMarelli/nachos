@@ -15,8 +15,7 @@ static void PrintSegment(noffSegment *s, const char *description) {
         "        Virtual address: %u (0x%X)\n"
         "        In-file address: %u (0x%X)\n"
         "        Size: %u bytes\n",
-        description, s->virtualAddr, s->virtualAddr, s->inFileAddr,
-        s->inFileAddr, s->size);
+        description, s->virtualAddr, s->virtualAddr, s->inFileAddr, s->inFileAddr, s->size);
 }
 
 int main(int argc, char *argv[]) {

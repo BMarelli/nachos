@@ -35,6 +35,4 @@ unsigned short ShortToHost(unsigned short shortword) {
 
 unsigned WordToMachine(unsigned word) { return WordToHost(word); }
 
-unsigned short ShortToMachine(unsigned short shortword) {
-    return ShortToHost(shortword);
-}
+unsigned short ShortToMachine(unsigned short shortword) { return ShortToHost(shortword); }

@@ -105,8 +105,7 @@ int OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position) {
     if (position + numBytes > fileLength) {
         numBytes = fileLength - position;
     }
-    DEBUG('f', "Reading %u bytes at %u, from file of length %u.\n", numBytes,
-          position, fileLength);
+    DEBUG('f', "Reading %u bytes at %u, from file of length %u.\n", numBytes, position, fileLength);
 
     firstSector = DivRoundDown(position, SECTOR_SIZE);
     lastSector = DivRoundDown(position + numBytes - 1, SECTOR_SIZE);
@@ -115,8 +114,7 @@ int OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position) {
     // Read in all the full and partial sectors that we need.
     buf = new char[numSectors * SECTOR_SIZE];
     for (unsigned i = firstSector; i <= lastSector; i++) {
-        synchDisk->ReadSector(hdr->ByteToSector(i * SECTOR_SIZE),
-                              &buf[(i - firstSector) * SECTOR_SIZE]);
+        synchDisk->ReadSector(hdr->ByteToSector(i * SECTOR_SIZE), &buf[(i - firstSector) * SECTOR_SIZE]);
     }
 
     // Copy the part we want.
@@ -140,8 +138,7 @@ int OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position) {
     if (position + numBytes > fileLength) {
         numBytes = fileLength - position;
     }
-    DEBUG('f', "Writing %u bytes at %u, from file of length %u.\n", numBytes,
-          position, fileLength);
+    DEBUG('f', "Writing %u bytes at %u, from file of length %u.\n", numBytes, position, fileLength);
 
     firstSector = DivRoundDown(position, SECTOR_SIZE);
     lastSector = DivRoundDown(position + numBytes - 1, SECTOR_SIZE);
@@ -157,8 +154,7 @@ int OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position) {
         ReadAt(buf, SECTOR_SIZE, firstSector * SECTOR_SIZE);
     }
     if (!lastAligned && (firstSector != lastSector || firstAligned)) {
-        ReadAt(&buf[(lastSector - firstSector) * SECTOR_SIZE], SECTOR_SIZE,
-               lastSector * SECTOR_SIZE);
+        ReadAt(&buf[(lastSector - firstSector) * SECTOR_SIZE], SECTOR_SIZE, lastSector * SECTOR_SIZE);
     }
 
     // Copy in the bytes we want to change.
@@ -166,8 +162,7 @@ int OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position) {
 
     // Write modified sectors back.
     for (unsigned i = firstSector; i <= lastSector; i++) {
-        synchDisk->WriteSector(hdr->ByteToSector(i * SECTOR_SIZE),
-                               &buf[(i - firstSector) * SECTOR_SIZE]);
+        synchDisk->WriteSector(hdr->ByteToSector(i * SECTOR_SIZE), &buf[(i - firstSector) * SECTOR_SIZE]);
     }
     delete[] buf;
     return numBytes;

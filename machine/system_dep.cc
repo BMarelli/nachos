@@ -81,8 +81,7 @@ bool PollFile(int fd) {
 
     // Poll file or socket.
 #ifdef HOST_LINUX
-    retVal =
-        select(32, (fd_set *)&rfd, (fd_set *)&wfd, (fd_set *)&xfd, &pollTime);
+    retVal = select(32, (fd_set *)&rfd, (fd_set *)&wfd, (fd_set *)&xfd, &pollTime);
 #else
     retVal = select(32, &rfd, &wfd, &xfd, &pollTime);
 #endif
@@ -240,8 +239,7 @@ void ReadFromSocket(int sockID, char *buffer, size_t packetSize) {
     struct sockaddr_un uName;
     size_t size = sizeof uName;
 
-    retVal = recvfrom(sockID, buffer, packetSize, 0, (struct sockaddr *)&uName,
-                      (socklen_t *)&size);
+    retVal = recvfrom(sockID, buffer, packetSize, 0, (struct sockaddr *)&uName, (socklen_t *)&size);
 
     if (retVal <= 0 || retVal != (ssize_t)packetSize) {
         perror("in recvfrom");
@@ -254,8 +252,7 @@ void ReadFromSocket(int sockID, char *buffer, size_t packetSize) {
 /// Transmit a fixed size packet to another Nachos' IPC port.
 ///
 /// Abort on error.
-void SendToSocket(int sockID, const char *buffer, size_t packetSize,
-                  const char *toName) {
+void SendToSocket(int sockID, const char *buffer, size_t packetSize, const char *toName) {
     ASSERT(buffer != nullptr);
     ASSERT(packetSize > 0);
     ASSERT(toName != nullptr);
@@ -265,11 +262,9 @@ void SendToSocket(int sockID, const char *buffer, size_t packetSize,
 
     InitSocketName(&uName, toName);
 #ifdef HOST_LINUX
-    retVal = sendto(sockID, buffer, packetSize, 0,
-                    (const struct sockaddr *)&uName, sizeof uName);
+    retVal = sendto(sockID, buffer, packetSize, 0, (const struct sockaddr *)&uName, sizeof uName);
 #else
-    retVal =
-        sendto(sockID, buffer, packetSize, 0, (char *)&uName, sizeof uName);
+    retVal = sendto(sockID, buffer, packetSize, 0, (char *)&uName, sizeof uName);
 #endif
 
     ASSERT(retVal > 0 && retVal == (ssize_t)packetSize);

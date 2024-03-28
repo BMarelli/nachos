@@ -12,9 +12,7 @@ typedef DebuggerCommandManager DCM;
 
 static const char SEPARATOR[] = " ";
 
-const char *DCM::FetchArg(char **args) {
-    return strtok_r(nullptr, SEPARATOR, args);
-}
+const char *DCM::FetchArg(char **args) { return strtok_r(nullptr, SEPARATOR, args); }
 
 bool DCM::AddCommand(const char *name, CommandFunc f, void *extra) {
     ASSERT(name != nullptr);

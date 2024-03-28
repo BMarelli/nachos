@@ -55,8 +55,7 @@ MailBox::~MailBox() { delete messages; }
 /// * `pktHdr` -- source, destination machine ID's.
 /// * `mailHdr` -- source, destination mailbox ID's.
 static void PrintHeader(PacketHeader pktHdr, MailHeader mailHdr) {
-    printf("From (%d, %d) to (%d, %d) bytes %u\n", pktHdr.from, mailHdr.from,
-           pktHdr.to, mailHdr.to, mailHdr.length);
+    printf("From (%d, %d) to (%d, %d) bytes %u\n", pktHdr.from, mailHdr.from, pktHdr.to, mailHdr.to, mailHdr.length);
 }
 
 /// Add a message to the mailbox.
@@ -219,8 +218,7 @@ void PostOffice::PostalDelivery() {
 /// * `pktHdr` -- source, destination machine ID's.
 /// * `mailHdr` -- source, destination mailbox ID's.
 /// * `data` is the payload message data.
-void PostOffice::Send(PacketHeader pktHdr, MailHeader mailHdr,
-                      const char *data) {
+void PostOffice::Send(PacketHeader pktHdr, MailHeader mailHdr, const char *data) {
     ASSERT(data != nullptr);
 
     char *buffer = new char[MAX_PACKET_SIZE];  // Space to hold concatenated
@@ -262,8 +260,7 @@ void PostOffice::Send(PacketHeader pktHdr, MailHeader mailHdr,
 /// * `pktHdr` is the address to put: source, destination machine ID's.
 /// * `mailHdr` is the address to put: source, destination mailbox ID's.
 /// * `data` is the address to put: payload message data.
-void PostOffice::Receive(int box, PacketHeader *pktHdr, MailHeader *mailHdr,
-                         char *data) {
+void PostOffice::Receive(int box, PacketHeader *pktHdr, MailHeader *mailHdr, char *data) {
     ASSERT(pktHdr != nullptr);
     ASSERT(mailHdr != nullptr);
     ASSERT(data != nullptr);

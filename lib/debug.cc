@@ -32,8 +32,7 @@ void Debug::SetFlags(const char *new_flags) { flags = new_flags; }
 
 void Debug::SetOpts(DebugOpts new_opts) { opts = new_opts; }
 
-void Debug::Print(const char *file, const unsigned line, const char *func,
-                  char flag, const char *format, ...) const {
+void Debug::Print(const char *file, const unsigned line, const char *func, char flag, const char *format, ...) const {
     ASSERT(format != nullptr);
 
     if (!IsEnabled(flag)) {

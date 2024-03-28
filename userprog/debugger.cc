@@ -43,10 +43,8 @@ static inline char *GetLine(char *buffer, unsigned size) {
 }
 
 static inline const char *GetGPRegisterName(unsigned i) {
-    static const char *NAMES[] = {
-        "ZE", "AT", "V0", "V1", "A0", "A1", "A2", "A3", "T0", "T1", "T2",
-        "T3", "T4", "T5", "T6", "T7", "S0", "S1", "S2", "S3", "S4", "S5",
-        "S6", "S7", "T8", "T9", "K0", "K1", "GP", "SP", "FP", "RA"};
+    static const char *NAMES[] = {"ZE", "AT", "V0", "V1", "A0", "A1", "A2", "A3", "T0", "T1", "T2", "T3", "T4", "T5", "T6", "T7",
+                                  "S0", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "T8", "T9", "K0", "K1", "GP", "SP", "FP", "RA"};
 
     return (i < sizeof NAMES / sizeof *NAMES) ? NAMES[i] : nullptr;
 }
@@ -101,9 +99,7 @@ static inline void DumpMachineState(int *previousRegisters) {
     memcpy(previousRegisters, registers, NUM_TOTAL_REGS * sizeof(int));
 }
 
-static DCM::RunResult CommandContinue(char **args, void *extra) {
-    return DCM::RUN_RESULT_NORMALIZE;
-}
+static DCM::RunResult CommandContinue(char **args, void *extra) { return DCM::RUN_RESULT_NORMALIZE; }
 
 static DCM::RunResult CommandDump(char **args, void *extra) {
     const char *path = DCM::FetchArg(args);
@@ -227,9 +223,7 @@ static DCM::RunResult CommandSetFlags(char **args, void *extra) {
     return DCM::RUN_RESULT_STAY;
 }
 
-static DCM::RunResult CommandStep(char **args, void *extra) {
-    return DCM::RUN_RESULT_STEP;
-}
+static DCM::RunResult CommandStep(char **args, void *extra) { return DCM::RUN_RESULT_STEP; }
 
 static DCM::RunResult CommandTick(char **args, void *runUntilTime_) {
     ASSERT(runUntilTime_ != nullptr);
@@ -243,8 +237,7 @@ static DCM::RunResult CommandTick(char **args, void *runUntilTime_) {
     char *end;
     unsigned num = strtoul(num_s, &end, 10);
     if (*end != '\0') {
-        fprintf(stderr, "ERROR: argument `%s` is not an integer number.\n",
-                num_s);
+        fprintf(stderr, "ERROR: argument `%s` is not an integer number.\n", num_s);
         return DCM::RUN_RESULT_STAY;
     }
 

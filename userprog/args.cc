@@ -43,8 +43,7 @@ char **SaveArgs(int address) {
         return nullptr;
     }
 
-    DEBUG('e', "Saving %u command line arguments from parent process.\n",
-          count);
+    DEBUG('e', "Saving %u command line arguments from parent process.\n", count);
 
     // Allocate an array of `count` pointers.  We know that `count` will
     // always be at least 1.

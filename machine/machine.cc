@@ -11,9 +11,7 @@
 
 #include "threads/system.hh"
 
-static inline bool IsExceptionType(ExceptionType t) {
-    return 0 <= t && t < NUM_EXCEPTION_TYPES;
-}
+static inline bool IsExceptionType(ExceptionType t) { return 0 <= t && t < NUM_EXCEPTION_TYPES; }
 
 /// Check to be sure that the host really uses the format it says it does,
 /// for storing the bytes of an integer.  Stop on error.
