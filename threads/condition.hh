@@ -18,6 +18,7 @@
 #define NACHOS_THREADS_CONDITION__HH
 
 #include "lock.hh"
+#include "semaphore.hh"
 
 /// This class defines a “condition variable”.
 ///
@@ -72,7 +73,8 @@ class Condition {
    private:
     const char *name;
 
-    // Other needed fields are to be added here.
+    List<Semaphore *> *queue;
+    Lock *lock;
 };
 
 #endif
