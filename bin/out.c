@@ -51,8 +51,9 @@ static char sspace[MAX_SSPACE];
 static const char *SYMBOL_TYPE[] = {"Nil", "Global", "Static", "Param", "Local",    "Label",   "Proc",       "Block",
                                     "End", "Member", "Type",   "File",  "Register", "Forward", "StaticProc", "Constant"};
 
-static const char *STORAGE_CLASS[] = {"Nil",        "Text",  "Data", "Bss",   "Register", "Abs",    "Undefined", "CdbLocal",    "Bits",    "CdbSystem",  "RegImage", "Info",
-                                      "UserStruct", "SData", "SBss", "RData", "Var",      "Common", "SCommon",   "VarRegister", "Variant", "SUndefined", "Init"};
+static const char *STORAGE_CLASS[] = {"Nil",  "Text",      "Data",     "Bss",         "Register",   "Abs",        "Undefined", "CdbLocal",
+                                      "Bits", "CdbSystem", "RegImage", "Info",        "UserStruct", "SData",      "SBss",      "RData",
+                                      "Var",  "Common",    "SCommon",  "VarRegister", "Variant",    "SUndefined", "Init"};
 
 static unsigned column = 1;
 
