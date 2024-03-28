@@ -122,8 +122,7 @@ class PostOffice {
     // Retrieve a message from `box`.
     //
     // Wait if there is no message in the box.
-    void Receive(int box, PacketHeader *pktHdr, MailHeader *mailHdr,
-                 char *data);
+    void Receive(int box, PacketHeader *pktHdr, MailHeader *mailHdr, char *data);
 
     // Wait for incoming messages, and then put them in the correct mailbox.
     void PostalDelivery();

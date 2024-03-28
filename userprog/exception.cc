@@ -50,8 +50,7 @@ static void IncrementPC() {
 static void DefaultHandler(ExceptionType et) {
     int exceptionArg = machine->ReadRegister(2);
 
-    fprintf(stderr, "Unexpected user mode exception: %s, arg %d.\n",
-            ExceptionTypeToString(et), exceptionArg);
+    fprintf(stderr, "Unexpected user mode exception: %s, arg %d.\n", ExceptionTypeToString(et), exceptionArg);
     ASSERT(false);
 }
 
@@ -88,10 +87,7 @@ static void SyscallHandler(ExceptionType _et) {
 
             char filename[FILE_NAME_MAX_LEN + 1];
             if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
-                DEBUG(
-                    'e',
-                    "Error: filename string too long (maximum is %u bytes).\n",
-                    FILE_NAME_MAX_LEN);
+                DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n", FILE_NAME_MAX_LEN);
             }
 
             DEBUG('e', "`Create` requested for file `%s`.\n", filename);

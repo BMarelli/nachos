@@ -35,12 +35,9 @@ void Statistics::Print() {
             tickResets);
     }
 #endif
-    printf("Ticks: total %lu, idle %lu, system %lu, user %lu\n", totalTicks,
-           idleTicks, systemTicks, userTicks);
+    printf("Ticks: total %lu, idle %lu, system %lu, user %lu\n", totalTicks, idleTicks, systemTicks, userTicks);
     printf("Disk I/O: reads %lu, writes %lu\n", numDiskReads, numDiskWrites);
-    printf("Console I/O: reads %lu, writes %lu\n", numConsoleCharsRead,
-           numConsoleCharsWritten);
+    printf("Console I/O: reads %lu, writes %lu\n", numConsoleCharsRead, numConsoleCharsWritten);
     printf("Paging: faults %lu\n", numPageFaults);
-    printf("Network I/O: packets received %lu, sent %lu\n", numPacketsRecvd,
-           numPacketsSent);
+    printf("Network I/O: packets received %lu, sent %lu\n", numPacketsRecvd, numPacketsSent);
 }

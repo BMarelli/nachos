@@ -89,8 +89,7 @@ static bool ParseDebugOpts(char *s, DebugOpts *out) {
             out->function = true;
         } else if (strcmp(token, "sleep") == 0 || strcmp(token, "s") == 0) {
             out->sleep = true;
-        } else if (strcmp(token, "interactive") == 0 ||
-                   strcmp(token, "i") == 0) {
+        } else if (strcmp(token, "interactive") == 0 || strcmp(token, "i") == 0) {
             out->interactive = true;
         } else {
             return false;  // Invalid option.

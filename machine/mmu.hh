@@ -81,16 +81,14 @@ class MMU {
 
    private:
     /// Retrieve a page entry either from a page table or the TLB.
-    ExceptionType RetrievePageEntry(unsigned vpn,
-                                    TranslationEntry **entry) const;
+    ExceptionType RetrievePageEntry(unsigned vpn, TranslationEntry **entry) const;
 
     /// Translate an address, and check for alignment.
     ///
     /// Set the use and dirty bits in the translation entry appropriately,
     /// and return an exception code if the translation could not be
     /// completed.
-    ExceptionType Translate(unsigned virtAddr, unsigned *physAddr,
-                            unsigned size, bool writing);
+    ExceptionType Translate(unsigned virtAddr, unsigned *physAddr, unsigned size, bool writing);
 };
 
 #endif

@@ -32,9 +32,7 @@ static void NetworkSendDone(void *arg) {
 /// * `addr` is used to generate the socket name.
 /// * `reliability` says whether we drop packets to emulate unreliable links.
 /// * `readAvail`, `writeDone`, `callArg` -- analogous to console.
-Network::Network(NetworkAddress addr, double reliability,
-                 VoidFunctionPtr readAvail, VoidFunctionPtr writeDone,
-                 void *callArg) {
+Network::Network(NetworkAddress addr, double reliability, VoidFunctionPtr readAvail, VoidFunctionPtr writeDone, void *callArg) {
     ASSERT(readAvail != nullptr);
     ASSERT(writeDone != nullptr);
 
@@ -86,8 +84,7 @@ void Network::CheckPktAvail() {
     memcpy(inbox, buffer + sizeof(PacketHeader), inHdr.length);
     delete[] buffer;
 
-    DEBUG('n', "Network received packet from %d, length %u...\n",
-          (int)inHdr.from, inHdr.length);
+    DEBUG('n', "Network received packet from %d, length %u...\n", (int)inHdr.from, inHdr.length);
     stats->numPacketsRecvd++;
 
     // Tell post office that the packet has arrived.
@@ -113,8 +110,7 @@ void Network::Send(PacketHeader hdr, const char *data) {
 
     snprintf(toName, sizeof toName, "SOCKET_%u", (unsigned)hdr.to);
 
-    ASSERT(!sendBusy && hdr.length > 0 && hdr.length <= MAX_PACKET_SIZE &&
-           hdr.from == ident);
+    ASSERT(!sendBusy && hdr.length > 0 && hdr.length <= MAX_PACKET_SIZE && hdr.from == ident);
     DEBUG('n', "Sending to addr %u, %u bytes... ", hdr.to, hdr.length);
 
     interrupt->Schedule(NetworkSendDone, this, NETWORK_TIME, NETWORK_SEND_INT);

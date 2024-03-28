@@ -29,13 +29,9 @@
 // String definitions for debugging messages
 
 static const char *INT_LEVEL_NAMES[] = {"disabled", "enabled"};
-static const char *INT_TYPE_NAMES[] = {"timer",         "disk",
-                                       "console write", "console read",
-                                       "network send",  "network recv"};
+static const char *INT_TYPE_NAMES[] = {"timer", "disk", "console write", "console read", "network send", "network recv"};
 
-static inline bool IsIntStatus(IntStatus s) {
-    return 0 <= s && s < NUM_INT_STATUS;
-}
+static inline bool IsIntStatus(IntStatus s) { return 0 <= s && s < NUM_INT_STATUS; }
 
 static inline bool IsIntType(IntType t) { return 0 <= t && t < NUM_INT_TYPES; }
 
@@ -46,8 +42,7 @@ static inline bool IsIntType(IntType t) { return 0 <= t && t < NUM_INT_TYPES; }
 /// * `param` is the argument to pass to the procedure.
 /// * `time` is when (in simulated time) the interrupt is to occur.
 /// * `kind` is the hardware device that generated the interrupt.
-PendingInterrupt::PendingInterrupt(VoidFunctionPtr func, void *param,
-                                   unsigned long time, IntType kind) {
+PendingInterrupt::PendingInterrupt(VoidFunctionPtr func, void *param, unsigned long time, IntType kind) {
     ASSERT(func != nullptr);
     ASSERT(IsIntType(kind));
 
@@ -218,8 +213,7 @@ void Interrupt::RestartTicks() {
     while ((i = oldPending->SortedPop((int *)&oldWhen)) != nullptr) {
         unsigned newWhen = oldWhen - stats->totalTicks;
         pending->SortedInsert(i, newWhen);
-        DEBUG('x', "Interrupt at time %u re-scheduled at new time %u.\n",
-              oldWhen, newWhen);
+        DEBUG('x', "Interrupt at time %u re-scheduled at new time %u.\n", oldWhen, newWhen);
     }
 
     delete oldPending;
@@ -241,8 +235,7 @@ void Interrupt::RestartTicks() {
 /// * `fromNow` is how far in the future (in simulated time) the interrupt is
 ///   to occur.
 /// * `type` is the hardware device that generated the interrupt.
-void Interrupt::Schedule(VoidFunctionPtr handler, void *arg,
-                         unsigned long fromNow, IntType type) {
+void Interrupt::Schedule(VoidFunctionPtr handler, void *arg, unsigned long fromNow, IntType type) {
     ASSERT(handler != nullptr);
     ASSERT(fromNow > 0);
     ASSERT(IsIntType(type));
@@ -262,8 +255,7 @@ void Interrupt::Schedule(VoidFunctionPtr handler, void *arg,
     unsigned when = stats->totalTicks + fromNow;
     PendingInterrupt *toOccur = new PendingInterrupt(handler, arg, when, type);
 
-    DEBUG('i', "Scheduling interrupt handler the %s at time = %u\n",
-          INT_TYPE_NAMES[type], when);
+    DEBUG('i', "Scheduling interrupt handler the %s at time = %u\n", INT_TYPE_NAMES[type], when);
 
     pending->SortedInsert(toOccur, when);
 }
@@ -300,22 +292,20 @@ bool Interrupt::CheckIfDue(bool advanceClock) {
     }
 
     // Check if there is nothing more to do, and if so, quit.
-    if (status == IDLE_MODE && toOccur->type == TIMER_INT &&
-        pending->IsEmpty()) {
+    if (status == IDLE_MODE && toOccur->type == TIMER_INT && pending->IsEmpty()) {
         pending->SortedInsert(toOccur, when);
         return false;
     }
 
-    DEBUG('i', "Invoking interrupt handler for the %s at time %u\n",
-          INT_TYPE_NAMES[toOccur->type], toOccur->when);
+    DEBUG('i', "Invoking interrupt handler for the %s at time %u\n", INT_TYPE_NAMES[toOccur->type], toOccur->when);
 #ifdef USER_PROGRAM
     if (machine != nullptr) {
         machine->DelayedLoad(0, 0);
     }
 #endif
     inHandler = true;
-    status = SYSTEM_MODE;  // Whatever we were doing, we are now going to be
-                           // running in the kernel.
+    status = SYSTEM_MODE;               // Whatever we were doing, we are now going to be
+                                        // running in the kernel.
     (*toOccur->handler)(toOccur->arg);  // Call the interrupt handler.
     status = old;                       // Restore the machine status.
     inHandler = false;
@@ -334,15 +324,13 @@ void Interrupt::SetStatus(MachineStatus st) { status = st; }
 static void PrintPending(PendingInterrupt *pend) {
     ASSERT(pend != nullptr);
 
-    printf("    Handler %s, scheduled at %lu\n", INT_TYPE_NAMES[pend->type],
-           pend->when);
+    printf("    Handler %s, scheduled at %lu\n", INT_TYPE_NAMES[pend->type], pend->when);
 }
 
 /// Print the complete interrupt state -- the status, and all interrupts that
 /// are scheduled to occur in the future.
 void Interrupt::DumpState() {
-    printf("Time: %lu, interrupts %s\n", stats->totalTicks,
-           INT_LEVEL_NAMES[level]);
+    printf("Time: %lu, interrupts %s\n", stats->totalTicks, INT_LEVEL_NAMES[level]);
     if (pending->IsEmpty()) {
         printf("No pending interrupts\n");
     } else {

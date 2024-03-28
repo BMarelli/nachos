@@ -60,8 +60,7 @@ void Copy(const char *from, const char *to) {
     // Copy the data in `TRANSFER_SIZE` chunks.
     char *buffer = new char[TRANSFER_SIZE];
     int amountRead;
-    while ((amountRead = fread(buffer, sizeof(char), TRANSFER_SIZE, fp)) > 0)
-        openFile->Write(buffer, amountRead);
+    while ((amountRead = fread(buffer, sizeof(char), TRANSFER_SIZE, fp)) > 0) openFile->Write(buffer, amountRead);
     delete[] buffer;
 
     // Close the UNIX and the Nachos files.
@@ -108,8 +107,7 @@ static const unsigned CONTENT_SIZE = sizeof CONTENTS - 1;
 static const unsigned FILE_SIZE = CONTENT_SIZE * 5000;
 
 static void FileWrite() {
-    printf("Sequential write of %u byte file, in %u byte chunks\n", FILE_SIZE,
-           CONTENT_SIZE);
+    printf("Sequential write of %u byte file, in %u byte chunks\n", FILE_SIZE, CONTENT_SIZE);
 
     if (!fileSystem->Create(FILE_NAME, 0)) {
         fprintf(stderr, "Perf test: cannot create %s\n", FILE_NAME);
@@ -134,8 +132,7 @@ static void FileWrite() {
 }
 
 static void FileRead() {
-    printf("Sequential read of %u byte file, in %u byte chunks\n", FILE_SIZE,
-           CONTENT_SIZE);
+    printf("Sequential read of %u byte file, in %u byte chunks\n", FILE_SIZE, CONTENT_SIZE);
 
     OpenFile *openFile = fileSystem->Open(FILE_NAME);
     if (openFile == nullptr) {

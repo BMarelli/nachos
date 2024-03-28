@@ -157,8 +157,7 @@ void main(int argc, char *argv[]) {
             /// Need to check if we have both `.bss` and `.sbss` -- make sure
             /// they are contiguous.
             if (noffH.uninitData.size != 0) {
-                if (addr ==
-                    noffH.uninitData.virtualAddr + noffH.uninitData.size) {
+                if (addr == noffH.uninitData.virtualAddr + noffH.uninitData.size) {
                     Die("Cannot handle both bss and sbss");
                 }
                 noffH.uninitData.size += size;

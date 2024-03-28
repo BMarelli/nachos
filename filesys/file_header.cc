@@ -69,16 +69,12 @@ void FileHeader::Deallocate(Bitmap *freeMap) {
 /// Fetch contents of file header from disk.
 ///
 /// * `sector` is the disk sector containing the file header.
-void FileHeader::FetchFrom(unsigned sector) {
-    synchDisk->ReadSector(sector, (char *)&raw);
-}
+void FileHeader::FetchFrom(unsigned sector) { synchDisk->ReadSector(sector, (char *)&raw); }
 
 /// Write the modified contents of the file header back to disk.
 ///
 /// * `sector` is the disk sector to contain the file header.
-void FileHeader::WriteBack(unsigned sector) {
-    synchDisk->WriteSector(sector, (char *)&raw);
-}
+void FileHeader::WriteBack(unsigned sector) { synchDisk->WriteSector(sector, (char *)&raw); }
 
 /// Return which disk sector is storing a particular byte within the file.
 /// This is essentially a translation from a virtual address (the offset in
@@ -86,9 +82,7 @@ void FileHeader::WriteBack(unsigned sector) {
 /// is stored).
 ///
 /// * `offset` is the location within the file of the byte in question.
-unsigned FileHeader::ByteToSector(unsigned offset) {
-    return raw.dataSectors[offset / SECTOR_SIZE];
-}
+unsigned FileHeader::ByteToSector(unsigned offset) { return raw.dataSectors[offset / SECTOR_SIZE]; }
 
 /// Return the number of bytes in the file.
 unsigned FileHeader::FileLength() const { return raw.numBytes; }

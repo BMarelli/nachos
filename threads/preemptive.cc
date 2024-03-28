@@ -31,8 +31,7 @@ void PreemptiveScheduler::SetUp(unsigned long timeSliceLength) {
     int childPid = fork();
     switch (childPid) {
         case -1:
-            DEBUG('p',
-                  "Preemptive scheduler: unable to launch child process\n");
+            DEBUG('p', "Preemptive scheduler: unable to launch child process\n");
             ASSERT(false);
             break;
 
@@ -77,8 +76,7 @@ void MonitorProcess(int childPid, unsigned long timeSliceLength) {
         // From time to time, insert machine code to force a context switch.
         if (instructionCounter % timeSliceLength == 0) {
             // Get child value of `inContextSwitch`.
-            long incs = ptrace(PTRACE_PEEKDATA, childPid,
-                               (void *)&inContextSwitch, nullptr);
+            long incs = ptrace(PTRACE_PEEKDATA, childPid, (void *)&inContextSwitch, nullptr);
 
             if (incs == 0) {
                 DEBUG('p',

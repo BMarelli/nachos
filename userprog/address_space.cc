@@ -32,8 +32,7 @@ AddressSpace::AddressSpace(OpenFile *executable_file) {
     // Check we are not trying to run anything too big -- at least until we
     // have virtual memory.
 
-    DEBUG('a', "Initializing address space, num pages %u, size %u\n", numPages,
-          size);
+    DEBUG('a', "Initializing address space, num pages %u, size %u\n", numPages, size);
 
     // First, set up the translation.
 
@@ -61,14 +60,12 @@ AddressSpace::AddressSpace(OpenFile *executable_file) {
     uint32_t initDataSize = exe.GetInitDataSize();
     if (codeSize > 0) {
         uint32_t virtualAddr = exe.GetCodeAddr();
-        DEBUG('a', "Initializing code segment, at 0x%X, size %u\n", virtualAddr,
-              codeSize);
+        DEBUG('a', "Initializing code segment, at 0x%X, size %u\n", virtualAddr, codeSize);
         exe.ReadCodeBlock(&mainMemory[virtualAddr], codeSize, 0);
     }
     if (initDataSize > 0) {
         uint32_t virtualAddr = exe.GetInitDataAddr();
-        DEBUG('a', "Initializing data segment, at 0x%X, size %u\n", virtualAddr,
-              initDataSize);
+        DEBUG('a', "Initializing data segment, at 0x%X, size %u\n", virtualAddr, initDataSize);
         exe.ReadDataBlock(&mainMemory[virtualAddr], initDataSize, 0);
     }
 }
@@ -100,8 +97,7 @@ void AddressSpace::InitRegisters() {
     // allocated the stack; but subtract off a bit, to make sure we do not
     // accidentally reference off the end!
     machine->WriteRegister(STACK_REG, numPages * PAGE_SIZE - 16);
-    DEBUG('a', "Initializing stack register to %u\n",
-          numPages * PAGE_SIZE - 16);
+    DEBUG('a', "Initializing stack register to %u\n", numPages * PAGE_SIZE - 16);
 }
 
 /// On a context switch, save any machine state, specific to this address

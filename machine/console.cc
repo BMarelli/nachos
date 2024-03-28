@@ -43,9 +43,7 @@ static void ConsoleWriteDone(void *c) {
 ///   from the keyboard.
 /// * `writeDone` is the interrupt handler called when a character has been
 ///   output, so that it is ok to request the next char be output.
-Console::Console(const char *readFile, const char *writeFile,
-                 VoidFunctionPtr readAvail, VoidFunctionPtr writeDone,
-                 void *callArg) {
+Console::Console(const char *readFile, const char *writeFile, VoidFunctionPtr readAvail, VoidFunctionPtr writeDone, void *callArg) {
     ASSERT(readAvail != nullptr);
     ASSERT(writeDone != nullptr);
 
@@ -130,6 +128,5 @@ void Console::PutChar(char ch) {
     ASSERT(!putBusy);
     SystemDep::WriteFile(writeFileNo, &ch, sizeof(char));
     putBusy = true;
-    interrupt->Schedule(ConsoleWriteDone, this, CONSOLE_TIME,
-                        CONSOLE_WRITE_INT);
+    interrupt->Schedule(ConsoleWriteDone, this, CONSOLE_TIME, CONSOLE_WRITE_INT);
 }
