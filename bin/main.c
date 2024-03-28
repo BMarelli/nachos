@@ -51,8 +51,7 @@ void main(int argc, char *argv[]) {
                     ASSOC = atoi(*++argv);
                     LINESIZE = atoi(*++argv);
                     RAND = (*++argv)[0] == 'r';
-                    LRD = (*argv)[0] == 'l' && (*argv)[1] == 'r' &&
-                          (*argv)[2] == 'd';
+                    LRD = (*argv)[0] == 'l' && (*argv)[1] == 'r' && (*argv)[2] == 'd';
                     argc -= 4;
                     break;
             }

@@ -45,8 +45,8 @@ class SynchDisk {
     Disk *disk;            ///< Raw disk device.
     Semaphore *semaphore;  ///< To synchronize requesting thread with the
                            ///< interrupt handler.
-    Lock *lock;  ///< Only one read/write request can be sent to the disk at
-                 ///< a time.
+    Lock *lock;            ///< Only one read/write request can be sent to the disk at
+                           ///< a time.
 };
 
 #endif

@@ -154,9 +154,7 @@ void Disk::HandleInterrupt() {
     (*handler)(handlerArg);
 }
 
-static inline unsigned Diff(unsigned a, unsigned b) {
-    return a > b ? a - b : b - a;
-}
+static inline unsigned Diff(unsigned a, unsigned b) { return a > b ? a - b : b - a; }
 
 /// Returns how long it will take to position the disk head over the correct
 /// track on the disk.  Since when we finish seeking, we are likely to be in
@@ -215,17 +213,14 @@ int Disk::ComputeLatency(unsigned newSector, bool writing) {
 #ifndef NOTRACKBUF  // Turn this on if you do not want the track buffer
                     // stuff.
     // Check if track buffer applies.
-    if (!writing && seek == 0 &&
-        (timeAfter - bufferInit) / ROTATION_TIME >
-            ModuloDiff(newSector, bufferInit / ROTATION_TIME)) {
+    if (!writing && seek == 0 && (timeAfter - bufferInit) / ROTATION_TIME > ModuloDiff(newSector, bufferInit / ROTATION_TIME)) {
         DEBUG('d', "Request latency = %u\n", ROTATION_TIME);
         return ROTATION_TIME;
         // Time to transfer sector from the track buffer.
     }
 #endif
 
-    rotation +=
-        ModuloDiff(newSector, timeAfter / ROTATION_TIME) * ROTATION_TIME;
+    rotation += ModuloDiff(newSector, timeAfter / ROTATION_TIME) * ROTATION_TIME;
 
     DEBUG('d', "Request latency = %u\n", seek + rotation + ROTATION_TIME);
     return seek + rotation + ROTATION_TIME;

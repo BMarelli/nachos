@@ -33,30 +33,23 @@ Executable::Executable(OpenFile *new_file) {
 }
 
 bool Executable::CheckMagic() {
-    if (header.noffMagic != NOFF_MAGIC &&
-        WordToHost(header.noffMagic) == NOFF_MAGIC) {
+    if (header.noffMagic != NOFF_MAGIC && WordToHost(header.noffMagic) == NOFF_MAGIC) {
         SwapHeader(&header);
     }
     return header.noffMagic == NOFF_MAGIC;
 }
 
-uint32_t Executable::GetSize() const {
-    return header.code.size + header.initData.size + header.uninitData.size;
-}
+uint32_t Executable::GetSize() const { return header.code.size + header.initData.size + header.uninitData.size; }
 
 uint32_t Executable::GetCodeSize() const { return header.code.size; }
 
 uint32_t Executable::GetInitDataSize() const { return header.initData.size; }
 
-uint32_t Executable::GetUninitDataSize() const {
-    return header.uninitData.size;
-}
+uint32_t Executable::GetUninitDataSize() const { return header.uninitData.size; }
 
 uint32_t Executable::GetCodeAddr() const { return header.code.virtualAddr; }
 
-uint32_t Executable::GetInitDataAddr() const {
-    return header.initData.virtualAddr;
-}
+uint32_t Executable::GetInitDataAddr() const { return header.initData.virtualAddr; }
 
 int Executable::ReadCodeBlock(char *dest, uint32_t size, uint32_t offset) {
     ASSERT(dest != nullptr);

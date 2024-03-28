@@ -9,33 +9,19 @@
 
 #include "encoding.hh"
 
-const OpInfo OP_TABLE[] = {
-    {SPECIAL, RFMT},  {BCOND, IFMT},    {OP_J, JFMT},     {OP_JAL, JFMT},
-    {OP_BEQ, IFMT},   {OP_BNE, IFMT},   {OP_BLEZ, IFMT},  {OP_BGTZ, IFMT},
-    {OP_ADDI, IFMT},  {OP_ADDIU, IFMT}, {OP_SLTI, IFMT},  {OP_SLTIU, IFMT},
-    {OP_ANDI, IFMT},  {OP_ORI, IFMT},   {OP_XORI, IFMT},  {OP_LUI, IFMT},
-    {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT},
-    {OP_RES, IFMT},   {OP_RES, IFMT},   {OP_RES, IFMT},   {OP_RES, IFMT},
-    {OP_RES, IFMT},   {OP_RES, IFMT},   {OP_RES, IFMT},   {OP_RES, IFMT},
-    {OP_RES, IFMT},   {OP_RES, IFMT},   {OP_RES, IFMT},   {OP_RES, IFMT},
-    {OP_LB, IFMT},    {OP_LH, IFMT},    {OP_LWL, IFMT},   {OP_LW, IFMT},
-    {OP_LBU, IFMT},   {OP_LHU, IFMT},   {OP_LWR, IFMT},   {OP_RES, IFMT},
-    {OP_SB, IFMT},    {OP_SH, IFMT},    {OP_SWL, IFMT},   {OP_SW, IFMT},
-    {OP_RES, IFMT},   {OP_RES, IFMT},   {OP_SWR, IFMT},   {OP_RES, IFMT},
-    {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT},
-    {OP_RES, IFMT},   {OP_RES, IFMT},   {OP_RES, IFMT},   {OP_RES, IFMT},
-    {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT},
-    {OP_RES, IFMT},   {OP_RES, IFMT},   {OP_RES, IFMT},   {OP_RES, IFMT}};
+const OpInfo OP_TABLE[] = {{SPECIAL, RFMT},  {BCOND, IFMT},    {OP_J, JFMT},     {OP_JAL, JFMT},   {OP_BEQ, IFMT},  {OP_BNE, IFMT}, {OP_BLEZ, IFMT}, {OP_BGTZ, IFMT},
+                           {OP_ADDI, IFMT},  {OP_ADDIU, IFMT}, {OP_SLTI, IFMT},  {OP_SLTIU, IFMT}, {OP_ANDI, IFMT}, {OP_ORI, IFMT}, {OP_XORI, IFMT}, {OP_LUI, IFMT},
+                           {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT}, {OP_RES, IFMT},  {OP_RES, IFMT}, {OP_RES, IFMT},  {OP_RES, IFMT},
+                           {OP_RES, IFMT},   {OP_RES, IFMT},   {OP_RES, IFMT},   {OP_RES, IFMT},   {OP_RES, IFMT},  {OP_RES, IFMT}, {OP_RES, IFMT},  {OP_RES, IFMT},
+                           {OP_LB, IFMT},    {OP_LH, IFMT},    {OP_LWL, IFMT},   {OP_LW, IFMT},    {OP_LBU, IFMT},  {OP_LHU, IFMT}, {OP_LWR, IFMT},  {OP_RES, IFMT},
+                           {OP_SB, IFMT},    {OP_SH, IFMT},    {OP_SWL, IFMT},   {OP_SW, IFMT},    {OP_RES, IFMT},  {OP_RES, IFMT}, {OP_SWR, IFMT},  {OP_RES, IFMT},
+                           {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT}, {OP_RES, IFMT},  {OP_RES, IFMT}, {OP_RES, IFMT},  {OP_RES, IFMT},
+                           {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT}, {OP_RES, IFMT},  {OP_RES, IFMT}, {OP_RES, IFMT},  {OP_RES, IFMT}};
 
-const int SPECIAL_TABLE[] = {
-    OP_SLL,  OP_RES,   OP_SRL,  OP_SRA,  OP_SLLV,    OP_RES,   OP_SRLV, OP_SRAV,
-    OP_JR,   OP_JALR,  OP_RES,  OP_RES,  OP_SYSCALL, OP_UNIMP, OP_RES,  OP_RES,
-    OP_MFHI, OP_MTHI,  OP_MFLO, OP_MTLO, OP_RES,     OP_RES,   OP_RES,  OP_RES,
-    OP_MULT, OP_MULTU, OP_DIV,  OP_DIVU, OP_RES,     OP_RES,   OP_RES,  OP_RES,
-    OP_ADD,  OP_ADDU,  OP_SUB,  OP_SUBU, OP_AND,     OP_OR,    OP_XOR,  OP_NOR,
-    OP_RES,  OP_RES,   OP_SLT,  OP_SLTU, OP_RES,     OP_RES,   OP_RES,  OP_RES,
-    OP_RES,  OP_RES,   OP_RES,  OP_RES,  OP_RES,     OP_RES,   OP_RES,  OP_RES,
-    OP_RES,  OP_RES,   OP_RES,  OP_RES,  OP_RES,     OP_RES,   OP_RES,  OP_RES};
+const int SPECIAL_TABLE[] = {OP_SLL,  OP_RES,  OP_SRL,  OP_SRA,  OP_SLLV, OP_RES, OP_SRLV, OP_SRAV, OP_JR,   OP_JALR,  OP_RES, OP_RES,  OP_SYSCALL, OP_UNIMP, OP_RES, OP_RES,
+                             OP_MFHI, OP_MTHI, OP_MFLO, OP_MTLO, OP_RES,  OP_RES, OP_RES,  OP_RES,  OP_MULT, OP_MULTU, OP_DIV, OP_DIVU, OP_RES,     OP_RES,   OP_RES, OP_RES,
+                             OP_ADD,  OP_ADDU, OP_SUB,  OP_SUBU, OP_AND,  OP_OR,  OP_XOR,  OP_NOR,  OP_RES,  OP_RES,   OP_SLT, OP_SLTU, OP_RES,     OP_RES,   OP_RES, OP_RES,
+                             OP_RES,  OP_RES,  OP_RES,  OP_RES,  OP_RES,  OP_RES, OP_RES,  OP_RES,  OP_RES,  OP_RES,   OP_RES, OP_RES,  OP_RES,     OP_RES,   OP_RES, OP_RES};
 
 const struct OpString OP_STRINGS[] = {{"Should not happen", {NONE, NONE, NONE}},
                                       {"ADD r%d,r%d,r%d", {RD, RS, RT}},

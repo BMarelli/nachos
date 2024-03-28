@@ -14,9 +14,7 @@ extern int Traptrace;
 
 /// Convert a user pointer to the real address.
 /// Used in the interpreter.
-static char *UserPointerToAddress(int ptr) {
-    return (char *)((int)mem - memoffset + ptr);
-}
+static char *UserPointerToAddress(int ptr) { return (char *)((int)mem - memoffset + ptr); }
 
 int UserPointerToFd(int fd) {
     if (fd > 2) {

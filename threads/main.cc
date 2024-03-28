@@ -93,9 +93,7 @@ void StartProcess(const char *file);
 void ConsoleTest(const char *in, const char *out);
 void MailTest(int networkID);
 
-static inline void PrintVersion() {
-    printf("%s (%s)\n%s", PROGRAM, VERSION, COPYRIGHT);
-}
+static inline void PrintVersion() { printf("%s (%s)\n%s", PROGRAM, VERSION, COPYRIGHT); }
 
 /// Bootstrap the operating system kernel.
 ///

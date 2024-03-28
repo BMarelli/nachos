@@ -292,16 +292,13 @@ static bool CheckForError(bool value, const char *message) {
 }
 
 static bool CheckSector(unsigned sector, Bitmap *shadowMap) {
-    if (CheckForError(sector < NUM_SECTORS,
-                      "sector number too big.  Skipping bitmap check.")) {
+    if (CheckForError(sector < NUM_SECTORS, "sector number too big.  Skipping bitmap check.")) {
         return true;
     }
-    return CheckForError(AddToShadowBitmap(sector, shadowMap),
-                         "sector number already used.");
+    return CheckForError(AddToShadowBitmap(sector, shadowMap), "sector number already used.");
 }
 
-static bool CheckFileHeader(const RawFileHeader *rh, unsigned num,
-                            Bitmap *shadowMap) {
+static bool CheckFileHeader(const RawFileHeader *rh, unsigned num, Bitmap *shadowMap) {
     ASSERT(rh != nullptr);
 
     bool error = false;
@@ -310,9 +307,7 @@ static bool CheckFileHeader(const RawFileHeader *rh, unsigned num,
           "Checking file header %u.  File size: %u bytes, number of sectors: "
           "%u.\n",
           num, rh->numBytes, rh->numSectors);
-    error |=
-        CheckForError(rh->numSectors >= DivRoundUp(rh->numBytes, SECTOR_SIZE),
-                      "sector count not compatible with file size.");
+    error |= CheckForError(rh->numSectors >= DivRoundUp(rh->numBytes, SECTOR_SIZE), "sector count not compatible with file size.");
     error |= CheckForError(rh->numSectors < NUM_DIRECT, "too many blocks.");
     for (unsigned i = 0; i < rh->numSectors; i++) {
         unsigned s = rh->dataSectors[i];
@@ -324,10 +319,8 @@ static bool CheckFileHeader(const RawFileHeader *rh, unsigned num,
 static bool CheckBitmaps(const Bitmap *freeMap, const Bitmap *shadowMap) {
     bool error = false;
     for (unsigned i = 0; i < NUM_SECTORS; i++) {
-        DEBUG('f', "Checking sector %u. Original: %u, shadow: %u.\n", i,
-              freeMap->Test(i), shadowMap->Test(i));
-        error |= CheckForError(freeMap->Test(i) == shadowMap->Test(i),
-                               "inconsistent bitmap.");
+        DEBUG('f', "Checking sector %u. Original: %u, shadow: %u.\n", i, freeMap->Test(i), shadowMap->Test(i));
+        error |= CheckForError(freeMap->Test(i) == shadowMap->Test(i), "inconsistent bitmap.");
     }
     return error;
 }
@@ -351,12 +344,10 @@ static bool CheckDirectory(const RawDirectory *rd, Bitmap *shadowMap) {
             }
 
             // Check for repeated filenames.
-            DEBUG('f', "Checking for repeated names.  Name count: %u.\n",
-                  nameCount);
+            DEBUG('f', "Checking for repeated names.  Name count: %u.\n", nameCount);
             bool repeated = false;
             for (unsigned j = 0; j < nameCount; j++) {
-                DEBUG('f', "Comparing \"%s\" and \"%s\".\n", knownNames[j],
-                      e->name);
+                DEBUG('f', "Comparing \"%s\" and \"%s\".\n", knownNames[j], e->name);
                 if (strcmp(knownNames[j], e->name) == 0) {
                     DEBUG('f', "Repeated filename.\n");
                     repeated = true;
@@ -399,13 +390,9 @@ bool FileSystem::Check() {
     DEBUG('f',
           "  File size: %u bytes, expected %u bytes.\n"
           "  Number of sectors: %u, expected %u.\n",
-          bitRH->numBytes, FREE_MAP_FILE_SIZE, bitRH->numSectors,
-          FREE_MAP_FILE_SIZE / SECTOR_SIZE);
-    error |= CheckForError(bitRH->numBytes == FREE_MAP_FILE_SIZE,
-                           "bad bitmap header: wrong file size.");
-    error |=
-        CheckForError(bitRH->numSectors == FREE_MAP_FILE_SIZE / SECTOR_SIZE,
-                      "bad bitmap header: wrong number of sectors.");
+          bitRH->numBytes, FREE_MAP_FILE_SIZE, bitRH->numSectors, FREE_MAP_FILE_SIZE / SECTOR_SIZE);
+    error |= CheckForError(bitRH->numBytes == FREE_MAP_FILE_SIZE, "bad bitmap header: wrong file size.");
+    error |= CheckForError(bitRH->numSectors == FREE_MAP_FILE_SIZE / SECTOR_SIZE, "bad bitmap header: wrong number of sectors.");
     error |= CheckFileHeader(bitRH, FREE_MAP_SECTOR, shadowMap);
     delete bitH;
 
@@ -431,8 +418,7 @@ bool FileSystem::Check() {
     delete shadowMap;
     delete freeMap;
 
-    DEBUG('f', error ? "Filesystem check failed.\n"
-                     : "Filesystem check succeeded.\n");
+    DEBUG('f', error ? "Filesystem check failed.\n" : "Filesystem check succeeded.\n");
 
     return !error;
 }

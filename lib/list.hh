@@ -178,8 +178,7 @@ Item List<Item>::Pop() {
 
 template <class Item>
 void List<Item>::Remove(Item item) {
-    for (ListNode *ptr = first, *prev_ptr = nullptr; ptr != nullptr;
-         prev_ptr = ptr, ptr = ptr->next) {
+    for (ListNode *ptr = first, *prev_ptr = nullptr; ptr != nullptr; prev_ptr = ptr, ptr = ptr->next) {
         if (item == ptr->item) {
             if (prev_ptr) {
                 prev_ptr->next = ptr->next;

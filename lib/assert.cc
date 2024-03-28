@@ -8,8 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void Assert(bool result, const char *expString, const char *filename,
-            unsigned line) {
+void Assert(bool result, const char *expString, const char *filename, unsigned line) {
     if (!result) {
         fprintf(stderr,
                 "\nAssertion failed!\n"

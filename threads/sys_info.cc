@@ -65,8 +65,7 @@ Disk:\n\
   Number of tracks: %u.\n\
   Number of sectors: %u.\n\
   Disk size: %u bytes.\n",
-        SECTOR_SIZE, SECTORS_PER_TRACK, NUM_TRACKS, NUM_SECTORS,
-        SECTOR_SIZE * NUM_SECTORS);
+        SECTOR_SIZE, SECTORS_PER_TRACK, NUM_TRACKS, NUM_SECTORS, SECTOR_SIZE * NUM_SECTORS);
     printf(
         "\n\
 Filesystem:\n\
@@ -76,6 +75,5 @@ Filesystem:\n\
   Free sectors map size: %u bytes.\n\
   Maximum number of dir-entries: %u.\n\
   Directory file size: %u bytes.\n",
-        NUM_DIRECT, MAX_FILE_SIZE, FILE_NAME_MAX_LEN, FREE_MAP_FILE_SIZE,
-        NUM_DIR_ENTRIES, DIRECTORY_FILE_SIZE);
+        NUM_DIRECT, MAX_FILE_SIZE, FILE_NAME_MAX_LEN, FREE_MAP_FILE_SIZE, NUM_DIR_ENTRIES, DIRECTORY_FILE_SIZE);
 }

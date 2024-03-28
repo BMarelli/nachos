@@ -48,16 +48,11 @@ static HDRR symbolHeader;
 static EXTR symbols[MAX_SYMBOLS];
 static char sspace[MAX_SSPACE];
 
-static const char *SYMBOL_TYPE[] = {
-    "Nil",      "Global",  "Static",     "Param",   "Local", "Label",
-    "Proc",     "Block",   "End",        "Member",  "Type",  "File",
-    "Register", "Forward", "StaticProc", "Constant"};
+static const char *SYMBOL_TYPE[] = {"Nil", "Global", "Static", "Param", "Local",    "Label",   "Proc",       "Block",
+                                    "End", "Member", "Type",   "File",  "Register", "Forward", "StaticProc", "Constant"};
 
-static const char *STORAGE_CLASS[] = {
-    "Nil",        "Text",        "Data",    "Bss",        "Register", "Abs",
-    "Undefined",  "CdbLocal",    "Bits",    "CdbSystem",  "RegImage", "Info",
-    "UserStruct", "SData",       "SBss",    "RData",      "Var",      "Common",
-    "SCommon",    "VarRegister", "Variant", "SUndefined", "Init"};
+static const char *STORAGE_CLASS[] = {"Nil",        "Text",  "Data", "Bss",   "Register", "Abs",    "Undefined", "CdbLocal",    "Bits",    "CdbSystem",  "RegImage", "Info",
+                                      "UserStruct", "SData", "SBss", "RData", "Var",      "Common", "SCommon",   "VarRegister", "Variant", "SUndefined", "Init"};
 
 static unsigned column = 1;
 
@@ -90,12 +85,9 @@ static int MyTab(unsigned n) {
     return column == n;
 }
 
-static const char *SECTION_NAME[] = {"(null)", ".text", ".rdata", ".data",
-                                     ".sdata", ".sbss", ".bss",   ".init",
-                                     ".lit8",  ".lit4"};
+static const char *SECTION_NAME[] = {"(null)", ".text", ".rdata", ".data", ".sdata", ".sbss", ".bss", ".init", ".lit8", ".lit4"};
 
-static const char *RELOC_TYPE[] = {"abs",  "16",   "32",     "26",
-                                   "hi16", "lo16", "gpdata", "gplit"};
+static const char *RELOC_TYPE[] = {"abs", "16", "32", "26", "hi16", "lo16", "gpdata", "gplit"};
 
 static void PrintReloc(int vaddr, int i, int j) {
     for (unsigned k = 0; k < section[i].relocs; k++) {
@@ -108,8 +100,7 @@ static void PrintReloc(int vaddr, int i, int j) {
                 if (rp->symbolIndex >= MAX_SYMBOLS) {
                     printf("sym $%u", rp->symbolIndex);
                 } else {
-                    printf("\"%s\"",
-                           &sspace[symbols[rp->symbolIndex].asym.iss]);
+                    printf("\"%s\"", &sspace[symbols[rp->symbolIndex].asym.iss]);
                 }
             } else {
                 printf("%s", SECTION_NAME[rp->symbolIndex]);
@@ -130,12 +121,10 @@ static void PrintSection(int i) {
     long word;
     char *s;
 
-    printf("Section %s (size %u, relocs %u):\n", sectionHeader[i].name,
-           sectionHeader[i].size, section[i].relocs);
+    printf("Section %s (size %u, relocs %u):\n", sectionHeader[i].name, sectionHeader[i].size, section[i].relocs);
     is_text = strncmp(sectionHeader[i].name, ".text", 5) == 0;
 
-    for (unsigned j = 0, pc = sectionHeader[i].virtAddr; j < section[i].length;
-         j++) {
+    for (unsigned j = 0, pc = sectionHeader[i].virtAddr; j < section[i].length; j++) {
         word = section[i].data[j];
         if (is_text) {
             DumpAscii(word, pc);
@@ -171,23 +160,17 @@ int main(int argc, char *argv[]) {
         perror("out");
         exit(1);
     }
-    if (!ReadStruct(f, fileHeader) || !ReadStruct(f, optHeader) ||
-        fileHeader.magic != COFF_MIPSELMAGIC) {
-        fprintf(stderr,
-                "out: %s is not a MIPS Little-Endian COFF object file.\n",
-                filename);
+    if (!ReadStruct(f, fileHeader) || !ReadStruct(f, optHeader) || fileHeader.magic != COFF_MIPSELMAGIC) {
+        fprintf(stderr, "out: %s is not a MIPS Little-Endian COFF object file.\n", filename);
         exit(1);
     }
     if (fileHeader.nSections > MAX_SECTIONS) {
-        fprintf(stderr, "out: too many COFF sections (%u, max %u).\n",
-                fileHeader.nSections, MAX_SECTIONS);
+        fprintf(stderr, "out: too many COFF sections (%u, max %u).\n", fileHeader.nSections, MAX_SECTIONS);
         exit(1);
     }
     for (unsigned i = 0; i < fileHeader.nSections; i++) {
         ReadStruct(f, sectionHeader[i]);
-        if (sectionHeader[i].size > MAX_DATA * sizeof(long) &&
-                sectionHeader[i].sectionPtr != 0 ||
-            sectionHeader[i].nReloc > MAX_RELOCS) {
+        if (sectionHeader[i].size > MAX_DATA * sizeof(long) && sectionHeader[i].sectionPtr != 0 || sectionHeader[i].nReloc > MAX_RELOCS) {
             printf("section %s is too big.\n", sectionHeader[i].name);
             exit(1);
         }
@@ -206,16 +189,14 @@ int main(int argc, char *argv[]) {
     fseek(f, fileHeader.symbolPtr, 0);
     ReadStruct(f, symbolHeader);
     if (symbolHeader.iextMax > MAX_SYMBOLS) {
-        fprintf(stderr, "Too many symbols to store (%u, max %u).\n",
-                symbolHeader.iextMax, MAX_SYMBOLS);
+        fprintf(stderr, "Too many symbols to store (%u, max %u).\n", symbolHeader.iextMax, MAX_SYMBOLS);
     }
     fseek(f, symbolHeader.cbExtOffset, 0);
     for (unsigned i = 0; i < MAX_SYMBOLS && i < symbolHeader.iextMax; i++) {
         ReadStruct(f, symbols[i]);
     }
     if (symbolHeader.issExtMax > MAX_SSPACE) {
-        fprintf(stderr, "Too large a string space (%u, max %u).\n",
-                symbolHeader.issExtMax, MAX_SSPACE);
+        fprintf(stderr, "Too large a string space (%u, max %u).\n", symbolHeader.issExtMax, MAX_SSPACE);
         exit(1);
     }
     fseek(f, symbolHeader.cbSsExtOffset, 0);
