@@ -16,29 +16,44 @@
 
 #include "condition.hh"
 
-/// Dummy functions -- so we can compile our later assignments.
-///
-/// Note -- without a correct implementation of `Condition::Wait`, the test
-/// case in the network assignment will not work!
+#include "lib/utility.hh"
+#include "system.hh"
 
 Condition::Condition(const char *debugName, Lock *conditionLock) {
-    // TODO
+    name = debugName;
+    lock = conditionLock;
+    queue = new List<Semaphore *>;
 }
 
-Condition::~Condition() {
-    // TODO
-}
+Condition::~Condition() { delete queue; }
 
 const char *Condition::GetName() const { return name; }
 
 void Condition::Wait() {
-    // TODO
+    ASSERT(lock->IsHeldByCurrentThread());
+
+    Semaphore *semaphore = new Semaphore(name, 0);
+
+    queue->Append(semaphore);
+
+    lock->Release();
+    semaphore->P();
+    lock->Acquire();
+
+    delete semaphore;
 }
 
 void Condition::Signal() {
-    // TODO
+    ASSERT(lock->IsHeldByCurrentThread());
+
+    if (!queue->IsEmpty()) {
+        Semaphore *semaphore = queue->Pop();
+        semaphore->V();
+    }
 }
 
 void Condition::Broadcast() {
-    // TODO
+    ASSERT(lock->IsHeldByCurrentThread());
+
+    while (!queue->IsEmpty()) Signal();
 }
