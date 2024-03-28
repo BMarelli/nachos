@@ -17,8 +17,7 @@
 
 static FILE *fp;
 static LDFILE *ldPtr;
-static SCNHDR textHeader, rdataHeader, dataHeader, sdataHeader, sbssHeader,
-    bssHeader;
+static SCNHDR textHeader, rdataHeader, dataHeader, sdataHeader, sbssHeader, bssHeader;
 
 static char filename[1000] = "a.out";  // Default a.out file.
 static char self[256];                 // Name of invoking program.

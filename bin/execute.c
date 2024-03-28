@@ -164,8 +164,7 @@ void RunProgram(unsigned startpc, int argc, char *argv[]) {
                             Reg[rd(instr)] = Reg[rt(instr)] << shamt(instr);
                             break;
                         case I_SRL:
-                            Reg[rd(instr)] =
-                                (unsigned)Reg[rt(instr)] >> shamt(instr);
+                            Reg[rd(instr)] = (unsigned)Reg[rt(instr)] >> shamt(instr);
                             break;
                         case I_SRA:
                             Reg[rd(instr)] = Reg[rt(instr)] >> shamt(instr);
@@ -174,8 +173,7 @@ void RunProgram(unsigned startpc, int argc, char *argv[]) {
                             Reg[rd(instr)] = Reg[rt(instr)] << Reg[rs(instr)];
                             break;
                         case I_SRLV:
-                            Reg[rd(instr)] =
-                                (unsigned)Reg[rt(instr)] >> Reg[rs(instr)];
+                            Reg[rd(instr)] = (unsigned)Reg[rt(instr)] >> Reg[rs(instr)];
                             break;
                         case I_SRAV:
                             Reg[rd(instr)] = Reg[rt(instr)] >> Reg[rs(instr)];
@@ -229,8 +227,7 @@ void RunProgram(unsigned startpc, int argc, char *argv[]) {
                             t1h = (t1 >> 16) & 0xFFFF;
                             t2l = t2 & 0xFFFF;
                             t2h = (t2 >> 16) & 0xFFFF;
-                            HI = t1h * t2h + (t1h * t2l >> 16) +
-                                 (t2h * t1l >> 16);
+                            HI = t1h * t2h + (t1h * t2l >> 16) + (t2h * t1l >> 16);
                             if (neg) {
                                 LO = ~LO;
                                 HI = ~HI;
@@ -252,8 +249,7 @@ void RunProgram(unsigned startpc, int argc, char *argv[]) {
                             t2l = t2 & 0xFFFF;
                             t2h = t2 >> 16 & 0xFFFF;
                             LO = t1 * t2;
-                            HI = t1h * t2h + (t1h * t2l >> 16) +
-                                 (t2h * t1l >> 16);
+                            HI = t1h * t2h + (t1h * t2l >> 16) + (t2h * t1l >> 16);
                             break;
                         }
                         case I_DIV:
@@ -261,10 +257,8 @@ void RunProgram(unsigned startpc, int argc, char *argv[]) {
                             HI = Reg[rs(instr)] % Reg[rt(instr)];
                             break;
                         case I_DIVU:
-                            LO = (unsigned)Reg[rs(instr)] /
-                                 (unsigned)Reg[rt(instr)];
-                            HI = (unsigned)Reg[rs(instr)] %
-                                 (unsigned)Reg[rt(instr)];
+                            LO = (unsigned)Reg[rs(instr)] / (unsigned)Reg[rt(instr)];
+                            HI = (unsigned)Reg[rs(instr)] % (unsigned)Reg[rt(instr)];
                             break;
 
                         case I_ADD:
@@ -292,8 +286,7 @@ void RunProgram(unsigned startpc, int argc, char *argv[]) {
                             Reg[rd(instr)] = Reg[rs(instr)] < Reg[rt(instr)];
                             break;
                         case I_SLTU:
-                            Reg[rd(instr)] = (unsigned)Reg[rs(instr)] <
-                                             (unsigned)Reg[rt(instr)];
+                            Reg[rd(instr)] = (unsigned)Reg[rs(instr)] < (unsigned)Reg[rt(instr)];
                             break;
                         default:
                             Unimplemented();
@@ -372,8 +365,7 @@ void RunProgram(unsigned startpc, int argc, char *argv[]) {
                     Reg[rt(instr)] = Reg[rs(instr)] < immed(instr);
                     break;
                 case I_SLTIU:
-                    Reg[rt(instr)] =
-                        (unsigned)Reg[rs(instr)] < (unsigned)immed(instr);
+                    Reg[rt(instr)] = (unsigned)Reg[rs(instr)] < (unsigned)immed(instr);
                     break;
                 case I_ANDI:
                     Reg[rt(instr)] = Reg[rs(instr)] & immed(instr);
@@ -459,8 +451,7 @@ void RunProgram(unsigned startpc, int argc, char *argv[]) {
         }
 
 #ifdef DEBUG
-        printf("%d(%X) = %d(%X) op %d(%X)\n", Reg[rd], Reg[rd], op1, op1, op2,
-               op2);
+        printf("%d(%X) = %d(%X) op %d(%X)\n", Reg[rd], Reg[rd], op1, op1, op2, op2);
 #endif
         if (TRACE) {
             DumpAscii(instr, xpc);

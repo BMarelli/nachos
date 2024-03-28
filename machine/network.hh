@@ -58,8 +58,7 @@ const unsigned MAX_PACKET_SIZE = MAX_WIRE_SIZE - sizeof(PacketHeader);
 class Network {
    public:
     /// Allocate and initialize network driver.
-    Network(NetworkAddress addr, double reliability, VoidFunctionPtr readAvail,
-            VoidFunctionPtr writeDone, void *callArg);
+    Network(NetworkAddress addr, double reliability, VoidFunctionPtr readAvail, VoidFunctionPtr writeDone, void *callArg);
 
     /// De-allocate the network driver data.
     ~Network();

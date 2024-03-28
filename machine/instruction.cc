@@ -35,11 +35,7 @@ void Instruction::Decode() {
     } else if (opCode == BCOND) {
         int i = value & 0x1F0000;
 
-        opCode = (i == 0)          ? OP_BLTZ
-                 : (i == 0x10000)  ? OP_BGEZ
-                 : (i == 0x100000) ? OP_BLTZAL
-                 : (i == 0x110000) ? OP_BGEZAL
-                                   : OP_UNIMP;
+        opCode = (i == 0) ? OP_BLTZ : (i == 0x10000) ? OP_BGEZ : (i == 0x100000) ? OP_BLTZAL : (i == 0x110000) ? OP_BGEZAL : OP_UNIMP;
     }
 }
 

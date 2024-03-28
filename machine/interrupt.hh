@@ -48,15 +48,7 @@ enum MachineStatus { IDLE_MODE, SYSTEM_MODE, USER_MODE, NUM_MACHINE_STATUS };
 /// `IntType` records which hardware device generated an interrupt.  In
 /// Nachos, we support a hardware timer device, a disk, a console display and
 /// keyboard, and a network.
-enum IntType {
-    TIMER_INT,
-    DISK_INT,
-    CONSOLE_WRITE_INT,
-    CONSOLE_READ_INT,
-    NETWORK_SEND_INT,
-    NETWORK_RECV_INT,
-    NUM_INT_TYPES
-};
+enum IntType { TIMER_INT, DISK_INT, CONSOLE_WRITE_INT, CONSOLE_READ_INT, NETWORK_SEND_INT, NETWORK_RECV_INT, NUM_INT_TYPES };
 
 /// The following class defines an interrupt that is scheduled to occur in
 /// the future.
@@ -66,8 +58,7 @@ enum IntType {
 class PendingInterrupt {
    public:
     /// initialize an interrupt that will occur in the future.
-    PendingInterrupt(VoidFunctionPtr func, void *param, unsigned long time,
-                     IntType kind);
+    PendingInterrupt(VoidFunctionPtr func, void *param, unsigned long time, IntType kind);
 
     VoidFunctionPtr handler;  ///< The function (in the hardware device
                               ///< emulator) to call when the interrupt
@@ -125,8 +116,7 @@ class Interrupt {
     /// Schedule an interrupt to occur at time ``when''.
     ///
     /// This is called by the hardware device simulators.
-    void Schedule(VoidFunctionPtr handler, void *arg, unsigned long when,
-                  IntType type);
+    void Schedule(VoidFunctionPtr handler, void *arg, unsigned long when, IntType type);
 
     /// Advance simulated time.
     void OneTick();
@@ -135,10 +125,10 @@ class Interrupt {
     IntStatus level;                    ///< Are interrupts enabled or disabled?
     List<PendingInterrupt *> *pending;  ///< The list of interrupts scheduled
                                         ///< to occur in the future.
-    bool inHandler;        ///< True if we are running an interrupt handler.
-    bool yieldOnReturn;    ///< True if we are to context switch on return from
-                           ///< the interrupt handler.
-    MachineStatus status;  ///< Idle, kernel mode, user mode.
+    bool inHandler;                     ///< True if we are running an interrupt handler.
+    bool yieldOnReturn;                 ///< True if we are to context switch on return from
+                                        ///< the interrupt handler.
+    MachineStatus status;               ///< Idle, kernel mode, user mode.
 
     /// These functions are internal to the interrupt simulation code.
 

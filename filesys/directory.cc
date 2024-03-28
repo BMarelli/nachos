@@ -69,8 +69,7 @@ int Directory::FindIndex(const char *name) {
     ASSERT(name != nullptr);
 
     for (unsigned i = 0; i < raw.tableSize; i++) {
-        if (raw.table[i].inUse &&
-            !strncmp(raw.table[i].name, name, FILE_NAME_MAX_LEN)) {
+        if (raw.table[i].inUse && !strncmp(raw.table[i].name, name, FILE_NAME_MAX_LEN)) {
             return i;
         }
     }

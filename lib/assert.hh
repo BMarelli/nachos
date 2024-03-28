@@ -14,7 +14,6 @@
 /// as a string and the location where the error occurred.
 #define ASSERT(condition) Assert(condition, #condition, __FILE__, __LINE__)
 
-void Assert(bool result, const char *expString, const char *filename,
-            unsigned line);
+void Assert(bool result, const char *expString, const char *filename, unsigned line);
 
 #endif

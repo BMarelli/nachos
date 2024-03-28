@@ -63,9 +63,7 @@ void MMU::PrintTLB() const {
     printf("TLB content (%u entries):\n", TLB_SIZE);
     for (unsigned i = 0; i < TLB_SIZE; i++) {
         const TranslationEntry *e = &tlb[i];
-        printf("(%u) valid: %d, virt: %d, frame: %d, flags: %s%s%s\n", i,
-               e->valid, e->virtualPage, e->physicalPage,
-               (e->readOnly) ? "readonly " : "", (e->use) ? "use " : "",
+        printf("(%u) valid: %d, virt: %d, frame: %d, flags: %s%s%s\n", i, e->valid, e->virtualPage, e->physicalPage, (e->readOnly) ? "readonly " : "", (e->use) ? "use " : "",
                (e->dirty) ? "dirty" : "");
     }
 #else
@@ -142,13 +140,11 @@ ExceptionType MMU::WriteMem(unsigned addr, unsigned size, int value) {
             break;
 
         case 2:
-            *(unsigned short *)&mainMemory[physicalAddress] =
-                ShortToMachine((unsigned short)(value & 0xFFFF));
+            *(unsigned short *)&mainMemory[physicalAddress] = ShortToMachine((unsigned short)(value & 0xFFFF));
             break;
 
         case 4:
-            *(unsigned *)&mainMemory[physicalAddress] =
-                WordToMachine((unsigned)value);
+            *(unsigned *)&mainMemory[physicalAddress] = WordToMachine((unsigned)value);
             break;
 
         default:
@@ -158,8 +154,7 @@ ExceptionType MMU::WriteMem(unsigned addr, unsigned size, int value) {
     return NO_EXCEPTION;
 }
 
-ExceptionType MMU::RetrievePageEntry(unsigned vpn,
-                                     TranslationEntry **entry) const {
+ExceptionType MMU::RetrievePageEntry(unsigned vpn, TranslationEntry **entry) const {
     ASSERT(entry != nullptr);
 
     if (tlb == nullptr) {
@@ -214,8 +209,7 @@ ExceptionType MMU::RetrievePageEntry(unsigned vpn,
 /// * `physAddr" is the place to store the physical address.
 /// * `size" is the amount of memory being read or written.
 /// * `writing` -- if true, check the “read-only” bit in the TLB.
-ExceptionType MMU::Translate(unsigned virtAddr, unsigned *physAddr,
-                             unsigned size, bool writing) {
+ExceptionType MMU::Translate(unsigned virtAddr, unsigned *physAddr, unsigned size, bool writing) {
     ASSERT(physAddr != nullptr);
     // We must have either a TLB or a page table, but not both!
     ASSERT((tlb == nullptr) != (pageTable == nullptr));

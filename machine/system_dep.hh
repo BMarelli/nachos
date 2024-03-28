@@ -59,8 +59,7 @@ bool PollSocket(int sockID);
 
 void ReadFromSocket(int sockID, char *buffer, size_t packetSize);
 
-void SendToSocket(int sockID, const char *buffer, size_t packetSize,
-                  const char *toName);
+void SendToSocket(int sockID, const char *buffer, size_t packetSize, const char *toName);
 
 /// Process control: `sleep`.
 

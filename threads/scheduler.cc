@@ -79,8 +79,7 @@ void Scheduler::Run(Thread *nextThread) {
     currentThread = nextThread;         // Switch to the next thread.
     currentThread->SetStatus(RUNNING);  // `nextThread` is now running.
 
-    DEBUG('t', "Switching from thread \"%s\" to thread \"%s\"\n",
-          oldThread->GetName(), nextThread->GetName());
+    DEBUG('t', "Switching from thread \"%s\" to thread \"%s\"\n", oldThread->GetName(), nextThread->GetName());
 
     // This is a machine-dependent assembly language routine defined in
     // `switch.s`.  You may have to think a bit to figure out what happens

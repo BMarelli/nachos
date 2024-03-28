@@ -60,8 +60,7 @@ class Debug {
     /// Like `printf`, with some extra arguments on the front.
     ///
     /// Put a flag prefix along with the message.
-    void Print(const char *file, const unsigned line, const char *func,
-               char flag, const char *format, ...) const;
+    void Print(const char *file, const unsigned line, const char *func, char flag, const char *format, ...) const;
 
     /// Similar to `Print` but avoid printing the flag prefix.
     ///

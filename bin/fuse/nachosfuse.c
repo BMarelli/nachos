@@ -57,8 +57,7 @@ static int do_getattr(const char *path, struct stat *st) {
     return 0;
 }
 
-static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t fill,
-                      off_t offset, struct fuse_file_info *fi) {
+static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t fill, off_t offset, struct fuse_file_info *fi) {
     fprintf(stderr, "[readdir] %s\n", path);
 
     (*fill)(buffer, ".", NULL, 0);
@@ -99,8 +98,7 @@ static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t fill,
     return 0;
 }
 
-static int do_read(const char *path, char *buffer, size_t size, off_t offset,
-                   struct fuse_file_info *fi) {
+static int do_read(const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi) {
     fprintf(stderr,
             "[read] %s\n"
             "    size: %zu, start: %zu\n",
@@ -108,8 +106,7 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset,
 
     // Prepare command string for invoking Nachos.
     char command[MAX_NACHOS_PR_LENGTH];
-    int rv =
-        snprintf(command, MAX_NACHOS_PR_LENGTH, "%s %s", NACHOS_PR, path + 1);
+    int rv = snprintf(command, MAX_NACHOS_PR_LENGTH, "%s %s", NACHOS_PR, path + 1);
     // Discard leading slash in path, because Nachos does not like it.
     if (rv < 0 || rv >= MAX_NACHOS_PR_LENGTH) {
         perror(path);
@@ -152,6 +149,4 @@ static const struct fuse_operations OPERATIONS = {
     .read = do_read,
 };
 
-int main(int argc, char *argv[]) {
-    return fuse_main(argc, argv, &OPERATIONS, NULL);
-}
+int main(int argc, char *argv[]) { return fuse_main(argc, argv, &OPERATIONS, NULL); }

@@ -68,9 +68,7 @@ bool Machine::FetchInstruction(Instruction *instr) {
 
         ASSERT(instr->opCode <= MAX_OPCODE);
         DEBUG('m', "At PC = 0x%X: ", registers[PC_REG]);
-        DEBUG_CONT('m', str->string, instr->RegFromType(str->args[0]),
-                   instr->RegFromType(str->args[1]),
-                   instr->RegFromType(str->args[2]));
+        DEBUG_CONT('m', str->string, instr->RegFromType(str->args[0]), instr->RegFromType(str->args[1]), instr->RegFromType(str->args[2]));
         DEBUG_CONT('m', "\n");
     }
     return true;
@@ -176,8 +174,7 @@ void Machine::ExecInstruction(const Instruction *instr) {
     switch (instr->opCode) {
         case OP_ADD:
             sum = registers[instr->rs] + registers[instr->rt];
-            if (!((registers[instr->rs] ^ registers[instr->rt]) & SIGN_BIT) &&
-                (registers[instr->rs] ^ sum) & SIGN_BIT) {
+            if (!((registers[instr->rs] ^ registers[instr->rt]) & SIGN_BIT) && (registers[instr->rs] ^ sum) & SIGN_BIT) {
                 RaiseException(OVERFLOW_EXCEPTION, 0);
                 return;
             }
@@ -186,8 +183,7 @@ void Machine::ExecInstruction(const Instruction *instr) {
 
         case OP_ADDI:
             sum = registers[instr->rs] + instr->extra;
-            if (!((registers[instr->rs] ^ instr->extra) & SIGN_BIT) &&
-                (instr->extra ^ sum) & SIGN_BIT) {
+            if (!((registers[instr->rs] ^ instr->extra) & SIGN_BIT) && (instr->extra ^ sum) & SIGN_BIT) {
                 RaiseException(OVERFLOW_EXCEPTION, 0);
                 return;
             }
@@ -207,8 +203,7 @@ void Machine::ExecInstruction(const Instruction *instr) {
             break;
 
         case OP_ANDI:
-            registers[instr->rt] =
-                registers[instr->rs] & (instr->extra & 0xFFFF);
+            registers[instr->rt] = registers[instr->rs] & (instr->extra & 0xFFFF);
             break;
 
         case OP_BEQ:
@@ -392,16 +387,13 @@ void Machine::ExecInstruction(const Instruction *instr) {
             }
             switch (tmp & 0x3) {
                 case 0:
-                    nextLoadValue =
-                        (nextLoadValue & 0xFFFFFF00) | (value >> 24 & 0xFF);
+                    nextLoadValue = (nextLoadValue & 0xFFFFFF00) | (value >> 24 & 0xFF);
                     break;
                 case 1:
-                    nextLoadValue =
-                        (nextLoadValue & 0xFFFF0000) | (value >> 16 & 0xFFFF);
+                    nextLoadValue = (nextLoadValue & 0xFFFF0000) | (value >> 16 & 0xFFFF);
                     break;
                 case 2:
-                    nextLoadValue =
-                        (nextLoadValue & 0xFF000000) | (value >> 8 & 0xFFFFFF);
+                    nextLoadValue = (nextLoadValue & 0xFF000000) | (value >> 8 & 0xFFFFFF);
                     break;
                 case 3:
                     nextLoadValue = value;
@@ -427,18 +419,15 @@ void Machine::ExecInstruction(const Instruction *instr) {
             break;
 
         case OP_MULT:
-            Mult(registers[instr->rs], registers[instr->rt], true,
-                 &registers[HI_REG], &registers[LO_REG]);
+            Mult(registers[instr->rs], registers[instr->rt], true, &registers[HI_REG], &registers[LO_REG]);
             break;
 
         case OP_MULTU:
-            Mult(registers[instr->rs], registers[instr->rt], false,
-                 &registers[HI_REG], &registers[LO_REG]);
+            Mult(registers[instr->rs], registers[instr->rt], false, &registers[HI_REG], &registers[LO_REG]);
             break;
 
         case OP_NOR:
-            registers[instr->rd] =
-                ~(registers[instr->rs] | registers[instr->rt]);
+            registers[instr->rd] = ~(registers[instr->rs] | registers[instr->rt]);
             break;
 
         case OP_OR:
@@ -446,20 +435,17 @@ void Machine::ExecInstruction(const Instruction *instr) {
             break;
 
         case OP_ORI:
-            registers[instr->rt] =
-                registers[instr->rs] | (instr->extra & 0xFFFF);
+            registers[instr->rt] = registers[instr->rs] | (instr->extra & 0xFFFF);
             break;
 
         case OP_SB:
-            if (!WriteMem((unsigned)(registers[instr->rs] + instr->extra), 1,
-                          registers[instr->rt])) {
+            if (!WriteMem((unsigned)(registers[instr->rs] + instr->extra), 1, registers[instr->rt])) {
                 return;
             }
             break;
 
         case OP_SH:
-            if (!WriteMem((unsigned)(registers[instr->rs] + instr->extra), 2,
-                          registers[instr->rt])) {
+            if (!WriteMem((unsigned)(registers[instr->rs] + instr->extra), 2, registers[instr->rt])) {
                 return;
             }
             break;
@@ -469,18 +455,15 @@ void Machine::ExecInstruction(const Instruction *instr) {
             break;
 
         case OP_SLLV:
-            registers[instr->rd] = registers[instr->rt]
-                                   << (registers[instr->rs] & 0x1F);
+            registers[instr->rd] = registers[instr->rt] << (registers[instr->rs] & 0x1F);
             break;
 
         case OP_SLT:
-            registers[instr->rd] =
-                (registers[instr->rs] < registers[instr->rt]) ? 1 : 0;
+            registers[instr->rd] = (registers[instr->rs] < registers[instr->rt]) ? 1 : 0;
             break;
 
         case OP_SLTI:
-            registers[instr->rt] =
-                (registers[instr->rs] < instr->extra) ? 1 : 0;
+            registers[instr->rt] = (registers[instr->rs] < instr->extra) ? 1 : 0;
             break;
 
         case OP_SLTIU:
@@ -500,8 +483,7 @@ void Machine::ExecInstruction(const Instruction *instr) {
             break;
 
         case OP_SRAV:
-            registers[instr->rd] =
-                registers[instr->rt] >> (registers[instr->rs] & 0x1F);
+            registers[instr->rd] = registers[instr->rt] >> (registers[instr->rs] & 0x1F);
             break;
 
         case OP_SRL:
@@ -518,8 +500,7 @@ void Machine::ExecInstruction(const Instruction *instr) {
 
         case OP_SUB:
             diff = registers[instr->rs] - registers[instr->rt];
-            if ((registers[instr->rs] ^ registers[instr->rt]) & SIGN_BIT &&
-                (registers[instr->rs] ^ diff) & SIGN_BIT) {
+            if ((registers[instr->rs] ^ registers[instr->rt]) & SIGN_BIT && (registers[instr->rs] ^ diff) & SIGN_BIT) {
                 RaiseException(OVERFLOW_EXCEPTION, 0);
                 return;
             }
@@ -531,8 +512,7 @@ void Machine::ExecInstruction(const Instruction *instr) {
             break;
 
         case OP_SW:
-            if (!WriteMem((unsigned)(registers[instr->rs] + instr->extra), 4,
-                          registers[instr->rt])) {
+            if (!WriteMem((unsigned)(registers[instr->rs] + instr->extra), 4, registers[instr->rt])) {
                 return;
             }
             break;
@@ -552,16 +532,13 @@ void Machine::ExecInstruction(const Instruction *instr) {
                     value = registers[instr->rt];
                     break;
                 case 1:
-                    value = (value & 0xFF000000) |
-                            (registers[instr->rt] >> 8 & 0xFFFFFF);
+                    value = (value & 0xFF000000) | (registers[instr->rt] >> 8 & 0xFFFFFF);
                     break;
                 case 2:
-                    value = (value & 0xFFFF0000) |
-                            (registers[instr->rt] >> 16 & 0xFFFF);
+                    value = (value & 0xFFFF0000) | (registers[instr->rt] >> 16 & 0xFFFF);
                     break;
                 case 3:
-                    value = (value & 0xFFFFFF00) |
-                            (registers[instr->rt] >> 24 & 0xFF);
+                    value = (value & 0xFFFFFF00) | (registers[instr->rt] >> 24 & 0xFF);
                     break;
             }
             if (!WriteMem(tmp & ~0x3, 4, value)) {
@@ -607,8 +584,7 @@ void Machine::ExecInstruction(const Instruction *instr) {
             break;
 
         case OP_XORI:
-            registers[instr->rt] =
-                registers[instr->rs] ^ (instr->extra & 0xFFFF);
+            registers[instr->rt] = registers[instr->rs] ^ (instr->extra & 0xFFFF);
             break;
 
         case OP_RES:

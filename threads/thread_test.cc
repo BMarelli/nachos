@@ -26,9 +26,7 @@ typedef struct {
 } Test;
 
 static const Test TESTS[] = {
-    {&ThreadTestSimple, "simple", "Simple thread interleaving"},
-    {&ThreadTestGarden, "garden", "Ornamental garden"},
-    {&ThreadTestProdCons, "prodcons", "Producer/Consumer"}};
+    {&ThreadTestSimple, "simple", "Simple thread interleaving"}, {&ThreadTestGarden, "garden", "Ornamental garden"}, {&ThreadTestProdCons, "prodcons", "Producer/Consumer"}};
 static const unsigned NUM_TESTS = sizeof TESTS / sizeof TESTS[0];
 
 static const unsigned NAME_MAX_LEN = 32;

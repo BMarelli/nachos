@@ -71,6 +71,5 @@ Filesystem:\n\
   Free sectors map size: %u bytes.\n\
   Maximum number of dir-entries: %u.\n\
   Directory file size: %u bytes.\n",
-        NUM_DIRECT, MAX_FILE_SIZE, FILE_NAME_MAX_LEN, FREE_MAP_FILE_SIZE,
-        NUM_DIR_ENTRIES, DIRECTORY_FILE_SIZE);
+        NUM_DIRECT, MAX_FILE_SIZE, FILE_NAME_MAX_LEN, FREE_MAP_FILE_SIZE, NUM_DIR_ENTRIES, DIRECTORY_FILE_SIZE);
 }

@@ -48,6 +48,5 @@ void ThreadTestGarden() {
             currentThread->Yield();
         }
     }
-    printf("All turnstiles finished. Final count is %u (should be %u).\n",
-           count, ITERATIONS_PER_TURNSTILE * NUM_TURNSTILES);
+    printf("All turnstiles finished. Final count is %u (should be %u).\n", count, ITERATIONS_PER_TURNSTILE * NUM_TURNSTILES);
 }

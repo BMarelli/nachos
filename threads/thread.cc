@@ -28,9 +28,7 @@
 /// overflows.
 const unsigned STACK_FENCEPOST = 0xDEADBEEF;
 
-static inline bool IsThreadStatus(ThreadStatus s) {
-    return 0 <= s && s < NUM_THREAD_STATUS;
-}
+static inline bool IsThreadStatus(ThreadStatus s) { return 0 <= s && s < NUM_THREAD_STATUS; }
 
 /// Initialize a thread control block, so that we can then call
 /// `Thread::Fork`.
@@ -59,8 +57,7 @@ Thread::~Thread() {
 
     ASSERT(this != currentThread);
     if (stack != nullptr) {
-        SystemDep::DeallocBoundedArray((char *)stack,
-                                       STACK_SIZE * sizeof *stack);
+        SystemDep::DeallocBoundedArray((char *)stack, STACK_SIZE * sizeof *stack);
     }
 }
 
@@ -83,8 +80,7 @@ Thread::~Thread() {
 void Thread::Fork(VoidFunctionPtr func, void *arg) {
     ASSERT(func != nullptr);
 
-    DEBUG('t', "Forking thread \"%s\" with func = %p, arg = %p\n", name, func,
-          arg);
+    DEBUG('t', "Forking thread \"%s\" with func = %p, arg = %p\n", name, func, arg);
 
     StackAllocate(func, arg);
 
@@ -225,8 +221,7 @@ static void InterruptEnable() { interrupt->Enable(); }
 void Thread::StackAllocate(VoidFunctionPtr func, void *arg) {
     ASSERT(func != nullptr);
 
-    stack =
-        (uintptr_t *)SystemDep::AllocBoundedArray(STACK_SIZE * sizeof *stack);
+    stack = (uintptr_t *)SystemDep::AllocBoundedArray(STACK_SIZE * sizeof *stack);
 
     // Stacks in x86 work from high addresses to low addresses.
     stackTop = stack + STACK_SIZE - 4;  // -4 to be on the safe side!

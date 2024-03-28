@@ -18,9 +18,7 @@
 
 size_t CoffSectionAddr(const coffSectionHeader *sh) { return sh->physAddr; }
 
-bool CoffSectionEmpty(const coffSectionHeader *sh) {
-    return CoffSectionSize(sh) == 0;
-}
+bool CoffSectionEmpty(const coffSectionHeader *sh) { return CoffSectionSize(sh) == 0; }
 
 char *CoffSectionName(const coffSectionHeader *sh) {
     assert(sh != NULL);
@@ -46,8 +44,7 @@ void CoffSectionPrint(const coffSectionHeader *sh) {
 
     char *name;
     name = CoffSectionName(sh);
-    printf("    %s: filepos 0x%X, mempos 0x%X, size %u bytes\n", name,
-           sh->sectionPtr, sh->physAddr, sh->size);
+    printf("    %s: filepos 0x%X, mempos 0x%X, size %u bytes\n", name, sh->sectionPtr, sh->physAddr, sh->size);
     free(name);
 }
 
