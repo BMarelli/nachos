@@ -8,7 +8,6 @@
 
 #include <stdio.h>
 
-#include <algorithm>
 #include <cstdlib>
 
 #include "condition.hh"
@@ -133,5 +132,5 @@ void ThreadTestProdCons() {
         currentThread->Yield();
     }
 
-    printf("All producers and consumers finished. Final buffer is %d (should be  %ld).\n", buffer, toProduce - toConsume);
+    printf("All producers and consumers finished. Final buffer is %d (should be %ld).\n", buffer, toProduce - toConsume);
 }
