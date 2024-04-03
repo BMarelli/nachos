@@ -35,6 +35,7 @@ LDFLAGS  =
 PROGRAM = nachos
 
 THREAD_HDR = threads/condition.hh              \
+             threads/channels.hh               \
              threads/copyright.h               \
              threads/lock.hh                   \
              threads/scheduler.hh              \
