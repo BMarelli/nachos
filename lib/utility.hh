@@ -60,4 +60,9 @@ extern Debug debug;
 #define DEBUG(...) (debug.Print)(__FILE__, __LINE__, __func__, __VA_ARGS__)
 #define DEBUG_CONT (debug.PrintCont)
 
+// make_debug_name returns a new string with the concatenation of `parent` and
+// `name`, separated by an underscore. If `parent` is `nullptr` or an empty
+// string, it returns a copy of `name`.
+char *make_debug_name(const char *parent, const char *name);
+
 #endif
