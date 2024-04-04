@@ -30,9 +30,13 @@ inline T DivRoundUp(T n, T s) {
     return n / s + (n % s > 0 ? 1 : 0);
 }
 
-// make_debug_name returns a new string with the concatenation of `parent` and
-// `name`, separated by an underscore. If `parent` is `nullptr` or an empty
-// string, it returns a copy of `name`.
+// make_debug_name returns a copy of a string.
+char *make_debug_name(const char *name);
+
+// make_debug_name returns the concatenation of two strings, separated by an underscore.
 char *make_debug_name(const char *parent, const char *name);
+
+// make_debug_name returns the concatenation of two strings and a number, separated by an underscore.
+char *make_debug_name(const char *parent, const char *name, int index);
 
 #endif

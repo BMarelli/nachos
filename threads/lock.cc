@@ -19,13 +19,19 @@
 #include "lib/utility.hh"
 #include "system.hh"
 
-Lock::Lock(const char *debugName) {
-    name = debugName;
-    semaphore = new Semaphore(name, 1);
-    thread = nullptr;
+Lock::Lock(const char *_name) {
+    name = make_debug_name(_name);
+    semaphoreName = make_debug_name(_name, "semaphore");
+
+    semaphore = new Semaphore(semaphoreName, 1);
 }
 
-Lock::~Lock() { delete semaphore; }
+Lock::~Lock() {
+    delete name;
+    delete semaphoreName;
+
+    delete semaphore;
+}
 
 const char *Lock::GetName() const { return name; }
 

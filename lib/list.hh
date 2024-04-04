@@ -74,11 +74,16 @@ class List {
     /// Remove first item from list.
     Item SortedPop(int *keyPtr);
 
+    /// Get the length of the list.
+    int Length();
+
    private:
     typedef ListElement<Item> ListNode;
 
     ListNode *first;  ///< Head of the list, null if list is empty.
     ListNode *last;   ///< Last element of list.
+
+    int length;
 };
 
 /// Initialize a list element, so it can be added somewhere on a list.
@@ -123,6 +128,8 @@ List<Item>::~List() {
 // * `item` is the thing to put on the list, it can be a pointer to anything.
 template <class Item>
 void List<Item>::Append(Item item) {
+    length++;
+
     ListNode *element = new ListNode(item, 0);
 
     if (IsEmpty()) {
@@ -144,6 +151,8 @@ void List<Item>::Append(Item item) {
 ///   anything.
 template <class Item>
 void List<Item>::Prepend(Item item) {
+    length++;
+
     ListNode *element = new ListNode(item, 0);
 
     if (IsEmpty()) {
@@ -189,7 +198,10 @@ void List<Item>::Remove(Item item) {
             if (last == ptr) {
                 last = prev_ptr;
             }
+
             delete ptr;
+            length--;
+
             return;
         }
     }
@@ -236,6 +248,8 @@ bool List<Item>::IsEmpty() const {
 /// * `sortKey` is the priority of the item.
 template <class Item>
 void List<Item>::SortedInsert(Item item, int sortKey) {
+    length++;
+
     ListNode *element = new ListNode(item, sortKey);
 
     if (IsEmpty()) {  // If list is empty, put.
@@ -285,8 +299,17 @@ Item List<Item>::SortedPop(int *keyPtr) {
     if (keyPtr != nullptr) {
         *keyPtr = element->key;
     }
+
     delete element;
+    length--;
+
     return thing;
+}
+
+/// Returns the length of the list.
+template <class Item>
+int List<Item>::Length() {
+    return length;
 }
 
 #endif

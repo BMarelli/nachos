@@ -34,7 +34,7 @@
 class Lock {
    public:
     /// Constructor: set up the lock as free.
-    Lock(const char *debugName);
+    Lock(const char *name);
 
     ~Lock();
 
@@ -55,7 +55,7 @@ class Lock {
 
    private:
     /// For debugging.
-    const char *name;
+    const char *name, *semaphoreName;
 
     Semaphore *semaphore;
 

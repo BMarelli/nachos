@@ -3,10 +3,10 @@
 #include "lib/utility.hh"
 
 Channels::Channels(const char *name) {
-    sendLockName = make_debug_name(name, "send");
-    receiveLockName = make_debug_name(name, "receive");
-    sendSemaphoreName = make_debug_name(name, "send");
-    receiveSemaphoreName = make_debug_name(name, "receive");
+    sendLockName = make_debug_name(name, "sendLock");
+    receiveLockName = make_debug_name(name, "receiveLock");
+    sendSemaphoreName = make_debug_name(name, "sendSemaphore");
+    receiveSemaphoreName = make_debug_name(name, "receiveSemaphore");
 
     sendLock = new Lock(sendLockName);
     receiveLock = new Lock(receiveLockName);

@@ -55,7 +55,7 @@
 class Condition {
    public:
     /// Constructor: indicate which lock the condition variable belongs to.
-    Condition(const char *debugName, Lock *conditionLock);
+    Condition(const char *name, Lock *lock);
 
     ~Condition();
 
