@@ -20,7 +20,7 @@
 #ifndef NACHOS_MACHINE_TIMER__HH
 #define NACHOS_MACHINE_TIMER__HH
 
-#include "lib/utility.hh"
+#include "lib/function_ptr.hh"
 
 /// The following class defines a hardware timer.
 class Timer {

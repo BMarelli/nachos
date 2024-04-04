@@ -11,8 +11,6 @@
 
 #include <stdio.h>
 
-#include "lib/utility.hh"
-
 /// Initialize performance metrics to zero, at system startup.
 Statistics::Statistics() {
     totalTicks = idleTicks = systemTicks = userTicks = 0;

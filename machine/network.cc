@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "lib/debug.hh"
 #include "threads/system.hh"
 
 /// Dummy functions because C++ cannot call member functions indirectly.

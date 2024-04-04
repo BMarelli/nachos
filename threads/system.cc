@@ -7,15 +7,17 @@
 
 #include "system.hh"
 
+#include <stdlib.h>
+#include <string.h>
+
+#include "lib/debug.hh"
+#include "lib/debug_opts.hh"
 #include "preemptive.hh"
 
 #ifdef USER_PROGRAM
 #include "userprog/debugger.hh"
 #include "userprog/exception.hh"
 #endif
-
-#include <stdlib.h>
-#include <string.h>
 
 /// This defines *all* of the global data structures used by Nachos.
 ///

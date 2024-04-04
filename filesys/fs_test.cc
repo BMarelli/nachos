@@ -19,11 +19,9 @@
 #include <string.h>
 
 #include "file_system.hh"
-#include "lib/utility.hh"
-#include "machine/disk.hh"
+#include "lib/debug.hh"
 #include "machine/statistics.hh"
 #include "threads/system.hh"
-#include "threads/thread.hh"
 
 static const unsigned TRANSFER_SIZE = 10;  // Make it small, just to be
                                            // difficult.

@@ -14,7 +14,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "utility.hh"
+#include "assert.hh"
+#include "machine/system_dep.hh"
 
 Debug::Debug() { flags = ""; }
 
@@ -81,3 +82,5 @@ void Debug::PrintCont(char flag, const char *format, ...) const {
 
     fflush(stderr);
 }
+
+Debug debug;

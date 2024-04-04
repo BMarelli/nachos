@@ -10,6 +10,8 @@
 #include <string.h>
 
 #include "executable.hh"
+#include "lib/debug.hh"
+#include "lib/utility.hh"
 #include "threads/system.hh"
 
 /// First, set up the translation from program memory to physical memory.

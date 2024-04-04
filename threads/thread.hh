@@ -38,7 +38,7 @@
 #ifndef NACHOS_THREADS_THREAD__HH
 #define NACHOS_THREADS_THREAD__HH
 
-#include "lib/utility.hh"
+#include "lib/function_ptr.hh"
 
 #ifdef USER_PROGRAM
 #include "machine/machine.hh"
