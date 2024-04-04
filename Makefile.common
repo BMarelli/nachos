@@ -74,7 +74,6 @@ THREAD_SRC = threads/main.cc                   \
              threads/thread_test_simple.cc     \
              lib/assert.cc                     \
              lib/debug.cc                      \
-             lib/utility.cc                    \
              machine/interrupt.cc              \
              machine/system_dep.cc             \
              machine/statistics.cc             \

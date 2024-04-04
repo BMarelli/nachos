@@ -10,6 +10,8 @@
 
 #include <stdio.h>
 
+#include "lib/utility.hh"
+
 /// Initialize a bitmap with `nitems` bits, so that every bit is clear.  It
 /// can be added somewhere on a list.
 ///

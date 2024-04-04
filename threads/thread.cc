@@ -18,9 +18,9 @@
 
 #include "thread.hh"
 
-#include <inttypes.h>
 #include <stdio.h>
 
+#include "lib/debug.hh"
 #include "switch.h"
 #include "system.hh"
 

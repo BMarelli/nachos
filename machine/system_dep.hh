@@ -14,7 +14,7 @@
 
 #include <stddef.h>
 
-#include "lib/utility.hh"
+#include "lib/function_ptr.hh"
 
 namespace SystemDep {
 /// Check file to see if there are any characters to be read.

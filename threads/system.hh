@@ -8,9 +8,9 @@
 #ifndef NACHOS_THREADS_SYSTEM__HH
 #define NACHOS_THREADS_SYSTEM__HH
 
-#include "lib/utility.hh"
 #include "machine/interrupt.hh"
 #include "machine/statistics.hh"
+#include "machine/system_dep.hh"  // IWYU pragma: export
 #include "machine/timer.hh"
 #include "scheduler.hh"
 #include "thread.hh"

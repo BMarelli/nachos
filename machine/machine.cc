@@ -9,6 +9,7 @@
 
 #include "machine.hh"
 
+#include "lib/debug.hh"
 #include "threads/system.hh"
 
 static inline bool IsExceptionType(ExceptionType t) { return 0 <= t && t < NUM_EXCEPTION_TYPES; }

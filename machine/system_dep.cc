@@ -24,6 +24,7 @@
 /// limitation of liability and disclaimer of warranty provisions.
 
 #include "interrupt.hh"
+#include "lib/debug.hh"
 #include "threads/system.hh"
 
 extern "C" {

@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "lib/debug.hh"
+
 /// Initialize a single mail message, by concatenating the headers to
 /// the data.
 ///

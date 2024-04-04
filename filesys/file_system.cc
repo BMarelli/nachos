@@ -49,6 +49,7 @@
 #include "directory.hh"
 #include "file_header.hh"
 #include "lib/bitmap.hh"
+#include "lib/debug.hh"
 
 /// Sectors containing the file headers for the bitmap of free sectors, and
 /// the directory of files.  These file headers are placed in well-known

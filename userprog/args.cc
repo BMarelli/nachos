@@ -4,6 +4,7 @@
 
 #include <string.h>
 
+#include "lib/debug.hh"
 #include "machine/machine.hh"
 #include "threads/system.hh"
 #include "transfer.hh"
