@@ -4,7 +4,6 @@
 
 #include "transfer.hh"
 
-#include "lib/utility.hh"
 #include "threads/system.hh"
 
 void ReadBufferFromUser(int userAddress, char *outBuffer, unsigned byteCount) {

@@ -74,4 +74,10 @@ class Debug {
     DebugOpts opts;
 };
 
+/// Global object for debug output.
+extern Debug debug;
+
+#define DEBUG(...) (debug.Print)(__FILE__, __LINE__, __func__, __VA_ARGS__)
+#define DEBUG_CONT (debug.PrintCont)
+
 #endif

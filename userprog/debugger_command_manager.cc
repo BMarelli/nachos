@@ -6,7 +6,7 @@
 
 #include <string.h>
 
-#include "lib/utility.hh"
+#include "lib/assert.hh"
 
 typedef DebuggerCommandManager DCM;
 

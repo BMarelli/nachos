@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lib/utility.hh"
+#include "lib/debug.hh"
 #include "machine/interrupt.hh"
 #include "machine/statistics.hh"
 #include "threads/system.hh"

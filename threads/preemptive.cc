@@ -7,8 +7,8 @@
 
 #include "preemptive.hh"
 
-// Access to global objects: `currentThread`, `interrupt`...
-#include "system.hh"
+#include "lib/debug.hh"
+#include "system.hh"  // Access to global objects: `currentThread`, `interrupt`...
 
 // UNIX and Linux-specific headers.
 #include <stdlib.h>

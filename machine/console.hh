@@ -23,7 +23,7 @@
 #ifndef NACHOS_MACHINE_CONSOLE__HH
 #define NACHOS_MACHINE_CONSOLE__HH
 
-#include "lib/utility.hh"
+#include "lib/function_ptr.hh"
 
 /// The following class defines a hardware console device.
 ///

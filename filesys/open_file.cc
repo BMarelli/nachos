@@ -15,6 +15,7 @@
 #include <string.h>
 
 #include "file_header.hh"
+#include "lib/debug.hh"
 #include "threads/system.hh"
 
 /// Open a Nachos file for reading and writing.  Bring the file header into

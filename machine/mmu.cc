@@ -32,6 +32,8 @@
 #include <stdio.h>
 
 #include "endianness.hh"
+#include "lib/assert.hh"
+#include "lib/debug.hh"
 
 MMU::MMU() {
     mainMemory = new char[MEMORY_SIZE];
