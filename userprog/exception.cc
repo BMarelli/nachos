@@ -24,6 +24,7 @@
 #include <stdio.h>
 
 #include "filesys/directory_entry.hh"
+#include "lib/debug.hh"
 #include "syscall.h"
 #include "threads/system.hh"
 #include "transfer.hh"

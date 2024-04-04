@@ -24,6 +24,7 @@
 #include <limits.h>
 #include <stdio.h>
 
+#include "lib/debug.hh"
 #include "threads/system.hh"
 
 // String definitions for debugging messages

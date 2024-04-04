@@ -6,7 +6,7 @@
 
 #include "exception_type.hh"
 
-#include "lib/utility.hh"
+#include "lib/assert.hh"
 
 const char *ExceptionTypeToString(ExceptionType et) {
     switch (et) {

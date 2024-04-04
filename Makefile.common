@@ -51,6 +51,7 @@ THREAD_HDR = threads/condition.hh             \
              lib/debug.hh                     \
              lib/debug_opts.hh                \
              lib/list.hh                      \
+             lib/function_ptr.hh              \
              lib/utility.hh                   \
              machine/interrupt.hh             \
              machine/system_dep.hh            \
@@ -72,7 +73,6 @@ THREAD_SRC = threads/main.cc                  \
              threads/thread_test_simple.cc    \
              lib/assert.cc                    \
              lib/debug.cc                     \
-             lib/utility.cc                   \
              machine/interrupt.cc             \
              machine/system_dep.cc            \
              machine/statistics.cc            \

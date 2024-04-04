@@ -84,6 +84,7 @@ class FileSystem {
 #else  // FILESYS
 
 #include "directory_entry.hh"
+#include "lib/utility.hh"
 #include "machine/disk.hh"
 
 /// Initial file sizes for the bitmap and directory; until the file system

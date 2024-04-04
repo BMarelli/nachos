@@ -14,7 +14,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lib/utility.hh"
+#include "lib/assert.hh"
+#include "lib/debug.hh"
 #include "thread_test_garden.hh"
 #include "thread_test_prod_cons.hh"
 #include "thread_test_simple.hh"

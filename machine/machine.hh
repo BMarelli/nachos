@@ -21,7 +21,6 @@
 #define NACHOS_MACHINE_MACHINE__HH
 
 #include "exception_type.hh"
-#include "lib/utility.hh"
 #include "mmu.hh"
 #include "single_stepper.hh"
 

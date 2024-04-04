@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 
+#include "lib/debug.hh"
 #include "threads/system.hh"
 
 /// We put this at the front of the UNIX file representing the

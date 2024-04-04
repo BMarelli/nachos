@@ -13,6 +13,7 @@
 #include <stdio.h>
 
 #include "instruction.hh"
+#include "lib/debug.hh"
 #include "machine.hh"
 #include "threads/system.hh"
 

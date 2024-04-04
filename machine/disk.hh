@@ -18,7 +18,7 @@
 #ifndef NACHOS_MACHINE_DISK__HH
 #define NACHOS_MACHINE_DISK__HH
 
-#include "lib/utility.hh"
+#include "lib/function_ptr.hh"
 
 /// The following class defines a physical disk I/O device.
 ///

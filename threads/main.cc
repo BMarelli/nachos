@@ -22,7 +22,7 @@
 /// ---------------
 ///
 /// * `-d`  -- causes certain debugging messages to be printed (cf.
-///            `utility.hh`).
+///            `debug.hh`).
 /// * `-do` -- enables options that modify the behavior when printing
 ///            debugging messages.
 /// * `-p`  -- enables preemptive multitasking for kernel threads.
@@ -75,14 +75,15 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "copyright.h"
-#include "lib/utility.hh"
-#include "sys_info.hh"
-#include "system.hh"
-#include "thread_test.hh"
 #ifdef NETWORK
 #include <stdlib.h>
 #endif
+
+#include "copyright.h"
+#include "lib/debug.hh"
+#include "sys_info.hh"
+#include "system.hh"
+#include "thread_test.hh"
 
 // External functions used by this file.
 

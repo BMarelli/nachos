@@ -19,7 +19,8 @@
 #ifndef NACHOS_FILESYS_OPENFILE__HH
 #define NACHOS_FILESYS_OPENFILE__HH
 
-#include "lib/utility.hh"
+#include "lib/assert.hh"
+#include "machine/system_dep.hh"
 
 #ifdef FILESYS_STUB  // Temporarily implement calls to Nachos file system as
                      // calls to UNIX!  See definitions listed under `#else`.

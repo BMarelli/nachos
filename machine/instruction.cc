@@ -7,8 +7,8 @@
 
 #include "instruction.hh"
 
-#include "../lib/utility.hh"
 #include "encoding.hh"
+#include "lib/assert.hh"
 
 /// Decode a MIPS instruction.
 void Instruction::Decode() {

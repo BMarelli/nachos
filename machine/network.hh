@@ -16,7 +16,7 @@
 #ifndef NACHOS_MACHINE_NETWORK__HH
 #define NACHOS_MACHINE_NETWORK__HH
 
-#include "lib/utility.hh"
+#include "lib/function_ptr.hh"
 
 /// Network address -- uniquely identifies a machine.
 ///
