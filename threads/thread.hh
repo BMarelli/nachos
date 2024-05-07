@@ -47,6 +47,9 @@
 
 #include <stdint.h>
 
+// NOTE: EXPLAIN PLEASE
+class Channels;
+
 /// CPU register state to be saved on context switch.
 ///
 /// x86 processors needs 9 32-bit registers, whereas x64 has 8 extra
@@ -86,7 +89,7 @@ class Thread {
 
    public:
     /// Initialize a `Thread`.
-    Thread(const char *debugName);
+    Thread(const char *debugName, bool joinable=false);
 
     /// Deallocate a Thread.
     ///
@@ -106,7 +109,7 @@ class Thread {
     void Sleep();
 
     /// The thread is done executing.
-    void Finish();
+    void Finish(int exitStatus=0);
 
     /// Check if thread has overflowed its stack.
     void CheckOverflow() const;
@@ -116,6 +119,8 @@ class Thread {
     const char *GetName() const;
 
     void Print() const;
+
+    int Join();
 
    private:
     // Some of the private data for this class is listed above.
@@ -129,6 +134,8 @@ class Thread {
     ThreadStatus status;
 
     const char *name;
+    bool isJoinable;
+    Channels* joinChannel;
 
     /// Allocate a stack for thread.  Used internally by `Fork`.
     void StackAllocate(VoidFunctionPtr func, void *arg);

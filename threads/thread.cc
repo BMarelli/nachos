@@ -23,6 +23,7 @@
 #include "lib/debug.hh"
 #include "switch.h"
 #include "system.hh"
+#include "channels.hh"
 
 /// This is put at the top of the execution stack, for detecting stack
 /// overflows.
@@ -34,11 +35,13 @@ static inline bool IsThreadStatus(ThreadStatus s) { return 0 <= s && s < NUM_THR
 /// `Thread::Fork`.
 ///
 /// * `threadName` is an arbitrary string, useful for debugging.
-Thread::Thread(const char *threadName) {
+Thread::Thread(const char *threadName, bool joinable) {
     name = threadName;
     stackTop = nullptr;
     stack = nullptr;
     status = JUST_CREATED;
+    isJoinable = joinable;
+    if (isJoinable) joinChannel = new Channels("joinChannel");
 #ifdef USER_PROGRAM
     space = nullptr;
 #endif
@@ -128,11 +131,13 @@ void Thread::Print() const { printf("%s, ", name); }
 ///
 /// NOTE: we disable interrupts, so that we do not get a time slice between
 /// setting `threadToBeDestroyed`, and going to sleep.
-void Thread::Finish() {
+void Thread::Finish(int exitStatus) {
     interrupt->SetLevel(INT_OFF);
     ASSERT(this == currentThread);
 
     DEBUG('t', "Finishing thread \"%s\"\n", GetName());
+
+    if (isJoinable) joinChannel->Send(exitStatus);
 
     threadToBeDestroyed = currentThread;
     Sleep();  // Invokes `SWITCH`.
@@ -238,6 +243,18 @@ void Thread::StackAllocate(VoidFunctionPtr func, void *arg) {
     machineState[InitialPCState] = (uintptr_t)func;
     machineState[InitialArgState] = (uintptr_t)arg;
     machineState[WhenDonePCState] = (uintptr_t)ThreadFinish;
+}
+
+int Thread::Join() {
+    ASSERT(this != currentThread);
+    ASSERT(isJoinable);
+
+    int result;
+    joinChannel->Receive(&result);
+    delete joinChannel;
+
+    threadToBeDestroyed = this;
+    return result;
 }
 
 #ifdef USER_PROGRAM
