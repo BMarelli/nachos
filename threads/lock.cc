@@ -38,6 +38,12 @@ const char *Lock::GetName() const { return name; }
 void Lock::Acquire() {
     ASSERT(!IsHeldByCurrentThread());
 
+    if (thread && thread->GetPriority() < currentThread->GetPriority()) {
+        unsigned threadPriority = thread->GetPriority();
+        thread->SetPriority(currentThread->GetPriority());
+        scheduler->SwitchPriority(thread, threadPriority);
+    }
+
     semaphore->P();
     thread = currentThread;
 }
