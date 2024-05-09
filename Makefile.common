@@ -50,6 +50,7 @@ THREAD_HDR = threads/condition.hh              \
              threads/thread_test_prod_cons.hh  \
              threads/thread_test_simple.hh     \
              threads/thread_test_join.hh       \
+             threads/thread_test_channels.hh   \
              lib/assert.hh                     \
              lib/debug.hh                      \
              lib/debug_opts.hh                 \
@@ -76,6 +77,7 @@ THREAD_SRC = threads/main.cc                   \
              threads/thread_test_prod_cons.cc  \
              threads/thread_test_simple.cc     \
              threads/thread_test_join.cc       \
+             threads/thread_test_channels.cc   \
              lib/assert.cc                     \
              lib/debug.cc                      \
              lib/utility.cc                    \
