@@ -36,8 +36,8 @@ void Channels::Send(int message) {
 
 void Channels::Receive(int *message) {
     receiveLock->Acquire();
+    sendSemaphore->V();
     receiveSemaphore->P();
     *message = buffer;
-    sendSemaphore->V();
     receiveLock->Release();
 }
