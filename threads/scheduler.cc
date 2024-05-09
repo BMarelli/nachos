@@ -49,7 +49,7 @@ void Scheduler::ReadyToRun(Thread *thread) {
 
     unsigned threadPriority = thread->GetPriority();
     ASSERT(threadPriority < NUM_QUEUES);
-    readyList[threadPriority]->Append(thread);
+    readyList[NUM_QUEUES - 1 - threadPriority]->Append(thread);
 }
 
 /// Return the next thread to be scheduled onto the CPU.
@@ -144,4 +144,10 @@ static void ThreadPrint(Thread *t) {
 void Scheduler::Print() {
     printf("Ready list contents:\n");
     for (int i = 0; i < NUM_QUEUES; i++) readyList[i]->Apply(ThreadPrint);
+}
+
+void Scheduler::SwitchPriority(Thread *thread, unsigned oldPriority) {
+    ASSERT(thread != nullptr);
+    readyList[NUM_QUEUES - 1 - oldPriority]->Remove(thread);
+    ReadyToRun(thread);
 }

@@ -39,6 +39,8 @@ class Scheduler {
     // Print contents of ready list.
     void Print();
 
+    void SwitchPriority(Thread *thread, unsigned oldPriority);
+
    private:
     // Queues of threads that are ready to run, but not running.
     List<Thread *> **readyList;
