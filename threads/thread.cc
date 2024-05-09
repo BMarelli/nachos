@@ -20,10 +20,10 @@
 
 #include <stdio.h>
 
+#include "channels.hh"
 #include "lib/debug.hh"
 #include "switch.h"
 #include "system.hh"
-#include "channels.hh"
 
 /// This is put at the top of the execution stack, for detecting stack
 /// overflows.
@@ -35,13 +35,15 @@ static inline bool IsThreadStatus(ThreadStatus s) { return 0 <= s && s < NUM_THR
 /// `Thread::Fork`.
 ///
 /// * `threadName` is an arbitrary string, useful for debugging.
-Thread::Thread(const char *threadName, bool joinable) {
+Thread::Thread(const char *threadName, bool joinable, unsigned startPriority) {
     name = threadName;
     stackTop = nullptr;
     stack = nullptr;
     status = JUST_CREATED;
     isJoinable = joinable;
     if (isJoinable) joinChannel = new Channels("joinChannel");
+    priority = startPriority;
+    prevPriority = startPriority;
 #ifdef USER_PROGRAM
     space = nullptr;
 #endif
@@ -256,6 +258,14 @@ int Thread::Join() {
     threadToBeDestroyed = this;
     return result;
 }
+
+void Thread::SetPriority(unsigned newPriority) {
+    ASSERT(newPriority >= MIN_PRIORITY);
+    prevPriority = priority;
+    priority = newPriority;
+}
+
+unsigned Thread::GetPriority() const { return priority; }
 
 #ifdef USER_PROGRAM
 #include "machine/machine.hh"
