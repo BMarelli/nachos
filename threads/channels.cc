@@ -28,16 +28,16 @@ Channels::~Channels() {
 
 void Channels::Send(int message) {
     sendLock->Acquire();
-    sendSemaphore->P();
     buffer = message;
     receiveSemaphore->V();
+    sendSemaphore->P();
     sendLock->Release();
 }
 
 void Channels::Receive(int *message) {
     receiveLock->Acquire();
-    sendSemaphore->V();
     receiveSemaphore->P();
     *message = buffer;
+    sendSemaphore->V();
     receiveLock->Release();
 }
