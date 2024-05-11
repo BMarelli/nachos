@@ -7,7 +7,17 @@
 #include "threads/system.hh"
 
 void ReadBufferFromUser(int userAddress, char *outBuffer, unsigned byteCount) {
-    // TODO: implement.
+    ASSERT(userAddress != 0);
+    ASSERT(outBuffer != nullptr);
+    ASSERT(byteCount != 0);
+
+    unsigned count = 0;
+    do {
+        int temp;
+        count++;
+        ASSERT(machine->ReadMem(userAddress++, 1, &temp));
+        *outBuffer = (unsigned char)temp;
+    } while (count < byteCount);
 }
 
 bool ReadStringFromUser(int userAddress, char *outString, unsigned maxByteCount) {
@@ -27,9 +37,22 @@ bool ReadStringFromUser(int userAddress, char *outString, unsigned maxByteCount)
 }
 
 void WriteBufferToUser(const char *buffer, int userAddress, unsigned byteCount) {
-    // TODO: implement.
+    ASSERT(userAddress != 0);
+    ASSERT(buffer != nullptr);
+    ASSERT(byteCount != 0);
+
+    unsigned count = 0;
+    do {
+        ASSERT(machine->WriteMem(userAddress++, 1, (int)buffer[count++]));
+    } while (count < byteCount);
 }
 
 void WriteStringToUser(const char *string, int userAddress) {
-    // TODO: implement.
+    ASSERT(userAddress != 0);
+    ASSERT(string != nullptr);
+
+    unsigned count = 0;
+    do {
+        ASSERT(machine->WriteMem(userAddress++, 1, (int)string[count]));
+    } while (string[count++] != '\0');
 }
