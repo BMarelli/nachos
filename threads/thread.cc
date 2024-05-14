@@ -20,7 +20,7 @@
 
 #include <stdio.h>
 
-#include "channels.hh"
+#include "channel.hh"
 #include "lib/debug.hh"
 #include "switch.h"
 #include "system.hh"
@@ -35,13 +35,13 @@ static inline bool IsThreadStatus(ThreadStatus s) { return 0 <= s && s < NUM_THR
 /// `Thread::Fork`.
 ///
 /// * `threadName` is an arbitrary string, useful for debugging.
-Thread::Thread(const char *threadName, bool joinable, unsigned startPriority) {
+Thread::Thread(const char *threadName, bool joinable, Priority startPriority) {
     name = threadName;
     stackTop = nullptr;
     stack = nullptr;
     status = JUST_CREATED;
     isJoinable = joinable;
-    if (isJoinable) joinChannel = new Channels("joinChannel");
+    if (isJoinable) joinChannel = new Channel();
     priority = startPriority;
     prevPriority = startPriority;
 #ifdef USER_PROGRAM
@@ -134,15 +134,18 @@ void Thread::Print() const { printf("%s, ", name); }
 /// NOTE: we disable interrupts, so that we do not get a time slice between
 /// setting `threadToBeDestroyed`, and going to sleep.
 void Thread::Finish(int exitStatus) {
-    interrupt->SetLevel(INT_OFF);
     ASSERT(this == currentThread);
+
+    interrupt->SetLevel(INT_OFF);
 
     DEBUG('t', "Finishing thread \"%s\"\n", GetName());
 
     if (isJoinable) joinChannel->Send(exitStatus);
 
     threadToBeDestroyed = currentThread;
+
     Sleep();  // Invokes `SWITCH`.
+
     // Not reached.
 }
 
@@ -162,9 +165,9 @@ void Thread::Finish(int exitStatus) {
 ///
 /// Similar to `Thread::Sleep`, but a little different.
 void Thread::Yield() {
-    IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
-
     ASSERT(this == currentThread);
+
+    IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
 
     DEBUG('t', "Yielding thread \"%s\"\n", GetName());
 
@@ -259,13 +262,12 @@ int Thread::Join() {
     return result;
 }
 
-void Thread::SetPriority(unsigned newPriority) {
-    ASSERT(newPriority >= MIN_PRIORITY);
+void Thread::SetPriority(Priority newPriority) {
     prevPriority = priority;
     priority = newPriority;
 }
 
-unsigned Thread::GetPriority() const { return priority; }
+Priority Thread::GetPriority() const { return priority; }
 
 #ifdef USER_PROGRAM
 #include "machine/machine.hh"

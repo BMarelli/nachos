@@ -34,12 +34,9 @@
 class Lock {
    public:
     /// Constructor: set up the lock as free.
-    Lock(const char *name);
+    Lock();
 
     ~Lock();
-
-    /// For debugging.
-    const char *GetName() const;
 
     /// Operations on the lock.
     ///
@@ -54,9 +51,6 @@ class Lock {
     bool IsHeldByCurrentThread() const;
 
    private:
-    /// For debugging.
-    const char *name, *semaphoreName;
-
     Semaphore *semaphore;
 
     Thread *thread;

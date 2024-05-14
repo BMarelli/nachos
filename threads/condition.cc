@@ -16,27 +16,18 @@
 
 #include "condition.hh"
 
-#include "lib/utility.hh"
-
-Condition::Condition(const char *_name, Lock *_lock) {
-    name = make_debug_name(_name);
+Condition::Condition(Lock *_lock) {
     lock = _lock;
 
     queue = new List<Semaphore *>;
 }
 
-Condition::~Condition() {
-    delete name;
-    delete queue;
-}
-
-const char *Condition::GetName() const { return name; }
+Condition::~Condition() { delete queue; }
 
 void Condition::Wait() {
     ASSERT(lock->IsHeldByCurrentThread());
 
-    char *semaphoreName = make_debug_name(name, "semaphore", queue->Length());
-    Semaphore *semaphore = new Semaphore(semaphoreName, 0);
+    Semaphore *semaphore = new Semaphore(0);
 
     queue->Append(semaphore);
 
@@ -45,7 +36,6 @@ void Condition::Wait() {
     lock->Acquire();
 
     delete semaphore;
-    delete semaphoreName;
 }
 
 void Condition::Signal() {

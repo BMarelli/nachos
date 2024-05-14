@@ -16,6 +16,7 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 //
+
 #ifndef NACHOS_THREADS_SEMAPHORE__HH
 #define NACHOS_THREADS_SEMAPHORE__HH
 
@@ -39,12 +40,9 @@ class Semaphore {
     /// Constructor: give an initial value to the semaphore.
     ///
     /// Set initial value.
-    Semaphore(const char *debugName, int initialValue);
+    Semaphore(int initialValue);
 
     ~Semaphore();
-
-    /// For debugging.
-    const char *GetName() const;
 
     /// The only public operations on the semaphore.
     ///
@@ -53,9 +51,6 @@ class Semaphore {
     void V();
 
    private:
-    /// For debugging.
-    const char *name;
-
     /// Semaphore value, it is always `>= 0`.
     int value;
 

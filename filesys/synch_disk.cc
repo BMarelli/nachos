@@ -28,8 +28,8 @@ static void DiskRequestDone(void *arg) {
 /// * `name` is a UNIX file name to be used as storage for the disk data
 ///   (usually, `DISK`).
 SynchDisk::SynchDisk(const char *name) {
-    semaphore = new Semaphore("synch disk", 0);
-    lock = new Lock("synch disk lock");
+    semaphore = new Semaphore(0);
+    lock = new Lock();
     disk = new Disk(name, DiskRequestDone, this);
 }
 

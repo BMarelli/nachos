@@ -16,24 +16,11 @@
 
 #include "lock.hh"
 
-#include "lib/utility.hh"
 #include "system.hh"
 
-Lock::Lock(const char *_name) {
-    name = make_debug_name(_name);
-    semaphoreName = make_debug_name(_name, "semaphore");
+Lock::Lock() { semaphore = new Semaphore(1); }
 
-    semaphore = new Semaphore(semaphoreName, 1);
-}
-
-Lock::~Lock() {
-    delete name;
-    delete semaphoreName;
-
-    delete semaphore;
-}
-
-const char *Lock::GetName() const { return name; }
+Lock::~Lock() { delete semaphore; }
 
 void Lock::Acquire() {
     ASSERT(!IsHeldByCurrentThread());
