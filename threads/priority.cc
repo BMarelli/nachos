@@ -1,5 +1,7 @@
 #include "priority.hh"
 
+#include "lib/assert.hh"
+
 char const *PriorityToString(Priority priority) {
     switch (priority) {
         case PRIORITY_HIGH:
@@ -9,6 +11,7 @@ char const *PriorityToString(Priority priority) {
         case PRIORITY_LOW:
             return "LOW";
         default:
-            return "UNKNOWN";
+            ASSERT(false);  // Invalid priority
+            return nullptr;
     }
 }
