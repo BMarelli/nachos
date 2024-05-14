@@ -35,15 +35,19 @@ static inline bool IsThreadStatus(ThreadStatus s) { return 0 <= s && s < NUM_THR
 /// `Thread::Fork`.
 ///
 /// * `threadName` is an arbitrary string, useful for debugging.
-Thread::Thread(const char *threadName, bool joinable, Priority startPriority) {
-    name = threadName;
+Thread::Thread(const char *_name, bool _isJoinable, Priority _priority) {
+    name = _name;
+    isJoinable = _isJoinable;
+    priority = _priority;
+    prevPriority = _priority;
+
     stackTop = nullptr;
     stack = nullptr;
-    status = JUST_CREATED;
-    isJoinable = joinable;
+
     if (isJoinable) joinChannel = new Channel();
-    priority = startPriority;
-    prevPriority = startPriority;
+
+    status = JUST_CREATED;
+
 #ifdef USER_PROGRAM
     space = nullptr;
 #endif
@@ -58,12 +62,13 @@ Thread::Thread(const char *threadName, bool joinable, Priority startPriority) {
 /// did not allocate it -- we got it automatically as part of starting up
 /// Nachos.
 Thread::~Thread() {
+    ASSERT(this != currentThread);
+
     DEBUG('t', "Deleting thread \"%s\"\n", name);
 
-    ASSERT(this != currentThread);
-    if (stack != nullptr) {
-        SystemDep::DeallocBoundedArray((char *)stack, STACK_SIZE * sizeof *stack);
-    }
+    if (stack != nullptr) SystemDep::DeallocBoundedArray((char *)stack, STACK_SIZE * sizeof *stack);
+
+    if (isJoinable) delete joinChannel;
 }
 
 /// Invoke `(*func)(arg)`, allowing caller and callee to execute
@@ -90,8 +95,7 @@ void Thread::Fork(VoidFunctionPtr func, void *arg) {
     StackAllocate(func, arg);
 
     IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
-    scheduler->ReadyToRun(this);  // `ReadyToRun` assumes that interrupts
-                                  // are disabled!
+    scheduler->ReadyToRun(this);  // `ReadyToRun` assumes that interrupts are disabled!
     interrupt->SetLevel(oldLevel);
 }
 
@@ -256,7 +260,6 @@ int Thread::Join() {
 
     int result;
     joinChannel->Receive(&result);
-    delete joinChannel;
 
     threadToBeDestroyed = this;
     return result;

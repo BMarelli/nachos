@@ -36,7 +36,8 @@ class Scheduler {
     // Print contents of ready list.
     void Print();
 
-    void SwitchPriority(Thread *thread, unsigned oldPriority);
+    /// Prioritize bumps the priority of a thread to the current thread's priority.
+    void Prioritize(Thread *thread);
 
    private:
     // Queues of threads that are ready to run, but not running.

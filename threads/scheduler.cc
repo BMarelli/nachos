@@ -146,10 +146,14 @@ void Scheduler::Print() {
     for (int i = 0; i < NUM_PRIORITIES; i++) readyList[i]->Apply(ThreadPrint);
 }
 
-void Scheduler::SwitchPriority(Thread *thread, unsigned oldPriority) {
+void Scheduler::Prioritize(Thread *thread) {
     ASSERT(thread != nullptr);
 
-    readyList[oldPriority]->Remove(thread);
+    readyList[thread->GetPriority()]->Remove(thread);
 
+    thread->SetPriority(currentThread->GetPriority());
+
+    IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
     ReadyToRun(thread);
+    interrupt->SetLevel(oldLevel);
 }

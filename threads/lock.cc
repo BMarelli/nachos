@@ -25,10 +25,10 @@ Lock::~Lock() { delete semaphore; }
 void Lock::Acquire() {
     ASSERT(!IsHeldByCurrentThread());
 
+    // If a thread with lower priority than the current thread is holding the
+    // lock with a lower priority, the prioritize it.
     if (thread && thread->GetPriority() < currentThread->GetPriority()) {
-        unsigned threadPriority = thread->GetPriority();
-        thread->SetPriority(currentThread->GetPriority());
-        scheduler->SwitchPriority(thread, threadPriority);
+        scheduler->Prioritize(thread);
     }
 
     semaphore->P();

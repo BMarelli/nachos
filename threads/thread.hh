@@ -89,7 +89,7 @@ class Thread {
 
    public:
     /// Initialize a `Thread`.
-    Thread(const char *debugName, bool joinable = false, Priority startPriority = PRIORITY_LOW);
+    Thread(const char *name, bool isJoinable = false, Priority priority = PRIORITY_LOW);
 
     /// Deallocate a Thread.
     ///
