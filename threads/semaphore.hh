@@ -39,12 +39,9 @@ class Semaphore {
     /// Constructor: give an initial value to the semaphore.
     ///
     /// Set initial value.
-    Semaphore(const char *debugName, int initialValue);
+    Semaphore(int initialValue);
 
     ~Semaphore();
-
-    /// For debugging.
-    const char *GetName() const;
 
     /// The only public operations on the semaphore.
     ///
@@ -53,9 +50,6 @@ class Semaphore {
     void V();
 
    private:
-    /// For debugging.
-    const char *name;
-
     /// Semaphore value, it is always `>= 0`.
     int value;
 

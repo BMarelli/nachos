@@ -41,7 +41,7 @@ Thread::Thread(const char *threadName, bool joinable, unsigned startPriority) {
     stack = nullptr;
     status = JUST_CREATED;
     isJoinable = joinable;
-    if (isJoinable) joinChannel = new Channels("joinChannel");
+    if (isJoinable) joinChannel = new Channels();
     priority = startPriority;
     prevPriority = startPriority;
 #ifdef USER_PROGRAM

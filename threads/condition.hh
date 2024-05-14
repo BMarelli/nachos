@@ -55,11 +55,9 @@
 class Condition {
    public:
     /// Constructor: indicate which lock the condition variable belongs to.
-    Condition(const char *name, Lock *lock);
+    Condition(Lock *lock);
 
     ~Condition();
-
-    const char *GetName() const;
 
     /// The three operations on condition variables.
     ///
@@ -71,8 +69,6 @@ class Condition {
     void Broadcast();
 
    private:
-    const char *name;
-
     List<Semaphore *> *queue;
     Lock *lock;
 };

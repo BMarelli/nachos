@@ -5,7 +5,7 @@
 
 class Channels {
    public:
-    Channels(const char *name);
+    Channels();
 
     ~Channels();
 
@@ -14,8 +14,6 @@ class Channels {
     void Receive(int *message);
 
    private:
-    const char *sendLockName, *receiveLockName, *sendSemaphoreName, *receiveSemaphoreName;
-
     int buffer;
 
     Lock *sendLock, *receiveLock;

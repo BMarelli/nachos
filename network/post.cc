@@ -153,9 +153,9 @@ PostOffice::PostOffice(NetworkAddress addr, double reliability, int nBoxes) {
     ASSERT(nBoxes > 0);
 
     // First, initialize the synchronization with the interrupt handlers.
-    messageAvailable = new Semaphore("message available", 0);
-    messageSent = new Semaphore("message sent", 0);
-    sendLock = new Lock("message send lock");
+    messageAvailable = new Semaphore(0);
+    messageSent = new Semaphore(0);
+    sendLock = new Lock();
 
     // Second, initialize the mailboxes.
     netAddr = addr;

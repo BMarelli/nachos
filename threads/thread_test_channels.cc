@@ -5,7 +5,7 @@
 #include "channels.hh"
 #include "system.hh"
 
-Channels *channel = new Channels("TestChannel");
+Channels *channel = new Channels();
 
 #define YIELD currentThread->Yield()
 

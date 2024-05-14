@@ -63,8 +63,8 @@ static void WriteDone(void *arg) { writeDone->V(); }
 /// Stop when the user types a `q`.
 void ConsoleTest(const char *in, const char *out) {
     console = new Console(in, out, ReadAvail, WriteDone, 0);
-    readAvail = new Semaphore("read avail", 0);
-    writeDone = new Semaphore("write done", 0);
+    readAvail = new Semaphore(0);
+    writeDone = new Semaphore(0);
 
     for (;;) {
         readAvail->P();  // Wait for character to arrive.

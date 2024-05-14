@@ -14,9 +14,9 @@
 #include "lock.hh"
 #include "system.hh"
 
-Lock *lock = new Lock("lock");
-Condition *empty = new Condition("empty", lock);
-Condition *full = new Condition("full", lock);
+Lock *lock = new Lock();
+Condition *empty = new Condition(lock);
+Condition *full = new Condition(lock);
 
 static const int NUM_PRODUCERS = 20;
 static const int NUM_CONSUMERS = 2;
