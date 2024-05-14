@@ -42,14 +42,13 @@ Scheduler::~Scheduler() {
 /// * `thread` is the thread to be put on the ready list.
 void Scheduler::ReadyToRun(Thread *thread) {
     ASSERT(thread != nullptr);
+    ASSERT(thread->GetPriority() < NUM_QUEUES);
 
-    DEBUG('t', "Putting thread %s on ready list\n", thread->GetName());
+    DEBUG('t', "Putting thread %s on ready list with priority level %d\n", thread->GetName(), thread->GetPriority());
 
     thread->SetStatus(READY);
 
-    unsigned threadPriority = thread->GetPriority();
-    ASSERT(threadPriority < NUM_QUEUES);
-    readyList[NUM_QUEUES - 1 - threadPriority]->Append(thread);
+    readyList[NUM_QUEUES - 1 - thread->GetPriority()]->Append(thread);
 }
 
 /// Return the next thread to be scheduled onto the CPU.
@@ -58,19 +57,17 @@ void Scheduler::ReadyToRun(Thread *thread) {
 ///
 /// Side effect: thread is removed from the ready list.
 Thread *Scheduler::FindNextToRun() {
-    bool found = false;
-    Thread *nextThread = nullptr;
-    int i = 0;
-    while (i < NUM_QUEUES && !found) {
+    for (int i = 0; i < NUM_QUEUES; i++) {
         if (!readyList[i]->IsEmpty()) {
-            nextThread = readyList[i]->Pop();
-            found = true;
+            Thread *next = readyList[i]->Pop();
+
+            DEBUG('t', "Next thread to run: \"%s\"\n", next->GetName());
+
+            return next;
         }
-        i++;
     }
 
-    if (nextThread) DEBUG('t', "Next thread to run: %s\n", nextThread->GetName());
-    return nextThread;
+    return nullptr;
 }
 
 /// Dispatch the CPU to `nextThread`.
@@ -138,16 +135,20 @@ void Scheduler::Run(Thread *nextThread) {
 /// For debugging.
 static void ThreadPrint(Thread *t) {
     ASSERT(t != nullptr);
+
     t->Print();
 }
 
 void Scheduler::Print() {
     printf("Ready list contents:\n");
+
     for (int i = 0; i < NUM_QUEUES; i++) readyList[i]->Apply(ThreadPrint);
 }
 
 void Scheduler::SwitchPriority(Thread *thread, unsigned oldPriority) {
     ASSERT(thread != nullptr);
+
     readyList[NUM_QUEUES - 1 - oldPriority]->Remove(thread);
+
     ReadyToRun(thread);
 }
