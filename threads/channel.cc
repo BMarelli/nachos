@@ -1,5 +1,8 @@
 #include "channel.hh"
 
+#include "lock.hh"
+#include "semaphore.hh"
+
 Channel::Channel() {
     sendLock = new Lock();
     receiveLock = new Lock();

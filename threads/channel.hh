@@ -1,7 +1,8 @@
 #ifndef NACHOS_CHANNEL__HH
 #define NACHOS_CHANNEL__HH
 
-#include "lock.hh"
+class Lock;
+class Semaphore;
 
 class Channel {
    public:

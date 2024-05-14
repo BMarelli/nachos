@@ -16,6 +16,7 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 //
+
 #ifndef NACHOS_THREADS_SEMAPHORE__HH
 #define NACHOS_THREADS_SEMAPHORE__HH
 

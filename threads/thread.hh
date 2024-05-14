@@ -47,9 +47,6 @@
 
 #include <stdint.h>
 
-/// NOTE: EXPLAIN PLEASE
-class Channel;
-
 /// Minimum priority value.
 #define MIN_PRIORITY 0
 
