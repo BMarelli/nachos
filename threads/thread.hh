@@ -47,8 +47,8 @@
 
 #include <stdint.h>
 
-/// Minimum priority value.
-#define MIN_PRIORITY 0
+#include "channel.hh"
+#include "priority.hh"
 
 /// CPU register state to be saved on context switch.
 ///
@@ -89,7 +89,7 @@ class Thread {
 
    public:
     /// Initialize a `Thread`.
-    Thread(const char *debugName, bool joinable = false, unsigned startPriority = MIN_PRIORITY);
+    Thread(const char *debugName, bool joinable = false, Priority startPriority = PRIORITY_LOW);
 
     /// Deallocate a Thread.
     ///
@@ -122,9 +122,9 @@ class Thread {
 
     int Join();
 
-    void SetPriority(unsigned newPriority);
+    void SetPriority(Priority newPriority);
 
-    unsigned GetPriority() const;
+    Priority GetPriority() const;
 
    private:
     // Some of the private data for this class is listed above.
@@ -141,8 +141,8 @@ class Thread {
     bool isJoinable;
     Channel *joinChannel;
 
-    unsigned priority;
-    unsigned prevPriority;
+    Priority priority;
+    Priority prevPriority;
 
     /// Allocate a stack for thread.  Used internally by `Fork`.
     void StackAllocate(VoidFunctionPtr func, void *arg);

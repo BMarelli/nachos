@@ -39,6 +39,7 @@ THREAD_HDR = threads/condition.hh              \
              threads/copyright.h               \
              threads/lock.hh                   \
              threads/scheduler.hh              \
+             threads/priority.hh			   \
              threads/semaphore.hh              \
              threads/synch_list.hh             \
              threads/sys_info.hh               \
@@ -66,6 +67,7 @@ THREAD_SRC = threads/main.cc                   \
              threads/channel.cc                \
              threads/lock.cc                   \
              threads/scheduler.cc              \
+             threads/priority.cc			   \
              threads/semaphore.cc              \
              threads/sys_info.cc               \
              threads/system.cc                 \

@@ -35,7 +35,7 @@ static inline bool IsThreadStatus(ThreadStatus s) { return 0 <= s && s < NUM_THR
 /// `Thread::Fork`.
 ///
 /// * `threadName` is an arbitrary string, useful for debugging.
-Thread::Thread(const char *threadName, bool joinable, unsigned startPriority) {
+Thread::Thread(const char *threadName, bool joinable, Priority startPriority) {
     name = threadName;
     stackTop = nullptr;
     stack = nullptr;
@@ -262,13 +262,12 @@ int Thread::Join() {
     return result;
 }
 
-void Thread::SetPriority(unsigned newPriority) {
-    ASSERT(newPriority >= MIN_PRIORITY);
+void Thread::SetPriority(Priority newPriority) {
     prevPriority = priority;
     priority = newPriority;
 }
 
-unsigned Thread::GetPriority() const { return priority; }
+Priority Thread::GetPriority() const { return priority; }
 
 #ifdef USER_PROGRAM
 #include "machine/machine.hh"
