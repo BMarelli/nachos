@@ -134,15 +134,18 @@ void Thread::Print() const { printf("%s, ", name); }
 /// NOTE: we disable interrupts, so that we do not get a time slice between
 /// setting `threadToBeDestroyed`, and going to sleep.
 void Thread::Finish(int exitStatus) {
-    interrupt->SetLevel(INT_OFF);
     ASSERT(this == currentThread);
+
+    interrupt->SetLevel(INT_OFF);
 
     DEBUG('t', "Finishing thread \"%s\"\n", GetName());
 
     if (isJoinable) joinChannel->Send(exitStatus);
 
     threadToBeDestroyed = currentThread;
+
     Sleep();  // Invokes `SWITCH`.
+
     // Not reached.
 }
 
@@ -162,9 +165,9 @@ void Thread::Finish(int exitStatus) {
 ///
 /// Similar to `Thread::Sleep`, but a little different.
 void Thread::Yield() {
-    IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
-
     ASSERT(this == currentThread);
+
+    IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
 
     DEBUG('t', "Yielding thread \"%s\"\n", GetName());
 
