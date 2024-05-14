@@ -48,7 +48,7 @@
 #include <stdint.h>
 
 /// NOTE: EXPLAIN PLEASE
-class Channels;
+class Channel;
 
 /// Minimum priority value.
 #define MIN_PRIORITY 0
@@ -92,7 +92,7 @@ class Thread {
 
    public:
     /// Initialize a `Thread`.
-    Thread(const char *debugName, bool joinable=false, unsigned startPriority=MIN_PRIORITY);
+    Thread(const char *debugName, bool joinable = false, unsigned startPriority = MIN_PRIORITY);
 
     /// Deallocate a Thread.
     ///
@@ -112,7 +112,7 @@ class Thread {
     void Sleep();
 
     /// The thread is done executing.
-    void Finish(int exitStatus=0);
+    void Finish(int exitStatus = 0);
 
     /// Check if thread has overflowed its stack.
     void CheckOverflow() const;
@@ -142,7 +142,7 @@ class Thread {
 
     const char *name;
     bool isJoinable;
-    Channels* joinChannel;
+    Channel *joinChannel;
 
     unsigned priority;
     unsigned prevPriority;

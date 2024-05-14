@@ -1,20 +1,20 @@
-#include "channels.hh"
+#include "channel.hh"
 
-Channels::Channels() {
+Channel::Channel() {
     sendLock = new Lock();
     receiveLock = new Lock();
     sendSemaphore = new Semaphore(0);
     receiveSemaphore = new Semaphore(0);
 }
 
-Channels::~Channels() {
+Channel::~Channel() {
     delete sendLock;
     delete receiveLock;
     delete sendSemaphore;
     delete receiveSemaphore;
 }
 
-void Channels::Send(int message) {
+void Channel::Send(int message) {
     sendLock->Acquire();
     buffer = message;
     receiveSemaphore->V();
@@ -22,7 +22,7 @@ void Channels::Send(int message) {
     sendLock->Release();
 }
 
-void Channels::Receive(int *message) {
+void Channel::Receive(int *message) {
     receiveLock->Acquire();
     receiveSemaphore->P();
     *message = buffer;

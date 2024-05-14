@@ -20,7 +20,7 @@
 
 #include <stdio.h>
 
-#include "channels.hh"
+#include "channel.hh"
 #include "lib/debug.hh"
 #include "switch.h"
 #include "system.hh"
@@ -41,7 +41,7 @@ Thread::Thread(const char *threadName, bool joinable, unsigned startPriority) {
     stack = nullptr;
     status = JUST_CREATED;
     isJoinable = joinable;
-    if (isJoinable) joinChannel = new Channels();
+    if (isJoinable) joinChannel = new Channel();
     priority = startPriority;
     prevPriority = startPriority;
 #ifdef USER_PROGRAM

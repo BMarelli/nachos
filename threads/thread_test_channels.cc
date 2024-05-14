@@ -2,10 +2,10 @@
 
 #include <stdio.h>
 
-#include "channels.hh"
+#include "channel.hh"
 #include "system.hh"
 
-Channels *channel = new Channels();
+Channel *channel = new Channel();
 
 #define YIELD currentThread->Yield()
 
