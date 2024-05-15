@@ -98,8 +98,7 @@ void Thread::Fork(VoidFunctionPtr func, void *arg) {
     StackAllocate(func, arg);
 
     IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
-    scheduler->ReadyToRun(this);  // `ReadyToRun` assumes that interrupts
-                                  // are disabled!
+    scheduler->ReadyToRun(this);  // `ReadyToRun` assumes that interrupts are disabled!
     interrupt->SetLevel(oldLevel);
 }
 
@@ -181,7 +180,8 @@ void Thread::Yield() {
 
     Thread *nextThread = scheduler->FindNextToRun();
     if (nextThread != nullptr) {
-        scheduler->ReadyToRun(this);
+        scheduler->ReadyToRun(this);  // `ReadyToRun` assumes that interrupts are disabled!
+
         scheduler->Run(nextThread);
     }
 
