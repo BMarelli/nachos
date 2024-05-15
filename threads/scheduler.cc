@@ -32,6 +32,7 @@ Scheduler::~Scheduler() { delete readyList; }
 
 /// Mark a thread as ready, but not running.
 /// Put it on the ready list, for later scheduling onto the CPU.
+/// NOTE: assumes that interrupts are disabled.
 ///
 /// * `thread` is the thread to be put on the ready list.
 void Scheduler::ReadyToRun(Thread *thread) {
