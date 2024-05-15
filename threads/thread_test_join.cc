@@ -1,23 +1,32 @@
 #include "thread_test_join.hh"
 
 #include <stdio.h>
-#include <string.h>
+
+#include <cstdlib>
 
 #include "system.hh"
 
-void ThreadJoin(void *name_) {
-    char *name = (char *)name_;
+void ThreadJoin(void *n) {
+    for (int i = 0; i < rand() % 20 + 5; i++) {
+        printf("Thread %ld: %d\n", (long)n, i);
 
-    for (unsigned num = 0; num < 20; num++) {
-        printf("*** Thread `%s` is running: iteration %u\n", name, num);
         currentThread->Yield();
     }
-    printf("!!! Thread `%s` has finished\n", name);
+
+    printf("Thread %ld finished\n", (long)n);
 }
 
 void ThreadTestJoin() {
-    Thread *newThread = new Thread("1", true);
-    newThread->Fork(ThreadJoin, (void *)"simple");
-    newThread->Join();
-    printf("!!! Thread joined\n");
+    Thread *threads[5];
+
+    for (long i = 0; i < 5; i++) {
+        threads[i] = new Thread("thread", true);
+        threads[i]->Fork(ThreadJoin, (void *)i);
+    }
+
+    for (int i = 0; i < 5; i++) {
+        threads[i]->Join();
+    }
+
+    printf("All threads finished\n");
 }
