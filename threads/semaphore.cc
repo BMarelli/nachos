@@ -61,15 +61,14 @@ void Semaphore::P() {
 /// Increment semaphore value, waking up a waiter if necessary.
 ///
 /// As with `P`, this operation must be atomic, so we need to disable
-/// interrupts.  `Scheduler::ReadyToRun` assumes that threads are disabled
-/// when it is called.
+/// interrupts.
 void Semaphore::V() {
     IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
 
     Thread *thread = queue->Pop();
     if (thread != nullptr) {
         // Make thread ready, consuming the `V` immediately.
-        scheduler->ReadyToRun(thread);
+        scheduler->ReadyToRun(thread);  // `ReadyToRun` assumes that interrupts are disabled!
     }
     value++;
 

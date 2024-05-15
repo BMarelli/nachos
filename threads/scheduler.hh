@@ -25,6 +25,7 @@ class Scheduler {
     ~Scheduler();
 
     /// Thread can be dispatched.
+    /// NOTE: assumes that interrupts are disabled.
     void ReadyToRun(Thread *thread);
 
     /// Dequeue first thread on the ready list, if any, and return thread.

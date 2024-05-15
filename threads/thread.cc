@@ -177,7 +177,8 @@ void Thread::Yield() {
 
     Thread *nextThread = scheduler->FindNextToRun();
     if (nextThread != nullptr) {
-        scheduler->ReadyToRun(this);
+        scheduler->ReadyToRun(this);  // `ReadyToRun` assumes that interrupts are disabled!
+
         scheduler->Run(nextThread);
     }
 

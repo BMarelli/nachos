@@ -39,6 +39,7 @@ Scheduler::~Scheduler() {
 
 /// Mark a thread as ready, but not running.
 /// Put it on the ready list, for later scheduling onto the CPU.
+/// NOTE: assumes that interrupts are disabled.
 ///
 /// * `thread` is the thread to be put on the ready list.
 void Scheduler::ReadyToRun(Thread *thread) {
@@ -154,6 +155,6 @@ void Scheduler::Prioritize(Thread *thread) {
     thread->SetPriority(currentThread->GetPriority());
 
     IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
-    ReadyToRun(thread);
+    ReadyToRun(thread);  // `ReadyToRun` assumes that interrupts are disabled!
     interrupt->SetLevel(oldLevel);
 }
