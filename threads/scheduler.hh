@@ -25,6 +25,7 @@ class Scheduler {
     ~Scheduler();
 
     /// Thread can be dispatched.
+    /// NOTE: assumes that interrupts are disabled.
     void ReadyToRun(Thread *thread);
 
     /// Dequeue first thread on the ready list, if any, and return thread.
@@ -36,7 +37,11 @@ class Scheduler {
     // Print contents of ready list.
     void Print();
 
-    void SwitchPriority(Thread *thread, unsigned oldPriority);
+    /// Prioritize bumps the priority of a thread to the current thread's priority.
+    void Prioritize(Thread *thread);
+
+    /// RestoreOriginalPriority restores the original priority of a thread.
+    void RestoreOriginalPriority(Thread *thread);
 
    private:
     // Queues of threads that are ready to run, but not running.

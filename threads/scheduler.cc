@@ -39,6 +39,7 @@ Scheduler::~Scheduler() {
 
 /// Mark a thread as ready, but not running.
 /// Put it on the ready list, for later scheduling onto the CPU.
+/// NOTE: assumes that interrupts are disabled.
 ///
 /// * `thread` is the thread to be put on the ready list.
 void Scheduler::ReadyToRun(Thread *thread) {
@@ -117,6 +118,8 @@ void Scheduler::Run(Thread *nextThread) {
     // now (for example, in `Thread::Finish`), because up to this point, we
     // were still running on the old thread's stack!
     if (threadToBeDestroyed != nullptr) {
+        readyList[threadToBeDestroyed->GetPriority()]->Remove(threadToBeDestroyed);
+
         delete threadToBeDestroyed;
         threadToBeDestroyed = nullptr;
     }
@@ -146,10 +149,34 @@ void Scheduler::Print() {
     for (int i = 0; i < NUM_PRIORITIES; i++) readyList[i]->Apply(ThreadPrint);
 }
 
-void Scheduler::SwitchPriority(Thread *thread, unsigned oldPriority) {
+void Scheduler::Prioritize(Thread *thread) {
     ASSERT(thread != nullptr);
 
-    readyList[oldPriority]->Remove(thread);
+    IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
 
-    ReadyToRun(thread);
+    if (thread->GetPriority() >= currentThread->GetPriority()) return;
+
+    readyList[thread->GetPriority()]->Remove(thread);
+
+    thread->SetPriority(currentThread->GetPriority());
+
+    ReadyToRun(thread);  // `ReadyToRun` assumes that interrupts are disabled!
+
+    interrupt->SetLevel(oldLevel);
+}
+
+void Scheduler::RestoreOriginalPriority(Thread *thread) {
+    ASSERT(thread != nullptr);
+
+    IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
+
+    if (thread->GetPriority() == thread->GetOriginalPriority()) return;
+
+    readyList[thread->GetPriority()]->Remove(thread);
+
+    thread->SetPriority(thread->GetOriginalPriority());
+
+    ReadyToRun(thread);  // `ReadyToRun` assumes that interrupts are disabled!
+
+    interrupt->SetLevel(oldLevel);
 }

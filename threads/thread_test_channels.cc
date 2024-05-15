@@ -2,69 +2,69 @@
 
 #include <stdio.h>
 
+#include <cstdlib>
+
 #include "channel.hh"
 #include "system.hh"
 
 Channel *channel = new Channel();
 
-#define YIELD currentThread->Yield()
+const int NUM_SENDERS = 6;
+const int NUM_RECEIVERS = 4;
 
-bool senderDone, receiverDone;
-
-void SenderThread(void *) {
-    printf("Sending 0\n");
-    channel->Send(0);
-    printf("Sent 0\n");
-
-    printf("Sending 1\n");
-    channel->Send(1);
-    printf("Sent 1\n");
-
-    printf("Sending 2\n");
-    channel->Send(2);
-    printf("Sent 2\n");
-
-    YIELD;
-
-    printf("Sending 3\n");
-    channel->Send(3);
-    printf("Sent 3\n");
-
-    senderDone = true;
+void randomYield() {
+    if (rand() % 2 == 0) {
+        currentThread->Yield();
+    }
 }
 
-void ReceiverThread(void *) {
-    int response;
+void SenderThread(void *n) {
+    for (int i = 0; i < NUM_RECEIVERS; ++i) {
+        printf("Sender %ld: waiting to send message %d\n", (long)n, i);
+        channel->Send(i);
+        printf("Sender %ld: sent message %d\n", (long)n, i);
 
-    printf("Receiving message\n");
-    channel->Receive(&response);
-    printf("Received %d\n", response);
+        randomYield();
+    }
+}
 
-    printf("Receiving message\n");
-    channel->Receive(&response);
-    printf("Received %d\n", response);
+void ReceiverThread(void *n) {
+    for (int i = 0; i < NUM_SENDERS; ++i) {
+        int response;
+        printf("Receiver %ld: waiting to receive message\n", (long)n);
+        channel->Receive(&response);
+        printf("Receiver %ld: received message %d\n", (long)n, response);
 
-    YIELD;
-
-    printf("Receiving message\n");
-    channel->Receive(&response);
-    printf("Received %d\n", response);
-
-    printf("Receiving message\n");
-    channel->Receive(&response);
-    printf("Received %d\n", response);
-
-    receiverDone = true;
+        randomYield();
+    }
 }
 
 void ThreadTestChannels() {
-    Thread *sender = new Thread("Sender");
-    Thread *receiver = new Thread("Receiver");
+    Thread *senders[NUM_SENDERS];
+    Thread *receivers[NUM_RECEIVERS];
 
-    sender->Fork(SenderThread, nullptr);
-    receiver->Fork(ReceiverThread, nullptr);
+    for (long i = 0; i < NUM_SENDERS; ++i) {
+        char *name = new char[16];
+        sprintf(name, "Sender %ld", i);
+        senders[i] = new Thread(name, true);
 
-    while (!senderDone || !receiverDone) {
-        YIELD;
+        senders[i]->Fork(SenderThread, (void *)i);
     }
+
+    for (long i = 0; i < NUM_RECEIVERS; ++i) {
+        char *name = new char[16];
+        sprintf(name, "Receiver %ld", i);
+        receivers[i] = new Thread(name, true);
+        receivers[i]->Fork(ReceiverThread, (void *)i);
+    }
+
+    for (int i = 0; i < NUM_SENDERS; ++i) {
+        senders[i]->Join();
+    }
+
+    for (int i = 0; i < NUM_RECEIVERS; ++i) {
+        receivers[i]->Join();
+    }
+
+    printf("Test completed successfully!\n");
 }
