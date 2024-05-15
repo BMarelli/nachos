@@ -38,6 +38,11 @@ void Lock::Acquire() {
 void Lock::Release() {
     ASSERT(IsHeldByCurrentThread());
 
+    // If the thread has been prioritized, restore its original priority.
+    if (thread->GetPriority() > thread->GetOriginalPriority()) {
+        scheduler->RestoreOriginalPriority(thread);
+    }
+
     thread = nullptr;
     semaphore->V();
 }

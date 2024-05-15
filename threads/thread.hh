@@ -122,9 +122,11 @@ class Thread {
 
     int Join();
 
-    void SetPriority(Priority newPriority);
+    void SetPriority(Priority priority);
 
     Priority GetPriority() const;
+
+    Priority GetOriginalPriority() const;
 
    private:
     // Some of the private data for this class is listed above.
@@ -141,8 +143,7 @@ class Thread {
     bool isJoinable;
     Channel *joinChannel;
 
-    Priority priority;
-    Priority prevPriority;
+    Priority originalPriority, priority;
 
     /// Allocate a stack for thread.  Used internally by `Fork`.
     void StackAllocate(VoidFunctionPtr func, void *arg);

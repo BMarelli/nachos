@@ -39,7 +39,7 @@ Thread::Thread(const char *_name, bool _isJoinable, Priority _priority) {
     name = _name;
     isJoinable = _isJoinable;
     priority = _priority;
-    prevPriority = _priority;
+    originalPriority = _priority;
 
     stackTop = nullptr;
     stack = nullptr;
@@ -263,15 +263,15 @@ int Thread::Join() {
     joinChannel->Receive(&result);
 
     threadToBeDestroyed = this;
+
     return result;
 }
 
-void Thread::SetPriority(Priority newPriority) {
-    prevPriority = priority;
-    priority = newPriority;
-}
+void Thread::SetPriority(Priority newPriority) { priority = newPriority; }
 
 Priority Thread::GetPriority() const { return priority; }
+
+Priority Thread::GetOriginalPriority() const { return originalPriority; }
 
 #ifdef USER_PROGRAM
 #include "machine/machine.hh"

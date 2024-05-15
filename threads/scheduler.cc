@@ -150,11 +150,31 @@ void Scheduler::Print() {
 void Scheduler::Prioritize(Thread *thread) {
     ASSERT(thread != nullptr);
 
+    IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
+
+    if (thread->GetPriority() >= currentThread->GetPriority()) return;
+
     readyList[thread->GetPriority()]->Remove(thread);
 
     thread->SetPriority(currentThread->GetPriority());
 
-    IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
     ReadyToRun(thread);  // `ReadyToRun` assumes that interrupts are disabled!
+
+    interrupt->SetLevel(oldLevel);
+}
+
+void Scheduler::RestoreOriginalPriority(Thread *thread) {
+    ASSERT(thread != nullptr);
+
+    IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
+
+    if (thread->GetPriority() == thread->GetOriginalPriority()) return;
+
+    readyList[thread->GetPriority()]->Remove(thread);
+
+    thread->SetPriority(thread->GetOriginalPriority());
+
+    ReadyToRun(thread);  // `ReadyToRun` assumes that interrupts are disabled!
+
     interrupt->SetLevel(oldLevel);
 }
