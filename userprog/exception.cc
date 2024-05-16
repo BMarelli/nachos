@@ -133,6 +133,63 @@ static void SyscallHandler(ExceptionType _et) {
             break;
         }
 
+        case SC_WRITE: {
+            int buffer = machine->ReadRegister(4);
+            int size = machine->ReadRegister(5);
+            int id = machine->ReadRegister(6);
+
+            if (buffer == 0) {
+                DEBUG('e', "Error: address to buffer is null.\n");
+            }
+
+            if (size <= 0) {
+                DEBUG('e', "Error: size is negative.\n");
+            }
+
+            switch (id) {
+                case CONSOLE_INPUT: {
+                    DEBUG('e', "Error: cannot write to console input.\n");
+                    machine->WriteRegister(2, -1);
+                    break;
+                }
+
+                case CONSOLE_OUTPUT: {
+                    DEBUG('e', "Writing to console output.\n");
+                    // TODO: Complete
+                    break;
+                }
+            }
+            break;
+        }
+
+        case SC_READ: {
+            int buffer = machine->ReadRegister(4);
+            int size = machine->ReadRegister(5);
+            int id = machine->ReadRegister(6);
+
+            if (buffer == 0) {
+                DEBUG('e', "Error: address to buffer is null.\n");
+            }
+
+            if (size <= 0) {
+                DEBUG('e', "Error: size is negative.\n");
+            }
+
+            switch (id) {
+                case CONSOLE_INPUT: {
+                    DEBUG('e', "Reading from console input.\n");
+                    // TODO: Complete
+                    break;
+                }
+
+                case CONSOLE_OUTPUT: {
+                    DEBUG('e', "Error: cannot read from console output.\n");
+                    machine->WriteRegister(2, -1);
+                    break;
+                }
+            }
+        }
+
         default:
             fprintf(stderr, "Unexpected system call: id %d.\n", scid);
             ASSERT(false);
