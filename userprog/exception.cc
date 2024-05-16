@@ -80,6 +80,13 @@ static void SyscallHandler(ExceptionType _et) {
             interrupt->Halt();
             break;
 
+        case SC_EXIT: {
+            int status = machine->ReadRegister(4);
+            DEBUG('e', "Program exit (status %d).\n", status);
+            currentThread->Finish(status);
+            break;
+        }
+
         case SC_CREATE: {
             int filenameAddr = machine->ReadRegister(4);
             if (filenameAddr == 0) {
@@ -92,7 +99,32 @@ static void SyscallHandler(ExceptionType _et) {
             }
 
             DEBUG('e', "`Create` requested for file `%s`.\n", filename);
+
+            if (fileSystem->Create(filename, 0))
+                machine->WriteRegister(2, 0);
+            else
+                machine->WriteRegister(2, -1);
+
             break;
+        }
+
+        case SC_REMOVE: {
+            int filenameAddr = machine->ReadRegister(4);
+            if (filenameAddr == 0) {
+                DEBUG('e', "Error: address to filename string is null.\n");
+            }
+
+            char filename[FILE_NAME_MAX_LEN + 1];
+            if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
+                DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n", FILE_NAME_MAX_LEN);
+            }
+
+            DEBUG('e', "`Remove` requested for file `%s`.\n", filename);
+
+            if (fileSystem->Remove(filename))
+                machine->WriteRegister(2, 0);
+            else
+                machine->WriteRegister(2, -1);
         }
 
         case SC_CLOSE: {
