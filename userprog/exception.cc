@@ -153,7 +153,7 @@ static void SyscallHandler(ExceptionType _et) {
         case SC_WRITE: {
             int buffer = machine->ReadRegister(4);
             int size = machine->ReadRegister(5);
-            int id = machine->ReadRegister(6);
+            OpenFileId fid = machine->ReadRegister(6);
 
             if (buffer == 0) {
                 DEBUG('e', "Error: address to buffer is null.\n");
@@ -163,7 +163,7 @@ static void SyscallHandler(ExceptionType _et) {
                 DEBUG('e', "Error: size is negative.\n");
             }
 
-            switch (id) {
+            switch (fid) {
                 case CONSOLE_INPUT: {
                     DEBUG('e', "Error: cannot write to console input.\n");
                     machine->WriteRegister(2, -1);
@@ -175,6 +175,19 @@ static void SyscallHandler(ExceptionType _et) {
                     // TODO: Complete
                     break;
                 }
+
+                default: {
+                    DEBUG('e', "Writing to file id %u.\n", fid);
+                    if (!currentThread->openFiles->HasKey(fid)) {
+                        DEBUG('e', "Error: file id %u not found.\n", fid);
+                        machine->WriteRegister(2, -1);
+                        break;
+                    }
+                    
+                    OpenFile *file = currentThread->openFiles->Get(fid);
+                    // TODO: Complete
+                    break;
+                }
             }
             break;
         }
@@ -182,7 +195,7 @@ static void SyscallHandler(ExceptionType _et) {
         case SC_READ: {
             int buffer = machine->ReadRegister(4);
             int size = machine->ReadRegister(5);
-            int id = machine->ReadRegister(6);
+            OpenFileId fid = machine->ReadRegister(6);
 
             if (buffer == 0) {
                 DEBUG('e', "Error: address to buffer is null.\n");
@@ -192,7 +205,7 @@ static void SyscallHandler(ExceptionType _et) {
                 DEBUG('e', "Error: size is negative.\n");
             }
 
-            switch (id) {
+            switch (fid) {
                 case CONSOLE_INPUT: {
                     DEBUG('e', "Reading from console input.\n");
                     // TODO: Complete
@@ -202,6 +215,19 @@ static void SyscallHandler(ExceptionType _et) {
                 case CONSOLE_OUTPUT: {
                     DEBUG('e', "Error: cannot read from console output.\n");
                     machine->WriteRegister(2, -1);
+                    break;
+                }
+
+                default: {
+                    DEBUG('e', "Reading from file id %u.\n", fid);
+                    if (!currentThread->openFiles->HasKey(fid)) {
+                        DEBUG('e', "Error: file id %u not found.\n", fid);
+                        machine->WriteRegister(2, -1);
+                        break;
+                    }
+                    
+                    OpenFile *file = currentThread->openFiles->Get(fid);
+                    // TODO: Complete
                     break;
                 }
             }
