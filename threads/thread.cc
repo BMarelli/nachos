@@ -50,6 +50,7 @@ Thread::Thread(const char *_name, bool _isJoinable, Priority _priority) {
 
 #ifdef USER_PROGRAM
     space = nullptr;
+    openFiles = new Table<OpenFile *>();
 #endif
 }
 

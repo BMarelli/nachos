@@ -49,6 +49,7 @@
 
 #include "channel.hh"
 #include "priority.hh"
+#include "lib/table.hh"
 
 /// CPU register state to be saved on context switch.
 ///
@@ -165,6 +166,8 @@ class Thread {
 
     // User code this thread is running.
     AddressSpace *space;
+
+    Table<OpenFile*> *openFiles;
 #endif
 };
 

@@ -25,6 +25,7 @@
 
 #include "filesys/directory_entry.hh"
 #include "lib/debug.hh"
+#include "open_file.hh"
 #include "syscall.h"
 #include "threads/system.hh"
 #include "transfer.hh"
@@ -128,8 +129,24 @@ static void SyscallHandler(ExceptionType _et) {
         }
 
         case SC_CLOSE: {
-            int fid = machine->ReadRegister(4);
+            OpenFileId fid = machine->ReadRegister(4);
             DEBUG('e', "`Close` requested for id %u.\n", fid);
+
+            if (fid < 0) {
+                DEBUG('e', "Error: invalid file id %u.\n", fid);
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            if (!currentThread->openFiles->HasKey(fid)) {
+                DEBUG('e', "Error: file id %u not found.\n", fid);
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            DEBUG('e', "File id %u closed.\n", fid);
+            delete currentThread->openFiles->Remove(fid);
+            machine->WriteRegister(2, 0);
             break;
         }
 
@@ -188,6 +205,38 @@ static void SyscallHandler(ExceptionType _et) {
                     break;
                 }
             }
+        }
+
+        case SC_OPEN: {
+            int filenameAddr = machine->ReadRegister(4);
+            if (filenameAddr == 0) {
+                DEBUG('e', "Error: address to filename string is null.\n");
+            }
+
+            char filename[FILE_NAME_MAX_LEN + 1];
+            if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
+                DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n", FILE_NAME_MAX_LEN);
+            }
+
+            DEBUG('e', "`Open` requested for file `%s`.\n", filename);
+
+            OpenFile *file = fileSystem->Open(filename);
+            if (file == nullptr) {
+                DEBUG('e', "Error: file `%s` not found.\n", filename);
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            OpenFileId fid = currentThread->openFiles->Add(file);
+            if (fid == -1) {
+                DEBUG('e', "Error: too many open files.\n");
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            DEBUG('e', "File `%s` opened with id %u.\n", filename, fid);
+            machine->WriteRegister(2, fid);
+            break;
         }
 
         default:
