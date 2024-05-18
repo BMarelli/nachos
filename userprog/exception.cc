@@ -25,7 +25,6 @@
 
 #include "filesys/directory_entry.hh"
 #include "lib/debug.hh"
-#include "open_file.hh"
 #include "syscall.h"
 #include "threads/system.hh"
 #include "transfer.hh"
@@ -183,7 +182,7 @@ static void SyscallHandler(ExceptionType _et) {
                         machine->WriteRegister(2, -1);
                         break;
                     }
-                    
+
                     OpenFile *file = currentThread->openFiles->Get(fid);
                     // TODO: Complete
                     break;
@@ -225,7 +224,7 @@ static void SyscallHandler(ExceptionType _et) {
                         machine->WriteRegister(2, -1);
                         break;
                     }
-                    
+
                     OpenFile *file = currentThread->openFiles->Get(fid);
                     // TODO: Complete
                     break;
