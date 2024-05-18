@@ -11,13 +11,11 @@ void ReadBufferFromUser(int userAddress, char *outBuffer, unsigned byteCount) {
     ASSERT(outBuffer != nullptr);
     ASSERT(byteCount != 0);
 
-    unsigned count = 0;
-    do {
+    for (unsigned i = 0; i < byteCount; i++) {
         int temp;
-        count++;
         ASSERT(machine->ReadMem(userAddress++, 1, &temp));
-        *outBuffer = (unsigned char)temp;
-    } while (count < byteCount);
+        *outBuffer++ = (unsigned char)temp;
+    }
 }
 
 bool ReadStringFromUser(int userAddress, char *outString, unsigned maxByteCount) {
@@ -25,15 +23,15 @@ bool ReadStringFromUser(int userAddress, char *outString, unsigned maxByteCount)
     ASSERT(outString != nullptr);
     ASSERT(maxByteCount != 0);
 
-    unsigned count = 0;
-    do {
+    for (unsigned i = 0; i < maxByteCount; i++) {
         int temp;
-        count++;
         ASSERT(machine->ReadMem(userAddress++, 1, &temp));
-        *outString = (unsigned char)temp;
-    } while (*outString++ != '\0' && count < maxByteCount);
+        outString[i] = (unsigned char)temp;
 
-    return *(outString - 1) == '\0';
+        if (outString[i] == '\0') return true;
+    }
+
+    return false;
 }
 
 void WriteBufferToUser(const char *buffer, int userAddress, unsigned byteCount) {
@@ -41,18 +39,18 @@ void WriteBufferToUser(const char *buffer, int userAddress, unsigned byteCount) 
     ASSERT(buffer != nullptr);
     ASSERT(byteCount != 0);
 
-    unsigned count = 0;
-    do {
-        ASSERT(machine->WriteMem(userAddress++, 1, (int)buffer[count++]));
-    } while (count < byteCount);
+    for (unsigned i = 0; i < byteCount; i++) {
+        ASSERT(machine->WriteMem(userAddress++, 1, (int)buffer[i]));
+    }
 }
 
 void WriteStringToUser(const char *string, int userAddress) {
     ASSERT(userAddress != 0);
     ASSERT(string != nullptr);
 
-    unsigned count = 0;
-    do {
-        ASSERT(machine->WriteMem(userAddress++, 1, (int)string[count]));
-    } while (string[count++] != '\0');
+    for (unsigned i = 0; string[i] != '\0'; i++) {
+        ASSERT(machine->WriteMem(userAddress++, 1, (int)string[i]));
+    }
+
+    ASSERT(machine->WriteMem(userAddress, 1, (int)'\0'));
 }
