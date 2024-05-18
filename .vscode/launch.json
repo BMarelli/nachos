@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Nachos (GDB)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/${input:subsystem}/nachos"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "subsystem",
+      "type": "pickString",
+      "description": "subsystem",
+      "options": [
+        {
+          "label": "threads",
+          "value": "threads"
+        }
+      ]
+    },
+    {
+      "id": "args",
+      "type": "promptString",
+      "description": "arguments"
+    }
+  ]
+}
