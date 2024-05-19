@@ -32,7 +32,10 @@ extern Timer *timer;                 ///< The hardware alarm clock.
 
 #ifdef USER_PROGRAM
 #include "machine/machine.hh"
-extern Machine *machine;  // User program memory and registers.
+#include "synch_console.hh"
+
+extern Machine *machine;            // User program memory and registers.
+extern SynchConsole *synchConsole;  // Synchronized console.
 #endif
 
 #ifdef FILESYS_NEEDED  // *FILESYS* or *FILESYS_STUB*.

@@ -15,6 +15,7 @@
 #include "preemptive.hh"
 
 #ifdef USER_PROGRAM
+#include "synch_console.hh"
 #include "userprog/debugger.hh"
 #include "userprog/exception.hh"
 #endif
@@ -43,8 +44,9 @@ FileSystem *fileSystem;
 SynchDisk *synchDisk;
 #endif
 
-#ifdef USER_PROGRAM  // Requires either *FILESYS* or *FILESYS_STUB*.
-Machine *machine;    ///< User program memory and registers.
+#ifdef USER_PROGRAM          // Requires either *FILESYS* or *FILESYS_STUB*.
+Machine *machine;            ///< User program memory and registers.
+SynchConsole *synchConsole;  ///< Synchronized console.
 #endif
 
 #ifdef NETWORK
@@ -219,6 +221,8 @@ void Initialize(int argc, char **argv) {
 #ifdef USER_PROGRAM
     Debugger *d = debugUserProg ? new Debugger : nullptr;
     machine = new Machine(d);  // This must come first.
+    synchConsole = new SynchConsole(nullptr, nullptr);
+
     SetExceptionHandlers();
 #endif
 
