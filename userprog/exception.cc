@@ -281,7 +281,7 @@ static void SyscallHandler(ExceptionType _et) {
 
                     synchConsole->Write(buffer, size);
 
-                    machine->WriteRegister(2, 1);
+                    machine->WriteRegister(2, size);
                     break;
                 }
 
