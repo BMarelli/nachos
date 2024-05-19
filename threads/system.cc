@@ -44,9 +44,10 @@ FileSystem *fileSystem;
 SynchDisk *synchDisk;
 #endif
 
-#ifdef USER_PROGRAM          // Requires either *FILESYS* or *FILESYS_STUB*.
-Machine *machine;            ///< User program memory and registers.
-SynchConsole *synchConsole;  ///< Synchronized console.
+#ifdef USER_PROGRAM             // Requires either *FILESYS* or *FILESYS_STUB*.
+Machine *machine;               ///< User program memory and registers.
+SynchConsole *synchConsole;     ///< Synchronized console.
+Table<Thread *> *processTable;  ///< Table of processes.
 #endif
 
 #ifdef NETWORK
@@ -253,6 +254,8 @@ void Cleanup() {
 
 #ifdef USER_PROGRAM
     delete machine;
+    delete synchConsole;
+    delete processTable;
 #endif
 
 #ifdef FILESYS_NEEDED
