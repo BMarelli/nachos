@@ -70,6 +70,10 @@ Thread::~Thread() {
     if (stack != nullptr) SystemDep::DeallocBoundedArray((char *)stack, STACK_SIZE * sizeof *stack);
 
     if (isJoinable) delete joinChannel;
+
+#ifdef USER_PROGRAM
+    delete openFiles;
+#endif
 }
 
 /// Invoke `(*func)(arg)`, allowing caller and callee to execute
