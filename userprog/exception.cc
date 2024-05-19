@@ -82,7 +82,7 @@ static void SyscallHandler(ExceptionType _et) {
 
         case SC_EXIT: {
             int status = machine->ReadRegister(4);
-            DEBUG('e', "Program exit (status %d).\n", status);
+            DEBUG('e', "Program exited with status %d.\n", status);
             currentThread->Finish(status);
             break;
         }
@@ -91,20 +91,31 @@ static void SyscallHandler(ExceptionType _et) {
             int filenameAddr = machine->ReadRegister(4);
             if (filenameAddr == 0) {
                 DEBUG('e', "Error: address to filename string is null.\n");
+
+                machine->WriteRegister(2, -1);
+                break;
             }
 
             char filename[FILE_NAME_MAX_LEN + 1];
             if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n", FILE_NAME_MAX_LEN);
+
+                machine->WriteRegister(2, -1);
+                break;
             }
 
             DEBUG('e', "`Create` requested for file `%s`.\n", filename);
 
-            if (fileSystem->Create(filename, 0))
-                machine->WriteRegister(2, 0);
-            else
-                machine->WriteRegister(2, -1);
+            if (!fileSystem->Create(filename, 0)) {
+                DEBUG('e', "Error: file `%s` could not be created.\n", filename);
 
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            DEBUG('e', "File `%s` created.\n", filename);
+
+            machine->WriteRegister(2, 0);
             break;
         }
 
@@ -112,124 +123,32 @@ static void SyscallHandler(ExceptionType _et) {
             int filenameAddr = machine->ReadRegister(4);
             if (filenameAddr == 0) {
                 DEBUG('e', "Error: address to filename string is null.\n");
+
+                machine->WriteRegister(2, -1);
+                break;
             }
 
             char filename[FILE_NAME_MAX_LEN + 1];
             if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n", FILE_NAME_MAX_LEN);
+
+                machine->WriteRegister(2, -1);
+                break;
             }
 
             DEBUG('e', "`Remove` requested for file `%s`.\n", filename);
 
-            if (fileSystem->Remove(filename))
-                machine->WriteRegister(2, 0);
-            else
-                machine->WriteRegister(2, -1);
-        }
+            if (!fileSystem->Remove(filename)) {
+                DEBUG('e', "Error: file `%s` could not be removed.\n", filename);
 
-        case SC_CLOSE: {
-            OpenFileId fid = machine->ReadRegister(4);
-            DEBUG('e', "`Close` requested for id %u.\n", fid);
-
-            if (fid < 0) {
-                DEBUG('e', "Error: invalid file id %u.\n", fid);
                 machine->WriteRegister(2, -1);
                 break;
             }
 
-            if (!currentThread->openFiles->HasKey(fid)) {
-                DEBUG('e', "Error: file id %u not found.\n", fid);
-                machine->WriteRegister(2, -1);
-                break;
-            }
+            DEBUG('e', "File `%s` removed.\n", filename);
 
-            DEBUG('e', "File id %u closed.\n", fid);
-            delete currentThread->openFiles->Remove(fid);
             machine->WriteRegister(2, 0);
             break;
-        }
-
-        case SC_WRITE: {
-            int buffer = machine->ReadRegister(4);
-            int size = machine->ReadRegister(5);
-            OpenFileId fid = machine->ReadRegister(6);
-
-            if (buffer == 0) {
-                DEBUG('e', "Error: address to buffer is null.\n");
-            }
-
-            if (size <= 0) {
-                DEBUG('e', "Error: size is negative.\n");
-            }
-
-            switch (fid) {
-                case CONSOLE_INPUT: {
-                    DEBUG('e', "Error: cannot write to console input.\n");
-                    machine->WriteRegister(2, -1);
-                    break;
-                }
-
-                case CONSOLE_OUTPUT: {
-                    DEBUG('e', "Writing to console output.\n");
-                    // TODO: Complete
-                    break;
-                }
-
-                default: {
-                    DEBUG('e', "Writing to file id %u.\n", fid);
-                    if (!currentThread->openFiles->HasKey(fid)) {
-                        DEBUG('e', "Error: file id %u not found.\n", fid);
-                        machine->WriteRegister(2, -1);
-                        break;
-                    }
-
-                    OpenFile *file = currentThread->openFiles->Get(fid);
-                    // TODO: Complete
-                    break;
-                }
-            }
-            break;
-        }
-
-        case SC_READ: {
-            int buffer = machine->ReadRegister(4);
-            int size = machine->ReadRegister(5);
-            OpenFileId fid = machine->ReadRegister(6);
-
-            if (buffer == 0) {
-                DEBUG('e', "Error: address to buffer is null.\n");
-            }
-
-            if (size <= 0) {
-                DEBUG('e', "Error: size is negative.\n");
-            }
-
-            switch (fid) {
-                case CONSOLE_INPUT: {
-                    DEBUG('e', "Reading from console input.\n");
-                    // TODO: Complete
-                    break;
-                }
-
-                case CONSOLE_OUTPUT: {
-                    DEBUG('e', "Error: cannot read from console output.\n");
-                    machine->WriteRegister(2, -1);
-                    break;
-                }
-
-                default: {
-                    DEBUG('e', "Reading from file id %u.\n", fid);
-                    if (!currentThread->openFiles->HasKey(fid)) {
-                        DEBUG('e', "Error: file id %u not found.\n", fid);
-                        machine->WriteRegister(2, -1);
-                        break;
-                    }
-
-                    OpenFile *file = currentThread->openFiles->Get(fid);
-                    // TODO: Complete
-                    break;
-                }
-            }
         }
 
         case SC_OPEN: {
@@ -241,6 +160,8 @@ static void SyscallHandler(ExceptionType _et) {
             char filename[FILE_NAME_MAX_LEN + 1];
             if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n", FILE_NAME_MAX_LEN);
+
+                machine->WriteRegister(2, -1);
             }
 
             DEBUG('e', "`Open` requested for file `%s`.\n", filename);
@@ -248,19 +169,122 @@ static void SyscallHandler(ExceptionType _et) {
             OpenFile *file = fileSystem->Open(filename);
             if (file == nullptr) {
                 DEBUG('e', "Error: file `%s` not found.\n", filename);
+
                 machine->WriteRegister(2, -1);
                 break;
             }
 
             OpenFileId fid = currentThread->openFiles->Add(file);
             if (fid == -1) {
-                DEBUG('e', "Error: too many open files.\n");
+                DEBUG('e', "Error: too many open files (maximum is %u).\n", currentThread->openFiles->SIZE);
+
                 machine->WriteRegister(2, -1);
                 break;
             }
 
-            DEBUG('e', "File `%s` opened with id %u.\n", filename, fid);
+            DEBUG('e', "File `%s` opened with id %d.\n", filename, fid);
+
             machine->WriteRegister(2, fid);
+            break;
+        }
+
+        case SC_CLOSE: {
+            OpenFileId fid = machine->ReadRegister(4);
+
+            DEBUG('e', "`Close` requested for id %d.\n", fid);
+
+            if (fid < 0) {
+                DEBUG('e', "Error: invalid file id %d.\n", fid);
+
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            if (!currentThread->openFiles->HasKey(fid)) {
+                DEBUG('e', "Error: file with id %d does not exist.\n", fid);
+
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            delete currentThread->openFiles->Remove(fid);
+
+            DEBUG('e', "File with id %d closed.\n", fid);
+
+            machine->WriteRegister(2, 0);
+            break;
+        }
+
+        case SC_READ: {
+            int bufferAddr = machine->ReadRegister(4);
+            unsigned int size = machine->ReadRegister(5);
+            OpenFileId fid = machine->ReadRegister(6);
+
+            if (bufferAddr == 0) {
+                DEBUG('e', "Error: address to buffer is null.\n");
+            }
+
+            switch (fid) {
+                case CONSOLE_INPUT: {
+                    DEBUG('e', "Reading from console input.\n");
+
+                    char buffer[size];
+                    int bytes = synchConsole->Read(buffer, size);
+
+                    WriteBufferToUser(buffer, bufferAddr, size);
+
+                    machine->WriteRegister(2, bytes);
+
+                    break;
+                }
+
+                case CONSOLE_OUTPUT: {
+                    DEBUG('e', "Error: cannot read from console output.\n");
+                    machine->WriteRegister(2, -1);
+                    break;
+                }
+
+                default: {
+                    // TODO: implement
+                    break;
+                }
+            }
+        }
+
+        case SC_WRITE: {
+            int bufferAddr = machine->ReadRegister(4);
+            unsigned int size = machine->ReadRegister(5);
+            OpenFileId fid = machine->ReadRegister(6);
+
+            if (bufferAddr == 0) {
+                DEBUG('e', "Error: address to buffer is null.\n");
+            }
+
+            switch (fid) {
+                case CONSOLE_INPUT: {
+                    DEBUG('e', "Error: cannot write to console input.\n");
+                    machine->WriteRegister(2, -1);
+                    break;
+                }
+
+                case CONSOLE_OUTPUT: {
+                    DEBUG('e', "Writing to console output.\n");
+
+                    char buffer[size];
+                    ReadBufferFromUser(bufferAddr, buffer, size);
+
+                    synchConsole->Write(buffer, size);
+
+                    machine->WriteRegister(2, 1);
+                    break;
+                }
+
+                default: {
+                    // TODO: implement
+
+                    break;
+                }
+            }
             break;
         }
 
