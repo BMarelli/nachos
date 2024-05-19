@@ -222,6 +222,9 @@ static void SyscallHandler(ExceptionType _et) {
 
             if (bufferAddr == 0) {
                 DEBUG('e', "Error: address to buffer is null.\n");
+
+                machine->WriteRegister(2, -1);
+                break;
             }
 
             switch (fid) {
@@ -258,6 +261,9 @@ static void SyscallHandler(ExceptionType _et) {
 
             if (bufferAddr == 0) {
                 DEBUG('e', "Error: address to buffer is null.\n");
+
+                machine->WriteRegister(2, -1);
+                break;
             }
 
             switch (fid) {
