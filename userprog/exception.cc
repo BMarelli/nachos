@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 
+#include "address_space.hh"
 #include "filesys/directory_entry.hh"
 #include "lib/debug.hh"
 #include "syscall.h"
@@ -55,77 +56,12 @@ static void DefaultHandler(ExceptionType et) {
     ASSERT(false);
 }
 
-/// Handle a system call exception.
-///
-/// * `et` is the kind of exception.  The list of possible exceptions is in
-///   `machine/exception_type.hh`.
-///
-/// The calling convention is the following:
-///
-/// * system call identifier in `r2`;
-/// * 1st argument in `r4`;
-/// * 2nd argument in `r5`;
-/// * 3rd argument in `r6`;
-/// * 4th argument in `r7`;
-/// * the result of the system call, if any, must be put back into `r2`.
-///
-/// And do not forget to increment the program counter before returning. (Or
-/// else you will loop making the same system call forever!)
-static void SyscallHandler(ExceptionType _et) {
-    int scid = machine->ReadRegister(2);
+static void ExecProcess(void *args) {
+    currentThread->space->InitRegisters();
+    currentThread->space->RestoreState();
 
-    switch (scid) {
-        case SC_HALT:
-            HandleHalt();
-            break;
-
-        case SC_EXIT:
-            HandleExit();
-            break;
-
-        case SC_CREATE:
-            HandleCreate();
-            break;
-
-        case SC_REMOVE:
-            HandleRemove();
-            break;
-
-        case SC_OPEN:
-            HandleOpen();
-            break;
-
-        case SC_CLOSE:
-            HandleClose();
-            break;
-
-        case SC_READ:
-            HandleRead();
-            break;
-
-        case SC_WRITE:
-            HandleWrite();
-            break;
-
-        default:
-            fprintf(stderr, "Unexpected system call: id %d.\n", scid);
-            ASSERT(false);
-    }
-
-    IncrementPC();
-}
-
-/// By default, only system calls have their own handler.  All other
-/// exception types are assigned the default handler.
-void SetExceptionHandlers() {
-    machine->SetHandler(NO_EXCEPTION, &DefaultHandler);
-    machine->SetHandler(SYSCALL_EXCEPTION, &SyscallHandler);
-    machine->SetHandler(PAGE_FAULT_EXCEPTION, &DefaultHandler);
-    machine->SetHandler(READ_ONLY_EXCEPTION, &DefaultHandler);
-    machine->SetHandler(BUS_ERROR_EXCEPTION, &DefaultHandler);
-    machine->SetHandler(ADDRESS_ERROR_EXCEPTION, &DefaultHandler);
-    machine->SetHandler(OVERFLOW_EXCEPTION, &DefaultHandler);
-    machine->SetHandler(ILLEGAL_INSTR_EXCEPTION, &DefaultHandler);
+    machine->Run();
+    ASSERT(false);  // machine->Run() never returns
 }
 
 static void HandleHalt() {
@@ -133,9 +69,85 @@ static void HandleHalt() {
     interrupt->Halt();
 }
 
+static void HandleJoin() {
+    SpaceId pid = machine->ReadRegister(4);
+
+    if (pid < 0) {
+        DEBUG('e', "Error: invalid process id %d.\n", pid);
+        machine->WriteRegister(2, -1);
+        return;
+    }
+
+    DEBUG('e', "Thread `%s` requested to join with process %d.\n", currentThread->GetName(), pid);
+
+    if (!processTable->HasKey(pid)) {
+        DEBUG('e', "Error: process %d does not exist.\n", pid);
+        machine->WriteRegister(2, -1);
+        return;
+    }
+
+    int status = processTable->Get(pid)->Join();
+
+    DEBUG('e', "Thread `%s` joined with process %d with status %d.\n", currentThread->GetName(), pid, status);
+
+    machine->WriteRegister(2, status);
+}
+
+static void HandleExec() {
+    int filenameAddr = machine->ReadRegister(4);
+
+    if (filenameAddr == 0) {
+        DEBUG('e', "Error: address to filename string is null.\n");
+
+        machine->WriteRegister(2, -1);
+        return;
+    }
+
+    char filename[FILE_NAME_MAX_LEN + 1];
+    if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
+        DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n", FILE_NAME_MAX_LEN);
+
+        machine->WriteRegister(2, -1);
+        return;
+    }
+
+    OpenFile *executable = fileSystem->Open(filename);
+    if (executable == nullptr) {
+        DEBUG('e', "Error: file `%s` not found.\n", filename);
+
+        machine->WriteRegister(2, -1);
+        return;
+    }
+
+    Thread *thread = new Thread(filename, true, currentThread->GetPriority());
+    thread->space = new AddressSpace(executable);
+
+    delete executable;
+
+    SpaceId pid = processTable->Add(thread);
+    if (pid == -1) {
+        DEBUG('e', "Error: too many processes are already running (maximum is %u).\n", processTable->SIZE);
+
+        delete thread->space;
+        delete thread;
+
+        machine->WriteRegister(2, -1);
+        return;
+    }
+
+    thread->space->InitRegisters();
+    thread->space->RestoreState();
+
+    thread->Fork(ExecProcess, nullptr);
+
+    machine->WriteRegister(2, pid);
+}
+
 static void HandleExit() {
     int status = machine->ReadRegister(4);
+
     DEBUG('e', "Program exited with status %d.\n", status);
+
     currentThread->Finish(status);
 }
 
@@ -258,19 +270,21 @@ static void HandleClose() {
     DEBUG('e', "`Close` requested for id %d.\n", fid);
 
     switch (fid) {
-        case CONSOLE_INPUT:
+        case CONSOLE_INPUT: {
             DEBUG('e', "Error: cannot close console input.\n");
 
             machine->WriteRegister(2, -1);
             return;
+        }
 
-        case CONSOLE_OUTPUT:
+        case CONSOLE_OUTPUT: {
             DEBUG('e', "Error: cannot close console output.\n");
 
             machine->WriteRegister(2, -1);
             return;
+        }
 
-        default:
+        default: {
             int key = fid - 2;
 
             if (!currentThread->openFiles->HasKey(key)) {
@@ -286,6 +300,7 @@ static void HandleClose() {
 
             machine->WriteRegister(2, 0);
             break;
+        }
     }
 }
 
@@ -301,8 +316,22 @@ static void HandleRead() {
         return;
     }
 
+    if (size == 0) {
+        DEBUG('e', "Error: size must be greater than 0.\n");
+
+        machine->WriteRegister(2, -1);
+        return;
+    }
+
+    if (fid < 0) {
+        DEBUG('e', "Error: invalid file id %d.\n", fid);
+
+        machine->WriteRegister(2, -1);
+        return;
+    }
+
     switch (fid) {
-        case CONSOLE_INPUT:
+        case CONSOLE_INPUT: {
             DEBUG('e', "Reading from console input.\n");
 
             char buffer[size];
@@ -312,14 +341,16 @@ static void HandleRead() {
 
             machine->WriteRegister(2, bytes);
             break;
+        }
 
-        case CONSOLE_OUTPUT:
+        case CONSOLE_OUTPUT: {
             DEBUG('e', "Error: cannot read from console output.\n");
 
             machine->WriteRegister(2, -1);
             break;
+        }
 
-        default:
+        default: {
             int key = fid - 2;
 
             if (!currentThread->openFiles->HasKey(key)) {
@@ -337,8 +368,8 @@ static void HandleRead() {
             WriteBufferToUser(buffer, bufferAddr, bytesRead);
 
             machine->WriteRegister(2, bytesRead);
-
             break;
+        }
     }
 }
 
@@ -354,14 +385,29 @@ static void HandleWrite() {
         return;
     }
 
+    if (size == 0) {
+        DEBUG('e', "Error: size must be greater than 0.\n");
+
+        machine->WriteRegister(2, -1);
+        return;
+    }
+
+    if (fid < 0) {
+        DEBUG('e', "Error: invalid file id %d.\n", fid);
+
+        machine->WriteRegister(2, -1);
+        return;
+    }
+
     switch (fid) {
-        case CONSOLE_INPUT:
+        case CONSOLE_INPUT: {
             DEBUG('e', "Error: cannot write to console input.\n");
 
             machine->WriteRegister(2, -1);
             break;
+        }
 
-        case CONSOLE_OUTPUT:
+        case CONSOLE_OUTPUT: {
             DEBUG('e', "Writing to console output.\n");
 
             char buffer[size];
@@ -371,8 +417,9 @@ static void HandleWrite() {
 
             machine->WriteRegister(2, size);
             break;
+        }
 
-        default:
+        default: {
             int key = fid - 2;
 
             if (!currentThread->openFiles->HasKey(key)) {
@@ -390,7 +437,88 @@ static void HandleWrite() {
             int bytesWritten = file->Write(buffer, size);
 
             machine->WriteRegister(2, bytesWritten);
-
             break;
+        }
     }
+}
+
+/// Handle a system call exception.
+///
+/// * `et` is the kind of exception.  The list of possible exceptions is in
+///   `machine/exception_type.hh`.
+///
+/// The calling convention is the following:
+///
+/// * system call identifier in `r2`;
+/// * 1st argument in `r4`;
+/// * 2nd argument in `r5`;
+/// * 3rd argument in `r6`;
+/// * 4th argument in `r7`;
+/// * the result of the system call, if any, must be put back into `r2`.
+///
+/// And do not forget to increment the program counter before returning. (Or
+/// else you will loop making the same system call forever!)
+static void SyscallHandler(ExceptionType _et) {
+    int scid = machine->ReadRegister(2);
+
+    switch (scid) {
+        case SC_HALT:
+            HandleHalt();
+            break;
+
+        case SC_EXIT:
+            HandleExit();
+            break;
+
+        case SC_CREATE:
+            HandleCreate();
+            break;
+
+        case SC_REMOVE:
+            HandleRemove();
+            break;
+
+        case SC_OPEN:
+            HandleOpen();
+            break;
+
+        case SC_CLOSE:
+            HandleClose();
+            break;
+
+        case SC_READ:
+            HandleRead();
+            break;
+
+        case SC_WRITE:
+            HandleWrite();
+            break;
+
+        case SC_JOIN:
+            HandleJoin();
+            break;
+
+        case SC_EXEC:
+            HandleExec();
+            break;
+
+        default:
+            fprintf(stderr, "Unexpected system call: id %d.\n", scid);
+            ASSERT(false);
+    }
+
+    IncrementPC();
+}
+
+/// By default, only system calls have their own handler.  All other
+/// exception types are assigned the default handler.
+void SetExceptionHandlers() {
+    machine->SetHandler(NO_EXCEPTION, &DefaultHandler);
+    machine->SetHandler(SYSCALL_EXCEPTION, &SyscallHandler);
+    machine->SetHandler(PAGE_FAULT_EXCEPTION, &DefaultHandler);
+    machine->SetHandler(READ_ONLY_EXCEPTION, &DefaultHandler);
+    machine->SetHandler(BUS_ERROR_EXCEPTION, &DefaultHandler);
+    machine->SetHandler(ADDRESS_ERROR_EXCEPTION, &DefaultHandler);
+    machine->SetHandler(OVERFLOW_EXCEPTION, &DefaultHandler);
+    machine->SetHandler(ILLEGAL_INSTR_EXCEPTION, &DefaultHandler);
 }
