@@ -5,7 +5,10 @@
       "name": "Run Nachos (GDB)",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/${input:subsystem}/nachos"
+      "program": "${workspaceFolder}/${input:subsystem}/nachos",
+      "args": [
+        "${input:args}"
+      ]
     }
   ],
   "inputs": [
@@ -17,6 +20,10 @@
         {
           "label": "threads",
           "value": "threads"
+        },
+        {
+          "label": "userprog",
+          "value": "userprog"
         }
       ]
     },
