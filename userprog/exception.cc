@@ -146,7 +146,7 @@ static void HandleExec() {
 static void HandleExit() {
     int status = machine->ReadRegister(4);
 
-    DEBUG('e', "Program exited with status %d.\n", status);
+    DEBUG('e', "Thread `%s` exited with status %d.\n", currentThread->GetName(), status);
 
     currentThread->Finish(status);
 }
