@@ -48,8 +48,8 @@
 #include <stdint.h>
 
 #include "channel.hh"
-#include "priority.hh"
 #include "lib/table.hh"
+#include "priority.hh"
 
 /// CPU register state to be saved on context switch.
 ///
@@ -129,6 +129,20 @@ class Thread {
 
     Priority GetOriginalPriority() const;
 
+#ifdef USER_PROGRAM
+    // Save user-level register state.
+    void SaveUserState();
+
+    // Restore user-level register state.
+    void RestoreUserState();
+
+    // User code this thread is running.
+    AddressSpace *space;
+
+    // Table of open files.
+    Table<OpenFile *> *openFiles;
+#endif
+
    private:
     // Some of the private data for this class is listed above.
 
@@ -156,18 +170,6 @@ class Thread {
     /// registers -- one for its state while executing user code, one for its
     /// state while executing kernel code.
     int userRegisters[NUM_TOTAL_REGS];
-
-   public:
-    // Save user-level register state.
-    void SaveUserState();
-
-    // Restore user-level register state.
-    void RestoreUserState();
-
-    // User code this thread is running.
-    AddressSpace *space;
-
-    Table<OpenFile*> *openFiles;
 #endif
 };
 
