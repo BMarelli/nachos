@@ -222,8 +222,14 @@ void Initialize(int argc, char **argv) {
 #ifdef USER_PROGRAM
     Debugger *d = debugUserProg ? new Debugger : nullptr;
     machine = new Machine(d);  // This must come first.
-    synchConsole = new SynchConsole(nullptr, nullptr);
     processTable = new Table<Thread *>();
+
+    // NOTE: initializing a console in this way means that the Nachos
+    // kernel will never shut down, even if there are no user programs or
+    // threads ready to run. This is because Nachos simulates a console
+    // by using the interrupt queue to repeatedly poll for input, and thus
+    // there are always pending I/O operations.
+    synchConsole = new SynchConsole(nullptr, nullptr);
 
     SetExceptionHandlers();
 #endif
