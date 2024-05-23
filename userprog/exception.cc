@@ -365,7 +365,8 @@ static void HandleRead() {
             char buffer[size];
             int bytesRead = file->Read(buffer, size);
 
-            WriteBufferToUser(buffer, bufferAddr, bytesRead);
+            if (bytesRead > 0)
+                WriteBufferToUser(buffer, bufferAddr, bytesRead);
 
             machine->WriteRegister(2, bytesRead);
             break;
