@@ -13,6 +13,8 @@ shell
 sort
 tiny_shell
 touch
+cat
+cp
 *.coff
 .cache
 compile_commands.json
