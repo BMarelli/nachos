@@ -23,10 +23,12 @@ int SynchConsole::Read(char *data, int size) {
 
     int i;
     for (i = 0; i < size; i++) {
-        readAvail->P();
-        data[i] = console->GetChar();
+        char ch = console->GetChar();
 
-        if (data[i] == EOF) break;
+        if (ch == EOF) break;
+
+        data[i] = ch;
+        readAvail->P();
     }
 
     readLock->Release();
