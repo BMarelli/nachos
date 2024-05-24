@@ -198,9 +198,11 @@ void Initialize(int argc, char **argv) {
     stats = new Statistics;      // Collect statistics.
     interrupt = new Interrupt;   // Start up interrupt handling.
     scheduler = new Scheduler;   // Initialize the ready queue.
-    if (randomYield) {           // Start the timer (if needed).
-        timer = new Timer(TimerInterruptHandler, 0, randomYield);
-    }
+
+    // Initialize a timer to interrupt the CPU periodically and force context switches.
+    // If `randomYield` is true, then these context switches will be randomized.
+    // Otherwise, the context switch will occur every TIMER_TICKS ticks.
+    timer = new Timer(TimerInterruptHandler, 0, randomYield);
 
     threadToBeDestroyed = nullptr;
 
