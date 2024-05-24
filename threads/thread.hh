@@ -41,6 +41,7 @@
 #include "lib/function_ptr.hh"
 
 #ifdef USER_PROGRAM
+#include "lib/table.hh"
 #include "machine/machine.hh"
 #include "userprog/address_space.hh"
 #endif
@@ -48,7 +49,6 @@
 #include <stdint.h>
 
 #include "channel.hh"
-#include "lib/table.hh"
 #include "priority.hh"
 
 /// CPU register state to be saved on context switch.
@@ -154,8 +154,13 @@ class Thread {
     /// Ready, running or blocked.
     ThreadStatus status;
 
+    /// Debug name
     const char *name;
+
+    /// If the thread is joinable, in which case another thread can call `Join` on it.
     bool isJoinable;
+
+    /// Channel to join the thread.
     Channel *joinChannel;
 
     Priority originalPriority, priority;

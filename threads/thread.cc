@@ -260,14 +260,17 @@ void Thread::StackAllocate(VoidFunctionPtr func, void *arg) {
     machineState[WhenDonePCState] = (uintptr_t)ThreadFinish;
 }
 
+/// Join blocks until the thread has finished executing.
 int Thread::Join() {
     ASSERT(this != currentThread);
     ASSERT(isJoinable);
 
+    IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
+
     int result;
     joinChannel->Receive(&result);
 
-    threadToBeDestroyed = this;
+    interrupt->SetLevel(oldLevel);
 
     return result;
 }
