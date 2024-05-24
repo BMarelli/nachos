@@ -335,11 +335,11 @@ static void HandleRead() {
             DEBUG('e', "Reading from console input.\n");
 
             char buffer[size];
-            int bytes = synchConsole->Read(buffer, size);
+            int bytesRead = synchConsole->Read(buffer, size);
 
-            WriteBufferToUser(buffer, bufferAddr, size);
+            if (bytesRead > 0) WriteBufferToUser(buffer, bufferAddr, bytesRead);
 
-            machine->WriteRegister(2, bytes);
+            machine->WriteRegister(2, bytesRead);
             break;
         }
 
@@ -365,8 +365,7 @@ static void HandleRead() {
             char buffer[size];
             int bytesRead = file->Read(buffer, size);
 
-            if (bytesRead > 0)
-                WriteBufferToUser(buffer, bufferAddr, bytesRead);
+            if (bytesRead > 0) WriteBufferToUser(buffer, bufferAddr, bytesRead);
 
             machine->WriteRegister(2, bytesRead);
             break;
