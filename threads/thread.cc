@@ -267,6 +267,8 @@ int Thread::Join() {
 
     IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
 
+    DEBUG('t', "Thread `%s` joining thread `%s`\n", currentThread->GetName(), GetName());
+
     int result;
     joinChannel->Receive(&result);
 
