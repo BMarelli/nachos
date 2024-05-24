@@ -24,8 +24,10 @@
 #include <stdio.h>
 
 #include "address_space.hh"
+#include "args.hh"
 #include "filesys/directory_entry.hh"
 #include "lib/debug.hh"
+#include "machine.hh"
 #include "syscall.h"
 #include "threads/system.hh"
 #include "transfer.hh"
@@ -59,6 +61,13 @@ static void DefaultHandler(ExceptionType et) {
 static void ExecProcess(void *args) {
     currentThread->space->InitRegisters();
     currentThread->space->RestoreState();
+
+    if (args) {
+        machine->WriteRegister(4, WriteArgs((char **)args));
+        int sp = machine->ReadRegister(STACK_REG);
+        machine->WriteRegister(5, sp);
+        machine->WriteRegister(STACK_REG, sp - 24);
+    }
 
     machine->Run();
     ASSERT(false);  // machine->Run() never returns
@@ -95,6 +104,7 @@ static void HandleJoin() {
 
 static void HandleExec() {
     int filenameAddr = machine->ReadRegister(4);
+    int argsAddr = machine->ReadRegister(5);
 
     if (filenameAddr == 0) {
         DEBUG('e', "Error: address to filename string is null.\n");
@@ -138,7 +148,8 @@ static void HandleExec() {
     thread->space->InitRegisters();
     thread->space->RestoreState();
 
-    thread->Fork(ExecProcess, nullptr);
+    char **args = (argsAddr == 0) ? nullptr : SaveArgs(argsAddr);
+    thread->Fork(ExecProcess, args);
 
     machine->WriteRegister(2, pid);
 }
