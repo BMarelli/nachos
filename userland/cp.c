@@ -1,41 +1,58 @@
 /// Copy content of a file to another file
 
+#include "lib.c"
 #include "syscall.h"
 
-#define ARGC_ERROR "Error: missing argument"
-#define OPEN_ERROR "Error: could not open file."
-#define CREATE_ERROR "Error: could not create file."
+#define BUFFER_SIZE 128
 
 int main(int argc, char *argv[]) {
     if (argc < 3) {
-        Write(ARGC_ERROR, sizeof(ARGC_ERROR) - 1, CONSOLE_OUTPUT);
-        Exit(1);
+        puts("Error: missing argument.\n");
+
+        return 1;
     }
 
-    OpenFileId fid = Open(argv[1]);
-    if (fid < 0) {
-        Write(OPEN_ERROR, sizeof(OPEN_ERROR) - 1, CONSOLE_OUTPUT);
-        Exit(1);
+    OpenFileId fromFid = Open(argv[1]);
+    if (fromFid < 0) {
+        puts("Error: failed to open file: ");
+        puts(argv[1]);
+        puts("\n");
+
+        return 1;
     }
 
     if (Create(argv[2]) < 0) {
-        Write(CREATE_ERROR, sizeof(CREATE_ERROR) - 1, CONSOLE_OUTPUT);
-        Exit(1);
+        puts("Error: failed to create file: ");
+        puts(argv[2]);
+        puts("\n");
+
+        return 1;
     }
 
-    OpenFileId fid2 = Open(argv[2]);
-    if (fid2 < 0) {
-        Write(OPEN_ERROR, sizeof(OPEN_ERROR) - 1, CONSOLE_OUTPUT);
-        Exit(1);
+    OpenFileId toFid = Open(argv[2]);
+    if (toFid < 0) {
+        puts("Error: failed to open file: ");
+        puts(argv[2]);
+        puts("\n");
+
+        return 1;
     }
 
-    char buffer[128];
+    char buffer[BUFFER_SIZE];
+
     int size;
-    while ((size = Read(buffer, sizeof(buffer), fid)) > 0) {
-        Write(buffer, size, fid2);
+    while ((size = Read(buffer, sizeof buffer, fromFid)) > 0) {
+        if (Write(buffer, size, toFid) < 0) {
+            puts("Error: failed to write to file: ");
+            puts(argv[2]);
+            puts("\n");
+
+            return 1;
+        }
     }
 
-    Close(fid);
-    Close(fid2);
-    Exit(0);
+    Close(fromFid);
+    Close(toFid);
+
+    return 0;
 }

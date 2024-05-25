@@ -1,16 +1,17 @@
 #include "syscall.h"
 
+#define NULL ((void *)0)
+
 // strlen returns the length of a string
 unsigned int strlen(const char *str) {
+    if (str == NULL) return 0;
+
     unsigned int len = 0;
 
     while (str[len] != '\0') len++;
 
     return len;
 }
-
-// puts writes a string to the console
-int puts(const char *str) { return Write(str, strlen(str), CONSOLE_OUTPUT); }
 
 // atoi converts a string to an integer
 int atoi(const char *str) {
@@ -56,4 +57,14 @@ void itoa(int num, char *str) {
         num /= 10;
         i--;
     }
+}
+
+// puts writes a string to the console
+int puts(const char *str) { return Write(str, strlen(str), CONSOLE_OUTPUT); }
+
+// puti writes an integer to the console
+void puti(int num) {
+    char str[12];
+    itoa(num, str);
+    puts(str);
 }
