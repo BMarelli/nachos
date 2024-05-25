@@ -145,9 +145,6 @@ static void HandleExec() {
         return;
     }
 
-    thread->space->InitRegisters();
-    thread->space->RestoreState();
-
     char **args = (argsAddr == 0) ? nullptr : SaveArgs(argsAddr);
     thread->Fork(ExecProcess, args);
 
