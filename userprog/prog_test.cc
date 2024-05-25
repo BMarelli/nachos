@@ -11,6 +11,7 @@
 #include <stdio.h>
 
 #include "address_space.hh"
+#include "args.hh"
 #include "machine/console.hh"
 #include "threads/semaphore.hh"
 #include "threads/system.hh"
@@ -18,7 +19,7 @@
 /// Run a user program.
 ///
 /// Open the executable, load it into memory, and jump to it.
-void StartProcess(const char *filename) {
+void StartProcess(const char *filename, char **args) {
     ASSERT(filename != nullptr);
 
     OpenFile *executable = fileSystem->Open(filename);
@@ -35,6 +36,17 @@ void StartProcess(const char *filename) {
 
     space->InitRegisters();
     space->RestoreState();
+
+    unsigned argc = WriteArgs(args);
+    machine->WriteRegister(4, argc);
+
+    int argv = machine->ReadRegister(STACK_REG);
+    machine->WriteRegister(5, argv);
+
+    // NOTE: we substract 24 bytes to make room for the function
+    // call argument area as mandated by the MIPS ABI.
+    // ref: WriteArgs (userprog/args.hh)
+    machine->WriteRegister(STACK_REG, argv - 24);
 
     machine->Run();
     ASSERT(false);  // machine->Run() never returns
