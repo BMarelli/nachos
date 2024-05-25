@@ -59,6 +59,14 @@ void itoa(int num, char *str) {
     }
 }
 
+// getchar reads a character from the console
+char getchar() {
+    char c;
+    Read(&c, 1, CONSOLE_INPUT);
+
+    return c;
+}
+
 // puts writes a string to the console
 int puts(const char *str) { return Write(str, strlen(str), CONSOLE_OUTPUT); }
 
