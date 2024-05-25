@@ -63,10 +63,16 @@ static void ExecProcess(void *args) {
     currentThread->space->RestoreState();
 
     if (args) {
-        machine->WriteRegister(4, WriteArgs((char **)args));
-        int sp = machine->ReadRegister(STACK_REG);
-        machine->WriteRegister(5, sp);
-        machine->WriteRegister(STACK_REG, sp - 24);
+        unsigned argc = WriteArgs((char **)args);
+        machine->WriteRegister(4, argc);
+
+        int argv = machine->ReadRegister(STACK_REG);
+        machine->WriteRegister(5, argv);
+
+        // NOTE: we substract 24 bytes to make room for the function
+        // call argument area as mandated by the MIPS ABI.
+        // ref: WriteArgs (userprog/args.hh)
+        machine->WriteRegister(STACK_REG, argv - 24);
     }
 
     machine->Run();
@@ -146,6 +152,7 @@ static void HandleExec() {
     }
 
     char **args = (argsAddr == 0) ? nullptr : SaveArgs(argsAddr);
+
     thread->Fork(ExecProcess, args);
 
     machine->WriteRegister(2, pid);
