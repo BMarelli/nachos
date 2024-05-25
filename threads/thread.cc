@@ -22,6 +22,7 @@
 
 #include "channel.hh"
 #include "lib/debug.hh"
+#include "lib/utility.hh"
 #include "switch.h"
 #include "system.hh"
 
@@ -36,7 +37,8 @@ static inline bool IsThreadStatus(ThreadStatus s) { return 0 <= s && s < NUM_THR
 ///
 /// * `threadName` is an arbitrary string, useful for debugging.
 Thread::Thread(const char *_name, bool _isJoinable, Priority _priority) {
-    name = _name;
+    name = CopyString(_name);
+
     isJoinable = _isJoinable;
     priority = _priority;
     originalPriority = _priority;
@@ -66,6 +68,8 @@ Thread::~Thread() {
     ASSERT(this != currentThread);
 
     DEBUG('t', "Deleting thread \"%s\"\n", name);
+
+    delete[] name;
 
     if (stack != nullptr) SystemDep::DeallocBoundedArray((char *)stack, STACK_SIZE * sizeof *stack);
 

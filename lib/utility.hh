@@ -10,6 +10,7 @@
 
 /// Useful definitions for diverse data structures.
 
+#include <cstring>
 const unsigned BITS_IN_BYTE = 8;
 const unsigned BITS_IN_WORD = 32;
 
@@ -28,6 +29,14 @@ inline T DivRoundDown(T n, T s) {
 template <typename T>
 inline T DivRoundUp(T n, T s) {
     return n / s + (n % s > 0 ? 1 : 0);
+}
+
+inline char* CopyString(const char* source) {
+    unsigned len = strlen(source) + 1;
+    char* dest = new char[len];
+    strncpy(dest, source, len);
+
+    return dest;
 }
 
 #endif
