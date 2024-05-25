@@ -23,7 +23,8 @@ void StartProcess(const char *filename) {
 
     OpenFile *executable = fileSystem->Open(filename);
     if (executable == nullptr) {
-        printf("Unable to open file %s\n", filename);
+        printf("Error: file `%s` not found.\n", filename);
+
         return;
     }
 
@@ -32,12 +33,11 @@ void StartProcess(const char *filename) {
 
     delete executable;
 
-    space->InitRegisters();  // Set the initial register values.
-    space->RestoreState();   // Load page table register.
+    space->InitRegisters();
+    space->RestoreState();
 
-    machine->Run();  // Jump to the user progam.
-    ASSERT(false);   // `machine->Run` never returns; the address space
-                     // exits by doing the system call `Exit`.
+    machine->Run();
+    ASSERT(false);  // machine->Run() never returns
 }
 
 /// Data structures needed for the console test.

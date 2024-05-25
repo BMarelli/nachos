@@ -15,6 +15,7 @@ tiny_shell
 touch
 cat
 cp
+lib
 *.coff
 .cache
 compile_commands.json
