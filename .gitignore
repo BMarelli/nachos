@@ -16,6 +16,7 @@ touch
 cat
 cp
 lib
+rm
 *.coff
 .cache
 compile_commands.json
