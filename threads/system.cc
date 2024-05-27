@@ -48,6 +48,7 @@ SynchDisk *synchDisk;
 Machine *machine;               ///< User program memory and registers.
 SynchConsole *synchConsole;     ///< Synchronized console.
 Table<Thread *> *processTable;  ///< Table of processes.
+Bitmap *memoryMap;              ///< Map of free memory frames.
 #endif
 
 #ifdef NETWORK
@@ -225,6 +226,7 @@ void Initialize(int argc, char **argv) {
     Debugger *d = debugUserProg ? new Debugger : nullptr;
     machine = new Machine(d);  // This must come first.
     processTable = new Table<Thread *>();
+    memoryMap = new Bitmap(NUM_PHYS_PAGES);
 
     // NOTE: initializing a console in this way means that the Nachos
     // kernel will never shut down, even if there are no user programs or
@@ -264,6 +266,7 @@ void Cleanup() {
     delete machine;
     delete synchConsole;
     delete processTable;
+    delete memoryMap;
 #endif
 
 #ifdef FILESYS_NEEDED
