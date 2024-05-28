@@ -30,52 +30,82 @@ AddressSpace::AddressSpace(OpenFile *executable_file) {
     numPages = DivRoundUp(size, PAGE_SIZE);
     size = numPages * PAGE_SIZE;
 
-    ASSERT(numPages <= NUM_PHYS_PAGES);
-    // Check we are not trying to run anything too big -- at least until we
-    // have virtual memory.
+    ASSERT(numPages <= memoryMap->CountClear());
 
     DEBUG('a', "Initializing address space, num pages %u, size %u\n", numPages, size);
+
+    char *mainMemory = machine->GetMMU()->mainMemory;
 
     // First, set up the translation.
 
     pageTable = new TranslationEntry[numPages];
     for (unsigned i = 0; i < numPages; i++) {
+        int physicalPage = memoryMap->Find();
+        ASSERT(physicalPage != -1);
+
         pageTable[i].virtualPage = i;
-        // For now, virtual page number = physical page number.
-        pageTable[i].physicalPage = i;
+        pageTable[i].physicalPage = physicalPage;
         pageTable[i].valid = true;
         pageTable[i].use = false;
         pageTable[i].dirty = false;
-        pageTable[i].readOnly = false;
+
         // If the code segment was entirely on a separate page, we could
         // set its pages to be read-only.
+        pageTable[i].readOnly = false;
+
+        memset(mainMemory + physicalPage * PAGE_SIZE, 0, PAGE_SIZE);
     }
-
-    char *mainMemory = machine->GetMMU()->mainMemory;
-
-    // Zero out the entire address space, to zero the unitialized data
-    // segment and the stack segment.
-    memset(mainMemory, 0, size);
 
     // Then, copy in the code and data segments into memory.
+
     uint32_t codeSize = exe.GetCodeSize();
-    uint32_t initDataSize = exe.GetInitDataSize();
+    uint32_t codeAddr = exe.GetCodeAddr();
     if (codeSize > 0) {
-        uint32_t virtualAddr = exe.GetCodeAddr();
-        DEBUG('a', "Initializing code segment, at 0x%X, size %u\n", virtualAddr, codeSize);
-        exe.ReadCodeBlock(&mainMemory[virtualAddr], codeSize, 0);
+        DEBUG('a', "Initializing code segment at 0x%X with size %u\n", codeAddr, codeSize);
+        loadSegment(exe, codeAddr, codeSize, &Executable::ReadCodeBlock);
     }
+
+    uint32_t initDataSize = exe.GetInitDataSize();
+    uint32_t initDataAddr = exe.GetInitDataAddr();
     if (initDataSize > 0) {
-        uint32_t virtualAddr = exe.GetInitDataAddr();
-        DEBUG('a', "Initializing data segment, at 0x%X, size %u\n", virtualAddr, initDataSize);
-        exe.ReadDataBlock(&mainMemory[virtualAddr], initDataSize, 0);
+        DEBUG('a', "Initializing data segment at 0x%X with size %u\n", initDataAddr, initDataSize);
+        loadSegment(exe, initDataAddr, initDataSize, &Executable::ReadDataBlock);
+    }
+}
+
+void AddressSpace::loadSegment(Executable &exe, uint32_t virtualAddr, uint32_t segmentSize, ReadBlockFunction readBlock) {
+    char *mainMemory = machine->GetMMU()->mainMemory;
+
+    uint32_t totalRead = 0;
+    while (totalRead < segmentSize) {
+        uint32_t virtualPage = DivRoundDown(virtualAddr, PAGE_SIZE);
+        uint32_t pageOffset = virtualAddr % PAGE_SIZE;
+
+        char *dest = mainMemory + pageTable[virtualPage].physicalPage * PAGE_SIZE + pageOffset;
+        uint32_t size = Min(segmentSize - totalRead, PAGE_SIZE - pageOffset);
+        uint32_t offset = totalRead;
+
+        int read = (exe.*readBlock)(dest, size, offset);
+        if (read != (int)size) {
+            DEBUG('a', "Error reading segment: expected %u bytes, got %d bytes\n", size, read);
+            ASSERT(false);
+        }
+
+        virtualAddr += size;
+        totalRead += size;
     }
 }
 
 /// Deallocate an address space.
 ///
 /// Nothing for now!
-AddressSpace::~AddressSpace() { delete[] pageTable; }
+AddressSpace::~AddressSpace() {
+    for (unsigned i = 0; i < numPages; i++) {
+        memoryMap->Clear(pageTable[i].physicalPage);
+    }
+
+    delete[] pageTable;
+}
 
 /// Set the initial values for the user-level register set.
 ///

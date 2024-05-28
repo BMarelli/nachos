@@ -14,6 +14,11 @@
 #define NACHOS_USERPROG_ADDRESSSPACE__HH
 
 #include "machine/translation_entry.hh"
+#include "userprog/executable.hh"
+
+/// ReadBlockFunction is a pointer to a member function of Executable that
+/// reads a block of data from a segment of the executable file.
+using ReadBlockFunction = int (Executable::*)(char *, unsigned, unsigned);
 
 const unsigned USER_STACK_SIZE = 1024;  ///< Increase this as necessary!
 
@@ -48,6 +53,9 @@ class AddressSpace {
 
     /// Number of pages in the virtual address space.
     unsigned numPages;
+
+    /// loadSegment loads a segment of the executable file into memory.
+    void loadSegment(Executable &exe, uint32_t addr, uint32_t size, ReadBlockFunction readBlock);
 };
 
 #endif
