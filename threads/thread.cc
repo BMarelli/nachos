@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 
+#include "channel.hh"
 #include "lib/debug.hh"
 #include "lib/utility.hh"
 #include "switch.h"
@@ -35,11 +36,19 @@ static inline bool IsThreadStatus(ThreadStatus s) { return 0 <= s && s < NUM_THR
 /// `Thread::Fork`.
 ///
 /// * `_name` is an arbitrary string, useful for debugging.
-Thread::Thread(const char *_name) {
+/// * `_isJoinable` is a boolean that indicates if the thread is joinable.
+Thread::Thread(const char *_name, bool _isJoinable) {
     name = CopyString(_name);
+    isJoinable = _isJoinable;
+
     stackTop = nullptr;
     stack = nullptr;
     status = JUST_CREATED;
+    if (isJoinable) {
+        joinChannel = new Channel();
+    } else {
+        joinChannel = nullptr;
+    }
 #ifdef USER_PROGRAM
     space = nullptr;
 #endif
@@ -61,6 +70,8 @@ Thread::~Thread() {
     delete name;
 
     if (stack != nullptr) SystemDep::DeallocBoundedArray((char *)stack, STACK_SIZE * sizeof *stack);
+
+    if (isJoinable) delete joinChannel;
 }
 
 /// Invoke `(*func)(arg)`, allowing caller and callee to execute
@@ -130,14 +141,19 @@ void Thread::Print() const { printf("%s, ", name); }
 ///
 /// NOTE: we disable interrupts, so that we do not get a time slice between
 /// setting `threadToBeDestroyed`, and going to sleep.
-void Thread::Finish() {
-    interrupt->SetLevel(INT_OFF);
+void Thread::Finish(int exitStatus) {
     ASSERT(this == currentThread);
+
+    interrupt->SetLevel(INT_OFF);
 
     DEBUG('t', "Finishing thread \"%s\"\n", GetName());
 
+    if (isJoinable) joinChannel->Send(exitStatus);
+
     threadToBeDestroyed = currentThread;
+
     Sleep();  // Invokes `SWITCH`.
+
     // Not reached.
 }
 
@@ -206,7 +222,7 @@ void Thread::Sleep() {
 /// Dummy functions because C++ does not allow a pointer to a member
 /// function.  So in order to do this, we create a dummy C function (which we
 /// can pass a pointer to), that then simply calls the member function.
-static void ThreadFinish() { currentThread->Finish(); }
+static void ThreadFinish() { currentThread->Finish(0); }
 
 static void InterruptEnable() { interrupt->Enable(); }
 
@@ -240,6 +256,23 @@ void Thread::StackAllocate(VoidFunctionPtr func, void *arg) {
     machineState[InitialPCState] = (uintptr_t)func;
     machineState[InitialArgState] = (uintptr_t)arg;
     machineState[WhenDonePCState] = (uintptr_t)ThreadFinish;
+}
+
+/// Join blocks until the thread has finished executing.
+int Thread::Join() {
+    ASSERT(this != currentThread);
+    ASSERT(isJoinable);
+
+    IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
+
+    DEBUG('t', "Thread `%s` joining thread `%s`\n", currentThread->GetName(), GetName());
+
+    int result;
+    joinChannel->Receive(&result);
+
+    interrupt->SetLevel(oldLevel);
+
+    return result;
 }
 
 #ifdef USER_PROGRAM
