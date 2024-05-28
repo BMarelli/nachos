@@ -8,6 +8,8 @@
 #ifndef NACHOS_LIB_UTILITY__HH
 #define NACHOS_LIB_UTILITY__HH
 
+#include <cstring>
+
 /// Useful definitions for diverse data structures.
 
 const unsigned BITS_IN_BYTE = 8;
@@ -28,6 +30,14 @@ inline T DivRoundDown(T n, T s) {
 template <typename T>
 inline T DivRoundUp(T n, T s) {
     return n / s + (n % s > 0 ? 1 : 0);
+}
+
+inline char* CopyString(const char* source) {
+    unsigned len = strlen(source) + 1;
+    char* dest = new char[len];
+    strncpy(dest, source, len);
+
+    return dest;
 }
 
 #endif
