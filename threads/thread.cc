@@ -21,6 +21,7 @@
 #include <stdio.h>
 
 #include "lib/debug.hh"
+#include "lib/utility.hh"
 #include "switch.h"
 #include "system.hh"
 
@@ -35,7 +36,7 @@ static inline bool IsThreadStatus(ThreadStatus s) { return 0 <= s && s < NUM_THR
 ///
 /// * `_name` is an arbitrary string, useful for debugging.
 Thread::Thread(const char *_name) {
-    name = _name;
+    name = CopyString(_name);
     stackTop = nullptr;
     stack = nullptr;
     status = JUST_CREATED;
@@ -53,12 +54,13 @@ Thread::Thread(const char *_name) {
 /// did not allocate it -- we got it automatically as part of starting up
 /// Nachos.
 Thread::~Thread() {
+    ASSERT(this != currentThread);
+
     DEBUG('t', "Deleting thread \"%s\"\n", name);
 
-    ASSERT(this != currentThread);
-    if (stack != nullptr) {
-        SystemDep::DeallocBoundedArray((char *)stack, STACK_SIZE * sizeof *stack);
-    }
+    delete name;
+
+    if (stack != nullptr) SystemDep::DeallocBoundedArray((char *)stack, STACK_SIZE * sizeof *stack);
 }
 
 /// Invoke `(*func)(arg)`, allowing caller and callee to execute
