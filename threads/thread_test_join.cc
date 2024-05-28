@@ -13,8 +13,6 @@
 void ThreadJoin(void *n) {
     for (int i = 0; i < rand() % (MAX_ITERATIONS - MIN_ITERATIONS) + MIN_ITERATIONS; i++) {
         printf("`%s`: %d\n", currentThread->GetName(), i);
-
-        currentThread->Yield();
     }
 
     printf("Thread %ld finished\n", (long)n);
