@@ -31,6 +31,8 @@ Interrupt *interrupt;         ///< Interrupt status.
 Statistics *stats;            ///< Performance metrics.
 Timer *timer;                 ///< The hardware timer device, for invoking
                               ///< context switches.
+bool disablePeriodicYield;    ///< Disables context switches caused by the
+                              ///< timer device.
 
 // 2007, Jose Miguel Santos Espino
 PreemptiveScheduler *preemptiveScheduler = nullptr;
@@ -73,6 +75,8 @@ extern void Cleanup();
 /// * `dummy` is because every interrupt handler takes one argument, whether
 ///   it needs it or not.
 static void TimerInterruptHandler(void *dummy) {
+    if (disablePeriodicYield) return;
+
     if (interrupt->GetStatus() != IDLE_MODE) {
         interrupt->YieldOnReturn();
     }
@@ -199,9 +203,12 @@ void Initialize(int argc, char **argv) {
     stats = new Statistics;      // Collect statistics.
     interrupt = new Interrupt;   // Start up interrupt handling.
     scheduler = new Scheduler;   // Initialize the ready queue.
-    if (randomYield) {           // Start the timer (if needed).
-        timer = new Timer(TimerInterruptHandler, 0, randomYield);
-    }
+
+    // Initialize a timer to interrupt the CPU periodically and force context switches.
+    // If `randomYield` is true, then these context switches will be randomized.
+    // Otherwise, the context switch will occur every TIMER_TICKS ticks.
+    disablePeriodicYield = false;
+    timer = new Timer(TimerInterruptHandler, 0, randomYield);
 
     threadToBeDestroyed = nullptr;
 
