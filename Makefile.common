@@ -35,6 +35,7 @@ LDFLAGS  =
 PROGRAM = nachos
 
 THREAD_HDR = threads/condition.hh              \
+             threads/channel.hh                \
              threads/copyright.h               \
              threads/lock.hh                   \
              threads/scheduler.hh              \
@@ -44,6 +45,7 @@ THREAD_HDR = threads/condition.hh              \
              threads/system.hh                 \
              threads/thread.hh                 \
              threads/thread_test.hh            \
+             threads/thread_test_channel.cc    \
              threads/thread_test_garden.hh     \
              threads/thread_test_garden_sem.hh \
              threads/thread_test_prod_cons.hh  \
@@ -60,6 +62,7 @@ THREAD_HDR = threads/condition.hh              \
              threads/preemptive.hh
 THREAD_SRC = threads/main.cc                   \
              threads/condition.cc              \
+             threads/channel.cc                \
              threads/lock.cc                   \
              threads/scheduler.cc              \
              threads/semaphore.cc              \
@@ -68,6 +71,7 @@ THREAD_SRC = threads/main.cc                   \
              threads/switch.S                  \
              threads/thread.cc                 \
              threads/thread_test.cc            \
+             threads/thread_test_channel.cc    \
              threads/thread_test_garden.cc     \
              threads/thread_test_garden_sem.cc \
              threads/thread_test_prod_cons.cc  \

@@ -1,0 +1,6 @@
+#ifndef NACHOS_THREADS_THREADTESTCHANNEL__HH
+#define NACHOS_THREADS_THREADTESTCHANNEL__HH
+
+void ThreadTestChannel();
+
+#endif
