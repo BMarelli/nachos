@@ -55,6 +55,7 @@ Thread::Thread(const char *_name, bool _isJoinable, Priority _priority) {
     }
 #ifdef USER_PROGRAM
     space = nullptr;
+    openFiles = new Table<OpenFile *>();
 #endif
 }
 
@@ -76,6 +77,11 @@ Thread::~Thread() {
     if (stack != nullptr) SystemDep::DeallocBoundedArray((char *)stack, STACK_SIZE * sizeof *stack);
 
     if (isJoinable) delete joinChannel;
+
+#ifdef USER_PROGRAM
+    if (space != nullptr) delete space;
+    delete openFiles;
+#endif
 }
 
 /// Invoke `(*func)(arg)`, allowing caller and callee to execute

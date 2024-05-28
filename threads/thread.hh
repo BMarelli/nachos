@@ -42,6 +42,7 @@
 #include "threads/priority.hh"
 
 #ifdef USER_PROGRAM
+#include "lib/table.hh"
 #include "machine/machine.hh"
 #include "userprog/address_space.hh"
 #endif
@@ -142,6 +143,9 @@ class Thread {
 
     // User code this thread is running.
     AddressSpace *space;
+
+    /// Table of open files.
+    Table<OpenFile *> *openFiles;
 #endif
 
    private:

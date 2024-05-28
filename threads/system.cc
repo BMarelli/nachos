@@ -15,6 +15,7 @@
 #include "preemptive.hh"
 
 #ifdef USER_PROGRAM
+#include "synch_console.hh"
 #include "userprog/debugger.hh"
 #include "userprog/exception.hh"
 #endif
@@ -43,8 +44,11 @@ FileSystem *fileSystem;
 SynchDisk *synchDisk;
 #endif
 
-#ifdef USER_PROGRAM  // Requires either *FILESYS* or *FILESYS_STUB*.
-Machine *machine;    ///< User program memory and registers.
+#ifdef USER_PROGRAM             // Requires either *FILESYS* or *FILESYS_STUB*.
+Machine *machine;               ///< User program memory and registers.
+Bitmap *memoryMap;              ///< Map of free memory frames.
+SynchConsole *synchConsole;     ///< Synchronized console.
+Table<Thread *> *processTable;  ///< Table of processes.
 #endif
 
 #ifdef NETWORK
@@ -219,6 +223,17 @@ void Initialize(int argc, char **argv) {
 #ifdef USER_PROGRAM
     Debugger *d = debugUserProg ? new Debugger : nullptr;
     machine = new Machine(d);  // This must come first.
+    memoryMap = new Bitmap(NUM_PHYS_PAGES);
+
+    // NOTE: initializing a console in this way means that the Nachos
+    // kernel will never shut down, even if there are no user programs or
+    // threads ready to run. This is because Nachos simulates a console
+    // by using the interrupt queue to repeatedly poll for input, and thus
+    // there are always pending I/O operations.
+    synchConsole = new SynchConsole(nullptr, nullptr);
+
+    processTable = new Table<Thread *>();
+
     SetExceptionHandlers();
 #endif
 
@@ -248,6 +263,9 @@ void Cleanup() {
 
 #ifdef USER_PROGRAM
     delete machine;
+    delete memoryMap;
+    delete synchConsole;
+    delete processTable;
 #endif
 
 #ifdef FILESYS_NEEDED
