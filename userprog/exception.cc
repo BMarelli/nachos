@@ -442,6 +442,12 @@ static void HandleWrite() {
     }
 }
 
+static void HandlePS() {
+    DEBUG('e', "Process list requested.\n");
+
+    scheduler->Print();
+}
+
 /// Handle a system call exception.
 ///
 /// * `et` is the kind of exception.  The list of possible exceptions is in
@@ -500,6 +506,10 @@ static void SyscallHandler(ExceptionType _et) {
 
         case SC_EXEC:
             HandleExec();
+            break;
+
+        case SC_PS:
+            HandlePS();
             break;
 
         default:
