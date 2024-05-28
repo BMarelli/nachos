@@ -25,10 +25,16 @@
 #include "system.hh"
 
 /// Initialize the list of ready but not running threads to empty.
-Scheduler::Scheduler() { readyList = new List<Thread *>; }
+Scheduler::Scheduler() {
+    readyList = new List<Thread *> *[NUM_PRIORITIES];
+    for (int i = 0; i < NUM_PRIORITIES; i++) readyList[i] = new List<Thread *>;
+}
 
 /// De-allocate the list of ready threads.
-Scheduler::~Scheduler() { delete readyList; }
+Scheduler::~Scheduler() {
+    for (int i = 0; i < NUM_PRIORITIES; i++) delete readyList[i];
+    delete readyList;
+}
 
 /// Mark a thread as ready, but not running.
 /// Put it on the ready list, for later scheduling onto the CPU.
@@ -38,10 +44,11 @@ Scheduler::~Scheduler() { delete readyList; }
 void Scheduler::ReadyToRun(Thread *thread) {
     ASSERT(thread != nullptr);
 
-    DEBUG('t', "Putting thread %s on ready list\n", thread->GetName());
+    DEBUG('t', "Putting thread %s on ready list with priority level %s\n", thread->GetName(), PriorityToString(thread->GetPriority()));
 
     thread->SetStatus(READY);
-    readyList->Append(thread);
+
+    readyList[thread->GetPriority()]->Append(thread);
 }
 
 /// Return the next thread to be scheduled onto the CPU.
@@ -49,7 +56,19 @@ void Scheduler::ReadyToRun(Thread *thread) {
 /// If there are no ready threads, return null.
 ///
 /// Side effect: thread is removed from the ready list.
-Thread *Scheduler::FindNextToRun() { return readyList->Pop(); }
+Thread *Scheduler::FindNextToRun() {
+    for (int i = 0; i < NUM_PRIORITIES; i++) {
+        if (!readyList[i]->IsEmpty()) {
+            Thread *next = readyList[i]->Pop();
+
+            DEBUG('t', "Next thread to run: \"%s\"\n", next->GetName());
+
+            return next;
+        }
+    }
+
+    return nullptr;
+}
 
 /// Dispatch the CPU to `nextThread`.
 ///
@@ -97,6 +116,8 @@ void Scheduler::Run(Thread *nextThread) {
     // now (for example, in `Thread::Finish`), because up to this point, we
     // were still running on the old thread's stack!
     if (threadToBeDestroyed != nullptr) {
+        readyList[threadToBeDestroyed->GetPriority()]->Remove(threadToBeDestroyed);
+
         delete threadToBeDestroyed;
         threadToBeDestroyed = nullptr;
     }
@@ -121,5 +142,38 @@ static void ThreadPrint(Thread *t) {
 
 void Scheduler::Print() {
     printf("Ready list contents:\n");
-    readyList->Apply(ThreadPrint);
+
+    for (int i = 0; i < NUM_PRIORITIES; i++) readyList[i]->Apply(ThreadPrint);
+}
+
+void Scheduler::Prioritize(Thread *thread) {
+    ASSERT(thread != nullptr);
+
+    IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
+
+    if (thread->GetPriority() >= currentThread->GetPriority()) return;
+
+    readyList[thread->GetPriority()]->Remove(thread);
+
+    thread->SetPriority(currentThread->GetPriority());
+
+    ReadyToRun(thread);  // `ReadyToRun` assumes that interrupts are disabled!
+
+    interrupt->SetLevel(oldLevel);
+}
+
+void Scheduler::RestoreOriginalPriority(Thread *thread) {
+    ASSERT(thread != nullptr);
+
+    IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
+
+    if (thread->GetPriority() == thread->GetOriginalPriority()) return;
+
+    readyList[thread->GetPriority()]->Remove(thread);
+
+    thread->SetPriority(thread->GetOriginalPriority());
+
+    ReadyToRun(thread);  // `ReadyToRun` assumes that interrupts are disabled!
+
+    interrupt->SetLevel(oldLevel);
 }

@@ -39,6 +39,7 @@
 #define NACHOS_THREADS_THREAD__HH
 
 #include "lib/function_ptr.hh"
+#include "threads/priority.hh"
 
 #ifdef USER_PROGRAM
 #include "machine/machine.hh"
@@ -89,7 +90,7 @@ class Thread {
 
    public:
     /// Initialize a `Thread`.
-    Thread(const char *name, bool isJoinable = false);
+    Thread(const char *name, bool isJoinable = false, Priority priority = PRIORITY_LOW);
 
     /// Deallocate a Thread.
     ///
@@ -123,6 +124,15 @@ class Thread {
 
     void Print() const;
 
+    /// Set the priority of the thread.
+    void SetPriority(Priority priority);
+
+    /// Get the priority of the thread.
+    Priority GetPriority() const;
+
+    /// Get the original priority of the thread.
+    Priority GetOriginalPriority() const;
+
 #ifdef USER_PROGRAM
     // Save user-level register state.
     void SaveUserState();
@@ -147,14 +157,17 @@ class Thread {
 
     const char *name;
 
-    /// Allocate a stack for thread.  Used internally by `Fork`.
-    void StackAllocate(VoidFunctionPtr func, void *arg);
-
     /// If the thread is joinable, in which case another thread can call `Join` on it.
     bool isJoinable;
 
     /// Channel to join the thread.
     Channel *joinChannel;
+
+    /// Priority of the thread.
+    Priority originalPriority, priority;
+
+    /// Allocate a stack for thread.  Used internally by `Fork`.
+    void StackAllocate(VoidFunctionPtr func, void *arg);
 
 #ifdef USER_PROGRAM
     /// User-level CPU register state.

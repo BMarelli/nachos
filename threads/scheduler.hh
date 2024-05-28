@@ -37,9 +37,15 @@ class Scheduler {
     // Print contents of ready list.
     void Print();
 
+    /// Prioritize bumps the priority of a thread to the current thread's priority.
+    void Prioritize(Thread *thread);
+
+    /// RestoreOriginalPriority restores the original priority of a thread.
+    void RestoreOriginalPriority(Thread *thread);
+
    private:
-    // Queue of threads that are ready to run, but not running.
-    List<Thread *> *readyList;
+    // Queues of threads that are ready to run, but not running.
+    List<Thread *> **readyList;
 };
 
 #endif
