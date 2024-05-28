@@ -187,7 +187,7 @@ int main(int argc, char **argv) {
 #endif  // NETWORK
     }
 
-    currentThread->Finish();
+    currentThread->Finish(0);
     // NOTE: if the procedure `main` returns, then the program `nachos`
     // will exit (as any other normal program would).  But there may be
     // other threads on the ready list.  We switch to those threads by

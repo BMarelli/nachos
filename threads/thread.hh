@@ -45,6 +45,9 @@
 #include "userprog/address_space.hh"
 #endif
 
+// NOTE: class `Channel` is forward declared here to avoid circular dependencies.
+class Channel;
+
 #include <stdint.h>
 
 /// CPU register state to be saved on context switch.
@@ -86,7 +89,7 @@ class Thread {
 
    public:
     /// Initialize a `Thread`.
-    Thread(const char *name);
+    Thread(const char *name, bool isJoinable = false);
 
     /// Deallocate a Thread.
     ///
@@ -106,7 +109,10 @@ class Thread {
     void Sleep();
 
     /// The thread is done executing.
-    void Finish();
+    void Finish(int exitStatus);
+
+    /// Join blocks the current thread until this has finished executing.
+    int Join();
 
     /// Check if thread has overflowed its stack.
     void CheckOverflow() const;
@@ -143,6 +149,12 @@ class Thread {
 
     /// Allocate a stack for thread.  Used internally by `Fork`.
     void StackAllocate(VoidFunctionPtr func, void *arg);
+
+    /// If the thread is joinable, in which case another thread can call `Join` on it.
+    bool isJoinable;
+
+    /// Channel to join the thread.
+    Channel *joinChannel;
 
 #ifdef USER_PROGRAM
     /// User-level CPU register state.
