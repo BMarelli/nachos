@@ -1,4 +1,4 @@
-/// Creates files specified on the command line.
+/// Delete a file or directory.
 
 #include "lib.c"
 #include "syscall.h"
@@ -10,16 +10,16 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    int success = 1;
+    int deleted = 0;
     for (unsigned i = 1; i < argc; i++) {
-        if (Create(argv[i]) < 0) {
-            puts("Error: failed to create file: ");
+        if (Remove(argv[i]) < 0) {
+            puts("Error: failed to remove file from directory: ");
             puts(argv[i]);
             puts("\n");
 
-            success = 0;
+            deleted = 1;
         }
     }
 
-    return !success;
+    return deleted;
 }

@@ -12,6 +12,6 @@
 
 int main(void) {
     Halt();
-    // Not reached.
-    return -1;
+
+    return -1;  // not reached
 }
