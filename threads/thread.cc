@@ -25,6 +25,7 @@
 #include "lib/utility.hh"
 #include "switch.h"
 #include "system.hh"
+#include "threads/priority.hh"
 
 /// This is put at the top of the execution stack, for detecting stack
 /// overflows.
@@ -37,9 +38,12 @@ static inline bool IsThreadStatus(ThreadStatus s) { return 0 <= s && s < NUM_THR
 ///
 /// * `_name` is an arbitrary string, useful for debugging.
 /// * `_isJoinable` is a boolean that indicates if the thread is joinable.
-Thread::Thread(const char *_name, bool _isJoinable) {
+/// * `_priority` is the priority of the thread.
+Thread::Thread(const char *_name, bool _isJoinable, Priority _priority) {
     name = CopyString(_name);
     isJoinable = _isJoinable;
+    priority = _priority;
+    originalPriority = _priority;
 
     stackTop = nullptr;
     stack = nullptr;
@@ -274,6 +278,12 @@ int Thread::Join() {
 
     return result;
 }
+
+void Thread::SetPriority(Priority newPriority) { priority = newPriority; }
+
+Priority Thread::GetPriority() const { return priority; }
+
+Priority Thread::GetOriginalPriority() const { return originalPriority; }
 
 #ifdef USER_PROGRAM
 #include "machine/machine.hh"
