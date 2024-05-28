@@ -16,21 +16,27 @@
 
 #include "lock.hh"
 
-/// Dummy functions -- so we can compile our later assignments.
+#include "system.hh"
 
-Lock::Lock() {}
+Lock::Lock() {
+    semaphore = new Semaphore(1);
+    thread = nullptr;
+}
 
-Lock::~Lock() {}
+Lock::~Lock() { delete semaphore; }
 
 void Lock::Acquire() {
-    // TODO
+    ASSERT(!IsHeldByCurrentThread());
+
+    semaphore->P();
+    thread = currentThread;
 }
 
 void Lock::Release() {
-    // TODO
+    ASSERT(IsHeldByCurrentThread());
+
+    thread = nullptr;
+    semaphore->V();
 }
 
-bool Lock::IsHeldByCurrentThread() const {
-    // TODO
-    return false;
-}
+bool Lock::IsHeldByCurrentThread() const { return thread == currentThread; }
