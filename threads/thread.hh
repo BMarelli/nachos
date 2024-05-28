@@ -63,7 +63,7 @@ const unsigned MACHINE_STATE_SIZE = 17;
 /// In words.
 ///
 /// WATCH OUT IF THIS IS NOT BIG ENOUGH!!!!!
-const unsigned STACK_SIZE = 4 * 1024;
+const unsigned STACK_SIZE = 20 * 1024;
 
 /// Thread state.
 enum ThreadStatus { JUST_CREATED, RUNNING, READY, BLOCKED, NUM_THREAD_STATUS };
