@@ -144,6 +144,8 @@ void Scheduler::Print() {
     printf("Ready list contents:\n");
 
     for (int i = 0; i < NUM_PRIORITIES; i++) readyList[i]->Apply(ThreadPrint);
+
+    fflush(stdout);
 }
 
 void Scheduler::Prioritize(Thread *thread) {

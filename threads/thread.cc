@@ -137,7 +137,7 @@ void Thread::SetStatus(ThreadStatus st) {
 
 const char *Thread::GetName() const { return name; }
 
-void Thread::Print() const { printf("%s, ", name); }
+void Thread::Print() const { printf("- %s\n", name); }
 
 /// Called by `ThreadRoot` when a thread is done executing the forked
 /// procedure.
