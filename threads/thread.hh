@@ -117,6 +117,17 @@ class Thread {
 
     void Print() const;
 
+#ifdef USER_PROGRAM
+    // Save user-level register state.
+    void SaveUserState();
+
+    // Restore user-level register state.
+    void RestoreUserState();
+
+    // User code this thread is running.
+    AddressSpace *space;
+#endif
+
    private:
     // Some of the private data for this class is listed above.
 
@@ -140,16 +151,6 @@ class Thread {
     /// registers -- one for its state while executing user code, one for its
     /// state while executing kernel code.
     int userRegisters[NUM_TOTAL_REGS];
-
-   public:
-    // Save user-level register state.
-    void SaveUserState();
-
-    // Restore user-level register state.
-    void RestoreUserState();
-
-    // User code this thread is running.
-    AddressSpace *space;
 #endif
 };
 
