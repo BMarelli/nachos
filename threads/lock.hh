@@ -17,6 +17,9 @@
 #ifndef NACHOS_THREADS_LOCK__HH
 #define NACHOS_THREADS_LOCK__HH
 
+#include "semaphore.hh"
+#include "thread.hh"
+
 /// This class defines a “lock”.
 ///
 /// A lock can have two states: free and busy. Only two operations are
@@ -48,7 +51,9 @@ class Lock {
     bool IsHeldByCurrentThread() const;
 
    private:
-    // Add other needed fields here.
+    Semaphore *semaphore;
+
+    Thread *thread;
 };
 
 #endif

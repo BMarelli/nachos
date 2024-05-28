@@ -18,6 +18,7 @@
 #define NACHOS_THREADS_CONDITION__HH
 
 #include "lock.hh"
+#include "semaphore.hh"
 
 /// This class defines a “condition variable”.
 ///
@@ -54,11 +55,9 @@
 class Condition {
    public:
     /// Constructor: indicate which lock the condition variable belongs to.
-    Condition(Lock *conditionLock);
+    Condition(Lock *lock);
 
     ~Condition();
-
-    const char *GetName() const;
 
     /// The three operations on condition variables.
     ///
@@ -70,9 +69,9 @@ class Condition {
     void Broadcast();
 
    private:
-    const char *name;
+    List<Semaphore *> *queue;
 
-    // Other needed fields are to be added here.
+    Lock *lock;
 };
 
 #endif
