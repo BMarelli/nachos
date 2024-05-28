@@ -73,26 +73,26 @@ AddressSpace::AddressSpace(OpenFile *executable_file) {
     }
 }
 
-void AddressSpace::loadSegment(Executable &exe, uint32_t virtualAddr, uint32_t size, ReadBlockFunction readBlock) {
+void AddressSpace::loadSegment(Executable &exe, uint32_t virtualAddr, uint32_t segmentSize, ReadBlockFunction readBlock) {
     char *mainMemory = machine->GetMMU()->mainMemory;
 
-    uint32_t bytesRead = 0;
-    while (size > 0) {
+    uint32_t totalRead = 0;
+    while (totalRead < segmentSize) {
         uint32_t virtualPage = DivRoundDown(virtualAddr, PAGE_SIZE);
         uint32_t pageOffset = virtualAddr % PAGE_SIZE;
 
         char *dest = mainMemory + pageTable[virtualPage].physicalPage * PAGE_SIZE + pageOffset;
-        uint32_t bytesToRead = Min(size, PAGE_SIZE - pageOffset);
-        uint32_t offset = bytesRead;
+        uint32_t size = Min(segmentSize - totalRead, PAGE_SIZE - pageOffset);
+        uint32_t offset = totalRead;
 
-        if ((exe.*readBlock)(dest, bytesToRead, offset) != (int)bytesToRead) {
-            DEBUG('a', "Error reading segment at 0x%X: expected %u bytes, got %d bytes\n", virtualAddr, bytesToRead, bytesRead);
+        int bytesRead = (exe.*readBlock)(dest, size, offset);
+        if (bytesRead != (int)size) {
+            DEBUG('a', "Error reading segment: expected %u bytes, got %d bytes\n", size, bytesRead);
             ASSERT(false);
         }
 
-        size -= bytesToRead;
-        virtualAddr += bytesToRead;
-        bytesRead += bytesToRead;
+        virtualAddr += size;
+        totalRead += size;
     }
 }
 
