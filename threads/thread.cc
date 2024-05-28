@@ -33,9 +33,9 @@ static inline bool IsThreadStatus(ThreadStatus s) { return 0 <= s && s < NUM_THR
 /// Initialize a thread control block, so that we can then call
 /// `Thread::Fork`.
 ///
-/// * `threadName` is an arbitrary string, useful for debugging.
-Thread::Thread(const char *threadName) {
-    name = threadName;
+/// * `_name` is an arbitrary string, useful for debugging.
+Thread::Thread(const char *_name) {
+    name = _name;
     stackTop = nullptr;
     stack = nullptr;
     status = JUST_CREATED;

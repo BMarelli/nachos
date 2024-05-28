@@ -86,7 +86,7 @@ class Thread {
 
    public:
     /// Initialize a `Thread`.
-    Thread(const char *debugName);
+    Thread(const char *name);
 
     /// Deallocate a Thread.
     ///
