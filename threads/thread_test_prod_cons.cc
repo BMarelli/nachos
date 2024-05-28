@@ -29,65 +29,39 @@ int buffer, capacity;
 long produced = 0;
 long consumed = 0;
 
-#define YIELD currentThread->Yield()
-
 void Producer(void *n) {
     for (int i = 0; i < (long)n; i++) {
-        YIELD;
-
         lock->Acquire();
-
-        YIELD;
 
         while (buffer == capacity) {
             empty->Wait();
         }
 
-        YIELD;
-
         buffer++;
         produced++;
         printf("%s produced %d.\n", currentThread->GetName(), buffer);
 
-        YIELD;
-
         full->Signal();
 
-        YIELD;
-
         lock->Release();
-
-        YIELD;
     }
 }
 
 void Consumer(void *n) {
     for (int i = 0; i < (long)n; i++) {
-        YIELD;
-
         lock->Acquire();
-
-        YIELD;
 
         while (buffer == 0) {
             full->Wait();
         }
 
-        YIELD;
-
         buffer--;
         consumed++;
         printf("%s consumed %d.\n", currentThread->GetName(), buffer);
 
-        YIELD;
-
         empty->Signal();
 
-        YIELD;
-
         lock->Release();
-
-        YIELD;
     }
 }
 

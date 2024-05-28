@@ -8,7 +8,7 @@
 
 #include <stdio.h>
 
-#include "system.hh"
+#include "thread.hh"
 
 #ifdef SEMAPHORE_TEST
 #include "semaphore.hh"
@@ -32,7 +32,6 @@ void SimpleThread(void *name_) {
     // conditions.
     for (unsigned num = 0; num < 10; num++) {
         printf("*** Thread `%s` is running: iteration %u\n", name, num);
-        currentThread->Yield();
     }
     printf("!!! Thread `%s` has finished\n", name);
 
