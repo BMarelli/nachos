@@ -53,7 +53,7 @@ void ThreadTestChannel() {
     for (long i = 0; i < NUM_SENDERS; ++i) {
         char *name = new char[16];
         sprintf(name, "Sender %ld", i);
-        senders[i] = new Thread(name);
+        senders[i] = new Thread(name, true);
 
         senders[i]->Fork(SenderThread, (void *)i);
     }
@@ -61,20 +61,16 @@ void ThreadTestChannel() {
     for (long i = 0; i < NUM_RECEIVERS; ++i) {
         char *name = new char[16];
         sprintf(name, "Receiver %ld", i);
-        receivers[i] = new Thread(name);
+        receivers[i] = new Thread(name, true);
         receivers[i]->Fork(ReceiverThread, (void *)i);
     }
 
     for (int i = 0; i < NUM_SENDERS; ++i) {
-        while (!senderDone[i]) {
-            currentThread->Yield();
-        }
+        senders[i]->Join();
     }
 
     for (int i = 0; i < NUM_RECEIVERS; ++i) {
-        while (!receiverDone[i]) {
-            currentThread->Yield();
-        }
+        receivers[i]->Join();
     }
 
     printf("Test completed successfully!\n");
