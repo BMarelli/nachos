@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "lib/debug.hh"
+#include "lib/utility.hh"
 #include "machine/machine.hh"
 #include "threads/system.hh"
 #include "transfer.hh"
@@ -95,4 +96,50 @@ unsigned WriteArgs(char **args) {
 
     machine->WriteRegister(STACK_REG, sp);
     return c;
+}
+
+char **PrepareArgs(const char *filename, const char *args) {
+    ASSERT(filename != nullptr);
+
+    if (args == nullptr) {
+        char **argv = new char *[2];
+        argv[0] = CopyString(filename);
+        argv[1] = nullptr;
+        return argv;
+    }
+
+    // Count the number of arguments by counting the number of spaces.
+    unsigned argc = 2;
+    for (unsigned i = 0; args[i] != '\0'; i++) {
+        if (args[i] == ' ') {
+            argc++;
+        }
+    }
+
+    char **argv = new char *[argc + 1];
+
+    // Copy the filename.
+    argv[0] = CopyString(filename);
+
+    // Copy each argument.
+    for (unsigned i = 1; i < argc; i++) {
+        while (*args == ' ') {
+            args++;  // Skip spaces.
+        }
+
+        unsigned j = 0;
+        while (args[j] != ' ' && args[j] != '\0') {
+            j++;
+        }
+
+        argv[i] = new char[j + 1];
+        strncpy(argv[i], args, j);
+        argv[i][j] = '\0';
+
+        args += j;
+    }
+
+    argv[argc] = nullptr;  // Write the trailing null.
+
+    return argv;
 }

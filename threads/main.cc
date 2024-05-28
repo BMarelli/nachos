@@ -39,6 +39,7 @@
 /// ----------------------
 ///
 /// * `-s`  -- causes user programs to be executed in single-step mode.
+/// * `-xa` -- runs a user program with arguments.
 /// * `-x`  -- runs a user program.
 /// * `-tc` -- tests the console.
 ///
@@ -85,12 +86,16 @@
 #include "system.hh"
 #include "thread_test.hh"
 
+#ifdef USER_PROGRAM
+#include "userprog/args.hh"
+#endif
+
 // External functions used by this file.
 
 void Copy(const char *unixFile, const char *nachosFile);
 void Print(const char *file);
 void PerformanceTest(void);
-void StartProcess(const char *file);
+void StartProcess(const char *filename, char **args);
 void ConsoleTest(const char *in, const char *out);
 void MailTest(int networkID);
 
@@ -132,9 +137,13 @@ int main(int argc, char **argv) {
         }
 #endif
 #ifdef USER_PROGRAM
-        if (!strcmp(*argv, "-x")) {  // Run a user program.
+        if (!strcmp(*argv, "-xa")) {  // Run a user program with arguments.
+            ASSERT(argc > 2);
+            StartProcess(*(argv + 1), PrepareArgs(*(argv + 1), *(argv + 2)));
+            argCount = 3;
+        } else if (!strcmp(*argv, "-x")) {  // Run a user program.
             ASSERT(argc > 1);
-            StartProcess(*(argv + 1));
+            StartProcess(*(argv + 1), PrepareArgs(*(argv + 1), nullptr));
             argCount = 2;
         } else if (!strcmp(*argv, "-tc")) {  // Test the console.
             if (argc == 1) {

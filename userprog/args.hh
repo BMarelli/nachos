@@ -20,6 +20,15 @@
 ///   `argv`-like array.
 char **SaveArgs(int address);
 
+/// Prepare arguments so they can be fed into a new process.
+///
+/// This method is used to launch a new process from kernel space.
+/// Parameters:
+/// * `filename` is the name of the executable file.
+/// * `args` is a kernel-space pointer to a string containing space-separated
+///  arguments.
+char **PrepareArgs(const char *filename, const char *args);
+
 /// Write command-line arguments into the stack memory of a user process.
 ///
 /// Considering two example arguments `hello` and `Nachos`, the resulting
