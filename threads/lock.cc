@@ -18,11 +18,9 @@
 
 /// Dummy functions -- so we can compile our later assignments.
 
-Lock::Lock(const char *debugName) {}
+Lock::Lock() {}
 
 Lock::~Lock() {}
-
-const char *Lock::GetName() const { return name; }
 
 void Lock::Acquire() {
     // TODO

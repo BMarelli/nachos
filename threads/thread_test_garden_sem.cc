@@ -10,7 +10,7 @@ static const unsigned ITERATIONS_PER_TURNSTILE = 50;
 static bool done[NUM_TURNSTILES];
 static int count;
 
-static Semaphore *sem = new Semaphore("Semaphore", 1);
+static Semaphore *sem = new Semaphore(1);
 
 static void Turnstile(void *n_) {
     unsigned *n = (unsigned *)n_;

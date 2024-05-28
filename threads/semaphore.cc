@@ -26,10 +26,8 @@
 
 /// Initialize a semaphore, so that it can be used for synchronization.
 ///
-/// * `debugName` is an arbitrary name, useful for debugging.
 /// * `initialValue` is the initial value of the semaphore.
-Semaphore::Semaphore(const char *debugName, int initialValue) {
-    name = debugName;
+Semaphore::Semaphore(int initialValue) {
     value = initialValue;
     queue = new List<Thread *>;
 }
@@ -38,8 +36,6 @@ Semaphore::Semaphore(const char *debugName, int initialValue) {
 ///
 /// Assume no one is still waiting on the semaphore!
 Semaphore::~Semaphore() { delete queue; }
-
-const char *Semaphore::GetName() const { return name; }
 
 /// Wait until semaphore `value > 0`, then decrement.
 ///

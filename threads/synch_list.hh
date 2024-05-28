@@ -58,9 +58,9 @@ class SynchList {
 template <class Item>
 SynchList<Item>::SynchList() {
     list = new List<Item>;
-    lock = new Lock("list lock");
-    listEmpty = new Condition("list empty cond", lock);
-    // original // listEmpty = new Condition("list empty cond");
+    lock = new Lock();
+    listEmpty = new Condition(lock);
+    // original // listEmpty = new Condition();
 }
 
 /// De-allocate the data structures created for synchronizing a list.

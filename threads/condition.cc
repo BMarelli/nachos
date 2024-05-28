@@ -21,15 +21,13 @@
 /// Note -- without a correct implementation of `Condition::Wait`, the test
 /// case in the network assignment will not work!
 
-Condition::Condition(const char *debugName, Lock *conditionLock) {
+Condition::Condition(Lock *conditionLock) {
     // TODO
 }
 
 Condition::~Condition() {
     // TODO
 }
-
-const char *Condition::GetName() const { return name; }
 
 void Condition::Wait() {
     // TODO
