@@ -92,6 +92,7 @@ void Consumer(void *n) {
 }
 
 void ThreadTestProdCons() {
+    Thread *producerThreads[NUM_PRODUCERS], *consumerThreads[NUM_CONSUMERS];
     long toProduce = 0, toConsume = 0;
 
     // Launch a new thread for each producer.
@@ -101,12 +102,12 @@ void ThreadTestProdCons() {
         char *name = new char[16];
         sprintf(name, "Producer %u", i);
 
-        Thread *thread = new Thread(name);
+        producerThreads[i] = new Thread(name, true);
 
         long n = rand() % (MAX_TO_PRODUCE - toProduce + 1);
 
         toProduce += n;
-        thread->Fork(Producer, (void *)n);
+        producerThreads[i]->Fork(Producer, (void *)n);
     }
 
     // Launch a new thread for each consumer.
@@ -116,18 +117,22 @@ void ThreadTestProdCons() {
         char *name = new char[16];
         sprintf(name, "Consumer %u", i);
 
-        Thread *thread = new Thread(name);
+        consumerThreads[i] = new Thread(name, true);
 
         long n = rand() % (toProduce - toConsume + 1);
 
         toConsume += n;
-        thread->Fork(Consumer, (void *)n);
+        consumerThreads[i]->Fork(Consumer, (void *)n);
     }
 
     capacity = rand() % (MAX_EXTRA_CAPACITY - (toProduce - toConsume) + 1) + toProduce - toConsume;
 
-    while (produced < toProduce || consumed < toConsume) {
-        currentThread->Yield();
+    for (int i = 0; i < NUM_PRODUCERS; i++) {
+        producerThreads[i]->Join();
+    }
+
+    for (int i = 0; i < NUM_CONSUMERS; i++) {
+        consumerThreads[i]->Join();
     }
 
     printf("All producers and consumers finished. Final buffer is %d (should be %ld).\n", buffer, toProduce - toConsume);
