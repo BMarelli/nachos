@@ -32,8 +32,6 @@ void StartProcess(const char *filename, char **args) {
     AddressSpace *space = new AddressSpace(executable);
     currentThread->space = space;
 
-    delete executable;
-
     space->InitRegisters();
     space->RestoreState();
 

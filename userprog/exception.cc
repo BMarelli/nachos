@@ -27,6 +27,7 @@
 #include "args.hh"
 #include "filesys/directory_entry.hh"
 #include "lib/debug.hh"
+#include "lib/utility.hh"
 #include "machine.hh"
 #include "syscall.h"
 #include "threads/system.hh"
@@ -139,8 +140,6 @@ static void HandleExec() {
 
     Thread *thread = new Thread(filename, true, currentThread->GetPriority());
     thread->space = new AddressSpace(executable);
-
-    delete executable;
 
     SpaceId pid = processTable->Add(thread);
     if (pid == -1) {
@@ -537,13 +536,44 @@ static void SyscallHandler(ExceptionType _et) {
     IncrementPC();
 }
 
+static void PageFaultHandler(ExceptionType et) {
+    stats->numPageFaults++;
+
+    unsigned badVAddr = machine->ReadRegister(BAD_VADDR_REG);
+
+    DEBUG('e', "Page fault at address 0x%X.\n", badVAddr);
+
+    unsigned vpn = DivRoundDown(badVAddr, PAGE_SIZE);
+
+    TranslationEntry *page = currentThread->space->GetPage(vpn);
+    if (!page->valid) {
+        DEBUG('e', "Page not valid. Loading from disk.\n");
+
+        currentThread->space->LoadPage(vpn);
+    }
+
+#ifdef USE_TLB
+    static unsigned tlbIndex = 0;
+    TranslationEntry *entry = &machine->GetMMU()->tlb[tlbIndex];
+    tlbIndex = (tlbIndex + 1) % TLB_SIZE;
+
+    if (entry->valid) {
+        TranslationEntry *victimPage = currentThread->space->GetPage(entry->virtualPage);
+        victimPage->use = entry->use;
+        victimPage->dirty = entry->dirty;
+    }
+
+    *entry = *page;
+#endif
+}
+
 /// By default, only system calls have their own handler.  All other
 /// exception types are assigned the default handler.
 void SetExceptionHandlers() {
     machine->SetHandler(NO_EXCEPTION, &DefaultHandler);
     machine->SetHandler(SYSCALL_EXCEPTION, &SyscallHandler);
-    machine->SetHandler(PAGE_FAULT_EXCEPTION, &DefaultHandler);
     machine->SetHandler(READ_ONLY_EXCEPTION, &DefaultHandler);
+    machine->SetHandler(PAGE_FAULT_EXCEPTION, &PageFaultHandler);
     machine->SetHandler(BUS_ERROR_EXCEPTION, &DefaultHandler);
     machine->SetHandler(ADDRESS_ERROR_EXCEPTION, &DefaultHandler);
     machine->SetHandler(OVERFLOW_EXCEPTION, &DefaultHandler);
