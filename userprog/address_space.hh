@@ -47,6 +47,10 @@ class AddressSpace {
     void SaveState();
     void RestoreState();
 
+    TranslationEntry *GetPage(unsigned vpn);
+
+    void LoadPage(unsigned vpn);
+
    private:
     /// Assume linear page table translation for now!
     TranslationEntry *pageTable;
@@ -56,6 +60,9 @@ class AddressSpace {
 
     /// loadSegment loads a segment of the executable file into memory.
     void loadSegment(Executable &exe, uint32_t addr, uint32_t size, ReadBlockFunction readBlock);
+
+    /// The executable file that contains the object code.
+    OpenFile *executable_file;
 };
 
 #endif

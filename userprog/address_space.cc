@@ -12,13 +12,16 @@
 #include "executable.hh"
 #include "lib/debug.hh"
 #include "lib/utility.hh"
+#include "mmu.hh"
 #include "threads/system.hh"
 
 /// First, set up the translation from program memory to physical memory.
 /// For now, this is really simple (1:1), since we are only uniprogramming,
 /// and we have a single unsegmented page table.
-AddressSpace::AddressSpace(OpenFile *executable_file) {
-    ASSERT(executable_file != nullptr);
+AddressSpace::AddressSpace(OpenFile *_executable_file) {
+    ASSERT(_executable_file != nullptr);
+
+    executable_file = _executable_file;
 
     Executable exe(executable_file);
     ASSERT(exe.CheckMagic());
@@ -105,6 +108,7 @@ AddressSpace::~AddressSpace() {
     }
 
     delete[] pageTable;
+    delete executable_file;
 }
 
 /// Set the initial values for the user-level register set.
@@ -134,9 +138,18 @@ void AddressSpace::InitRegisters() {
 
 /// On a context switch, save any machine state, specific to this address
 /// space, that needs saving.
-///
-/// For now, nothing!
-void AddressSpace::SaveState() {}
+void AddressSpace::SaveState() {
+#ifdef USE_TLB
+    TranslationEntry *tlb = machine->GetMMU()->tlb;
+
+    for (unsigned i = 0; i < TLB_SIZE; i++) {
+        if (tlb[i].valid) {
+            pageTable[tlb[i].virtualPage].use = tlb[i].use;
+            pageTable[tlb[i].virtualPage].dirty = tlb[i].dirty;
+        }
+    }
+#endif
+}
 
 /// On a context switch, restore the machine state so that this address space
 /// can run.
@@ -151,4 +164,66 @@ void AddressSpace::RestoreState() {
     machine->GetMMU()->pageTable = pageTable;
     machine->GetMMU()->pageTableSize = numPages;
 #endif
+}
+
+TranslationEntry *AddressSpace::GetPage(unsigned vpn) {
+    ASSERT(vpn < numPages);
+
+    return &pageTable[vpn];
+}
+
+void AddressSpace::LoadPage(unsigned vpn) {
+    ASSERT(vpn < numPages);
+
+    char *mainMemory = machine->GetMMU()->mainMemory;
+
+    int physicalPage = memoryMap->Find();
+    ASSERT(physicalPage != -1);
+
+    pageTable[vpn].virtualPage = vpn;
+    pageTable[vpn].physicalPage = physicalPage;
+    pageTable[vpn].valid = true;
+    pageTable[vpn].use = false;
+    pageTable[vpn].dirty = false;
+    pageTable[vpn].readOnly = false;
+
+    memset(mainMemory + physicalPage * PAGE_SIZE, 0, PAGE_SIZE);
+
+    Executable exe(executable_file);
+
+    uint32_t totalRead = 0;
+
+    uint32_t codeSize = exe.GetCodeSize();
+    uint32_t codeAddr = exe.GetCodeAddr();
+    if (codeSize > 0 && (vpn + 1) * PAGE_SIZE >= codeAddr && vpn * PAGE_SIZE < codeAddr + codeSize) {
+        uint32_t virtualAddr = Max(vpn * PAGE_SIZE, codeAddr);
+        uint32_t offset = virtualAddr - codeAddr;
+        uint32_t size = Min(PAGE_SIZE - (virtualAddr % PAGE_SIZE), codeSize - offset);
+
+        int read = exe.ReadCodeBlock(mainMemory + physicalPage * PAGE_SIZE + (virtualAddr % PAGE_SIZE), size, offset);
+        if (read != (int)size) {
+            DEBUG('a', "Error reading segment: expected %u bytes, got %d bytes\n", size, read);
+            ASSERT(false);
+        }
+
+        totalRead += size;
+    }
+
+    uint32_t initDataSize = exe.GetInitDataSize();
+    uint32_t initDataAddr = exe.GetInitDataAddr();
+    if (initDataSize > 0 && (vpn + 1) * PAGE_SIZE >= initDataAddr && vpn * PAGE_SIZE < initDataAddr + initDataSize) {
+        uint32_t virtualAddr = Max(vpn * PAGE_SIZE, initDataAddr);
+        uint32_t offset = virtualAddr - initDataAddr;
+        uint32_t size = Min(PAGE_SIZE - (virtualAddr % PAGE_SIZE), initDataSize - offset);
+
+        int read = exe.ReadDataBlock(mainMemory + physicalPage * PAGE_SIZE + (virtualAddr % PAGE_SIZE), size, offset);
+        if (read != (int)size) {
+            DEBUG('a', "Error reading segment: expected %u bytes, got %d bytes\n", size, read);
+            ASSERT(false);
+        }
+
+        totalRead += size;
+    }
+
+    ASSERT(totalRead <= PAGE_SIZE);
 }
