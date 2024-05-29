@@ -41,6 +41,17 @@ extern Machine *machine;               // User program memory and registers.
 extern Bitmap *memoryMap;              // Map of free memory frames.
 extern SynchConsole *synchConsole;     // Synchronized console.
 extern Table<Thread *> *processTable;  // Table of processes.
+
+#ifdef USE_TLB
+// When using TLB or demand loading, we need to retry the read/write as the first attempt may result in a page fault.
+#define READ_MEM(addr, size, value) ASSERT_WITH_RETRY(machine->ReadMem(addr, size, value))
+#define WRITE_MEM(addr, size, value) ASSERT_WITH_RETRY(machine->WriteMem(addr, size, value))
+#else
+// Otherwise, we don't need to retry the read/write as pages are always valid.
+#define READ_MEM(addr, size, value) ASSERT(machine->ReadMem(addr, size, value))
+#define WRITE_MEM(addr, size, value) ASSERT(machine->WriteMem(addr, size, value))
+#endif
+
 #endif
 
 #ifdef FILESYS_NEEDED  // *FILESYS* or *FILESYS_STUB*.
