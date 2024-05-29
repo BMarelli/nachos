@@ -13,7 +13,9 @@ void ReadBufferFromUser(int userAddress, char *outBuffer, unsigned byteCount) {
 
     for (unsigned i = 0; i < byteCount; i++) {
         int temp;
-        ASSERT(machine->ReadMem(userAddress++, 1, &temp));
+        READ_MEM(userAddress, 1, &temp);
+
+        userAddress++;
         *outBuffer++ = (unsigned char)temp;
     }
 }
@@ -25,10 +27,12 @@ bool ReadStringFromUser(int userAddress, char *outString, unsigned maxByteCount)
 
     for (unsigned i = 0; i < maxByteCount; i++) {
         int temp;
-        ASSERT(machine->ReadMem(userAddress++, 1, &temp));
-        outString[i] = (unsigned char)temp;
+        READ_MEM(userAddress, 1, &temp);
 
+        outString[i] = (unsigned char)temp;
         if (outString[i] == '\0') return true;
+
+        userAddress++;
     }
 
     return false;
@@ -40,7 +44,9 @@ void WriteBufferToUser(const char *buffer, int userAddress, unsigned byteCount) 
     ASSERT(byteCount != 0);
 
     for (unsigned i = 0; i < byteCount; i++) {
-        ASSERT(machine->WriteMem(userAddress++, 1, (int)buffer[i]));
+        WRITE_MEM(userAddress, 1, (int)buffer[i]);
+
+        userAddress++;
     }
 }
 
@@ -49,8 +55,10 @@ void WriteStringToUser(const char *string, int userAddress) {
     ASSERT(string != nullptr);
 
     for (unsigned i = 0; string[i] != '\0'; i++) {
-        ASSERT(machine->WriteMem(userAddress++, 1, (int)string[i]));
+        WRITE_MEM(userAddress, 1, (int)string[i]);
+
+        userAddress++;
     }
 
-    ASSERT(machine->WriteMem(userAddress, 1, (int)'\0'));
+    WRITE_MEM(userAddress, 1, (int)'\0');
 }
