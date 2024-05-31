@@ -567,13 +567,22 @@ static void PageFaultHandler(ExceptionType et) {
 #endif
 }
 
+static void ReadOnlyHandler(ExceptionType et) {
+    unsigned badVAddr = machine->ReadRegister(BAD_VADDR_REG);
+
+    DEBUG('e', "Read-only exception at address 0x%X.\n", badVAddr);
+
+    fprintf(stderr, "Read-only exception at address 0x%X. Terminating process.\n", badVAddr);
+    currentThread->Finish(-1);
+}
+
 /// By default, only system calls have their own handler.  All other
 /// exception types are assigned the default handler.
 void SetExceptionHandlers() {
     machine->SetHandler(NO_EXCEPTION, &DefaultHandler);
     machine->SetHandler(SYSCALL_EXCEPTION, &SyscallHandler);
-    machine->SetHandler(READ_ONLY_EXCEPTION, &DefaultHandler);
     machine->SetHandler(PAGE_FAULT_EXCEPTION, &PageFaultHandler);
+    machine->SetHandler(READ_ONLY_EXCEPTION, &ReadOnlyHandler);
     machine->SetHandler(BUS_ERROR_EXCEPTION, &DefaultHandler);
     machine->SetHandler(ADDRESS_ERROR_EXCEPTION, &DefaultHandler);
     machine->SetHandler(OVERFLOW_EXCEPTION, &DefaultHandler);
