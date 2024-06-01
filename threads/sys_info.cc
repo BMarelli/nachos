@@ -34,6 +34,9 @@ void SysInfo() {
 #ifdef USE_TLB
         "USE_TLB "
 #endif
+#ifdef DEMAND_LOADING
+        "DEMAND_LOADING "
+#endif
 #ifdef FILESYS_NEEDED
         "FILESYS_NEEDED "
 #endif
