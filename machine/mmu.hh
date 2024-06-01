@@ -60,24 +60,12 @@ class MMU {
     /// * a traditional linear page table;
     /// * a software-loaded translation lookaside buffer (tlb) -- a cache of
     ///   mappings of virtual page #'s to physical page #'s.
-    ///
-    /// If `tlb` is null, the linear page table is used.
-    /// If `tlb` is non-null, the Nachos kernel is responsible for managing
-    /// the contents of the TLB.  But the kernel can use any data structure
-    /// it wants (eg, segmented paging) for handling TLB cache misses.
-    ///
-    /// For simplicity, both the page table pointer and the TLB pointer are
-    /// public.  However, while there can be multiple page tables (one per
-    /// address space, stored in memory), there is only one TLB (implemented
-    /// in hardware).  Thus the TLB pointer should be considered as
-    /// *read-only*, although the contents of the TLB are free to be modified
-    /// by the kernel software.
-
-    TranslationEntry *tlb;  ///< This pointer should be considered
-                            ///< “read-only” to Nachos kernel code.
-
+#ifdef USE_TLB
+    TranslationEntry *tlb;  ///< This pointer should be considered “read-only” to Nachos kernel code.
+#else
     TranslationEntry *pageTable;
     unsigned pageTableSize;
+#endif
 
    private:
     /// Retrieve a page entry either from a page table or the TLB.
