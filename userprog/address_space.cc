@@ -37,18 +37,10 @@ AddressSpace::AddressSpace(OpenFile *_executable_file) {
 
     DEBUG('a', "Initializing address space, num pages %u, size %u\n", numPages, size);
 
-    char *mainMemory = machine->GetMMU()->mainMemory;
-
     // First, set up the translation.
-
     pageTable = new TranslationEntry[numPages];
     for (unsigned i = 0; i < numPages; i++) {
-        int physicalPage = memoryMap->Find();
-        ASSERT(physicalPage != -1);
-
         pageTable[i].virtualPage = i;
-        pageTable[i].physicalPage = physicalPage;
-        pageTable[i].valid = true;
         pageTable[i].use = false;
         pageTable[i].dirty = false;
 
@@ -56,10 +48,23 @@ AddressSpace::AddressSpace(OpenFile *_executable_file) {
         // set its pages to be read-only.
         pageTable[i].readOnly = false;
 
-        memset(mainMemory + physicalPage * PAGE_SIZE, 0, PAGE_SIZE);
+#ifdef DEMAND_LOADING
+        pageTable[i].valid = false;  // Mark pages as not present initially
+#else
+        int physicalPage = memoryMap->Find();
+        ASSERT(physicalPage != -1);
+
+        pageTable[i].physicalPage = physicalPage;
+        pageTable[i].valid = true;
+
+        memset(machine->GetMMU()->mainMemory + physicalPage * PAGE_SIZE, 0, PAGE_SIZE);
+#endif
     }
 
-    // Then, copy in the code and data segments into memory.
+#ifdef DEMAND_LOADING
+    // We're done.
+#else
+    // Load the code and data segments into memory.
 
     uint32_t codeSize = exe.GetCodeSize();
     uint32_t codeAddr = exe.GetCodeAddr();
@@ -74,6 +79,7 @@ AddressSpace::AddressSpace(OpenFile *_executable_file) {
         DEBUG('a', "Initializing data segment at 0x%X with size %u\n", initDataAddr, initDataSize);
         loadSegment(exe, initDataAddr, initDataSize, &Executable::ReadDataBlock);
     }
+#endif
 }
 
 void AddressSpace::loadSegment(Executable &exe, uint32_t virtualAddr, uint32_t segmentSize, ReadBlockFunction readBlock) {
@@ -104,7 +110,9 @@ void AddressSpace::loadSegment(Executable &exe, uint32_t virtualAddr, uint32_t s
 /// Nothing for now!
 AddressSpace::~AddressSpace() {
     for (unsigned i = 0; i < numPages; i++) {
-        memoryMap->Clear(pageTable[i].physicalPage);
+        if (pageTable[i].valid) {
+            memoryMap->Clear(pageTable[i].physicalPage);
+        }
     }
 
     delete[] pageTable;
