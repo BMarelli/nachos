@@ -51,6 +51,14 @@ class Statistics {
     /// Number of packets received over the network.
     unsigned long numPacketsRecvd;
 
+#ifdef USE_TLB
+    /// Number of TLB hits.
+    unsigned long numTlbHits;
+
+    /// Number of TLB misses.
+    unsigned long numTlbMisses;
+#endif
+
 #ifdef DFS_TICKS_FIX
     /// Number of times the tick count gets reset.
     unsigned long tickResets;
