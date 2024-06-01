@@ -10,6 +10,7 @@
 
 #include "disk.hh"
 #include "exception_type.hh"
+#include "statistics.hh"
 #include "translation_entry.hh"
 
 /// Definitions related to the size, and format of user memory.
@@ -23,7 +24,9 @@ const unsigned MEMORY_SIZE = NUM_PHYS_PAGES * PAGE_SIZE;
 /// Number of entries in the TLB, if one is present.
 ///
 /// If there is a TLB, it will be small compared to page tables.
-const unsigned TLB_SIZE = 4;
+const unsigned TLB_SIZE = 16;
+
+extern Statistics *stats;
 
 /// This class simulates an MMU (memory management unit) that can use either
 /// page tables or a TLB.

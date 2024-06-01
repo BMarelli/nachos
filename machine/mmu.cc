@@ -165,6 +165,7 @@ ExceptionType MMU::RetrievePageEntry(unsigned vpn, TranslationEntry **entry) con
         if (e->valid && e->virtualPage == vpn) {
             *entry = e;  // FOUND!
 
+            stats->numTlbHits++;
             return NO_EXCEPTION;
         }
     }
@@ -172,6 +173,7 @@ ExceptionType MMU::RetrievePageEntry(unsigned vpn, TranslationEntry **entry) con
     // Not found.
     DEBUG_CONT('a', "no valid TLB entry found for this virtual page!\n");
 
+    stats->numTlbMisses++;
 
     return PAGE_FAULT_EXCEPTION;  // Really, this is a TLB fault, the
                                   // page may be in memory, but not in

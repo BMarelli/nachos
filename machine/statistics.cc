@@ -17,6 +17,10 @@ Statistics::Statistics() {
     numDiskReads = numDiskWrites = 0;
     numConsoleCharsRead = numConsoleCharsWritten = 0;
     numPageFaults = numPacketsSent = numPacketsRecvd = 0;
+
+#ifdef USE_TLB
+    numTlbHits = numTlbMisses = 0;  // Initialize TLB hit and miss counters
+#endif
 #ifdef DFS_TICKS_FIX
     tickResets = 0;
 #endif
@@ -37,5 +41,15 @@ void Statistics::Print() {
     printf("Disk I/O: reads %lu, writes %lu\n", numDiskReads, numDiskWrites);
     printf("Console I/O: reads %lu, writes %lu\n", numConsoleCharsRead, numConsoleCharsWritten);
     printf("Paging: faults %lu\n", numPageFaults);
+#ifdef USE_TLB
+    if (numTlbHits + numTlbMisses > 0) {
+        // Given that each tlb miss is retried, numTlbHits is the number of true tlb hits
+        // (on the first try) plus the number of tlb misses that were retried. Therefore,
+        // we need to subtract the number of misses from the total number of tlb hits to
+        // get the number of true hits.
+        double tlbHitRatio = (double)(numTlbHits - numTlbMisses) / (double)numTlbHits;
+        printf("TLB: hit ratio %4.2f%%\n", tlbHitRatio * 100.0);
+    }
+#endif
     printf("Network I/O: packets received %lu, sent %lu\n", numPacketsRecvd, numPacketsSent);
 }
