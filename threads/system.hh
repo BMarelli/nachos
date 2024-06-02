@@ -32,13 +32,13 @@ extern Timer *timer;                 ///< The hardware alarm clock.
 extern bool disablePeriodicYield;    ///< Disables context switches caused by the timer device.
 
 #ifdef USER_PROGRAM
-#include "lib/bitmap.hh"
 #include "lib/table.hh"
 #include "machine/machine.hh"
 #include "synch_console.hh"
+#include "userprog/core_map.hh"
 
 extern Machine *machine;               // User program memory and registers.
-extern Bitmap *memoryMap;              // Map of free memory frames.
+extern CoreMap *memoryMap;             // Map of free memory frames.
 extern SynchConsole *synchConsole;     // Synchronized console.
 extern Table<Thread *> *processTable;  // Table of processes.
 
