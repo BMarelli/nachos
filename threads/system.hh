@@ -42,7 +42,7 @@ extern CoreMap *memoryMap;             // Map of free memory frames.
 extern SynchConsole *synchConsole;     // Synchronized console.
 extern Table<Thread *> *processTable;  // Table of processes.
 
-#if defined(USE_TLB) || defined(DEMAND_LOADING)
+#if defined(USE_TLB) || defined(DEMAND_LOADING) || defined(SWAP)
 // When using TLB or demand loading, we need to retry the read/write as the first attempt may result in a page fault.
 #define READ_MEM(addr, size, value) ASSERT_WITH_RETRY(machine->ReadMem(addr, size, value))
 #define WRITE_MEM(addr, size, value) ASSERT_WITH_RETRY(machine->WriteMem(addr, size, value))

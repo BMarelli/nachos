@@ -15,6 +15,7 @@
 #include "machine/console.hh"
 #include "threads/semaphore.hh"
 #include "threads/system.hh"
+#include "userprog/syscall.h"
 
 /// Run a user program.
 ///
@@ -29,7 +30,10 @@ void StartProcess(const char *filename, char **args) {
         return;
     }
 
-    AddressSpace *space = new AddressSpace(executable);
+    SpaceId pid = processTable->Add(currentThread);
+    ASSERT(pid != -1);
+
+    AddressSpace *space = new AddressSpace(executable, pid);
     currentThread->space = space;
 
     space->InitRegisters();

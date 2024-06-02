@@ -15,13 +15,21 @@
 #include "mmu.hh"
 #include "threads/system.hh"
 
+#ifdef SWAP
+#include <cstdio>
+
+#include "system_dep.hh"
+#endif
+
 /// First, set up the translation from program memory to physical memory.
 /// For now, this is really simple (1:1), since we are only uniprogramming,
 /// and we have a single unsegmented page table.
-AddressSpace::AddressSpace(OpenFile *_executable_file) {
+AddressSpace::AddressSpace(OpenFile *_executable_file, int _pid) {
     ASSERT(_executable_file != nullptr);
+    ASSERT(_pid != -1);
 
     executable_file = _executable_file;
+    pid = _pid;
 
     Executable exe(executable_file);
     ASSERT(exe.CheckMagic());
@@ -33,7 +41,14 @@ AddressSpace::AddressSpace(OpenFile *_executable_file) {
     numPages = DivRoundUp(size, PAGE_SIZE);
     size = numPages * PAGE_SIZE;
 
+#ifdef SWAP
+    sprintf(swapFileName, "SWAP.%d", pid);
+
+    ASSERT(fileSystem->Create(swapFileName, 0));
+    ASSERT((swapFile = fileSystem->Open(swapFileName)) != nullptr);
+#else
     ASSERT(numPages <= memoryMap->CountClear());
+#endif
 
     DEBUG('a', "Initializing address space, num pages %u, size %u\n", numPages, size);
 
@@ -117,6 +132,14 @@ AddressSpace::~AddressSpace() {
 
     delete[] pageTable;
     delete executable_file;
+
+#ifdef SWAP
+    if (!fileSystem->Remove(swapFileName)) {
+        DEBUG('a', "Error removing swap file %s\n", swapFileName);
+    }
+
+    delete swapFile;
+#endif
 }
 
 /// Set the initial values for the user-level register set.
