@@ -46,7 +46,7 @@ SynchDisk *synchDisk;
 
 #ifdef USER_PROGRAM             // Requires either *FILESYS* or *FILESYS_STUB*.
 Machine *machine;               ///< User program memory and registers.
-Bitmap *memoryMap;              ///< Map of free memory frames.
+CoreMap *memoryMap;             ///< Map of free memory frames.
 SynchConsole *synchConsole;     ///< Synchronized console.
 Table<Thread *> *processTable;  ///< Table of processes.
 #endif
@@ -225,7 +225,7 @@ void Initialize(int argc, char **argv) {
 #ifdef USER_PROGRAM
     Debugger *d = debugUserProg ? new Debugger : nullptr;
     machine = new Machine(d);  // This must come first.
-    memoryMap = new Bitmap(NUM_PHYS_PAGES);
+    memoryMap = new CoreMap();
 
     // NOTE: initializing a console in this way means that the Nachos
     // kernel will never shut down, even if there are no user programs or

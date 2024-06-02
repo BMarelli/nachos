@@ -51,7 +51,7 @@ AddressSpace::AddressSpace(OpenFile *_executable_file) {
 #ifdef DEMAND_LOADING
         pageTable[i].valid = false;  // Mark pages as not present initially
 #else
-        int physicalPage = memoryMap->Find();
+        int physicalPage = memoryMap->Find(this, i);
         ASSERT(physicalPage != -1);
 
         pageTable[i].physicalPage = physicalPage;
@@ -185,7 +185,7 @@ void AddressSpace::LoadPage(unsigned vpn) {
 
     char *mainMemory = machine->GetMMU()->mainMemory;
 
-    int physicalPage = memoryMap->Find();
+    int physicalPage = memoryMap->Find(this, vpn);
     ASSERT(physicalPage != -1);
 
     pageTable[vpn].virtualPage = vpn;
