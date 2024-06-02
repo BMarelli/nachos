@@ -16,6 +16,10 @@
 #include "machine/translation_entry.hh"
 #include "userprog/executable.hh"
 
+#ifdef SWAP
+#include "filesys/directory_entry.hh"
+#endif
+
 /// ReadBlockFunction is a pointer to a member function of Executable that
 /// reads a block of data from a segment of the executable file.
 using ReadBlockFunction = int (Executable::*)(char *, unsigned, unsigned);
@@ -34,7 +38,9 @@ class AddressSpace {
     /// Parameters:
     /// * `executable_file` is the open file that corresponds to the
     ///   program; it contains the object code to load into memory.
-    AddressSpace(OpenFile *executable_file);
+    /// * `pid` is the process identifier of the process that is running
+    ///   this address space.
+    AddressSpace(OpenFile *executable_file, int pid);
 
     /// De-allocate an address space.
     ~AddressSpace();
@@ -63,6 +69,17 @@ class AddressSpace {
 
     /// The executable file that contains the object code.
     OpenFile *executable_file;
+
+    /// The process identifier of the process that is running this address space.
+    int pid;
+
+#ifdef SWAP
+    /// The name of the swap file.
+    char swapFileName[FILE_NAME_MAX_LEN + 1];
+
+    /// The swap file for the address space.
+    OpenFile *swapFile;
+#endif
 };
 
 #endif

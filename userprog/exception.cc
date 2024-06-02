@@ -139,18 +139,18 @@ static void HandleExec() {
     }
 
     Thread *thread = new Thread(filename, true, currentThread->GetPriority());
-    thread->space = new AddressSpace(executable);
 
     SpaceId pid = processTable->Add(thread);
     if (pid == -1) {
         DEBUG('e', "Error: too many processes are already running (maximum is %u).\n", processTable->SIZE);
 
-        delete thread->space;
         delete thread;
 
         machine->WriteRegister(2, -1);
         return;
     }
+
+    thread->space = new AddressSpace(executable, pid);
 
     char **args = (argsAddr == 0) ? nullptr : SaveArgs(argsAddr);
 
