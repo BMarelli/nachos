@@ -20,3 +20,4 @@ userland/cat
 *.coff
 .cache
 compile_commands.json
+SWAP.*
