@@ -43,6 +43,10 @@ void SysInfo() {
 #ifdef DFS_TICKS_FIX
         "DFS_TICKS_FIX "
 #endif
+#ifdef SWAP
+        "SWAP "
+#endif
+#endif
         ;
 
     printf("System information.\n");
