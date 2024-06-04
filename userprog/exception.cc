@@ -536,6 +536,22 @@ static void SyscallHandler(ExceptionType _et) {
     IncrementPC();
 }
 
+#ifdef USE_TLB
+TranslationEntry *PickTLBVictim() {
+    for (unsigned i = 0; i < TLB_SIZE; i++) {
+        if (!machine->GetMMU()->tlb[i].valid) {
+            return &machine->GetMMU()->tlb[i];
+        }
+    }
+
+    static unsigned tlbIndex = 0;
+    TranslationEntry *entry = &machine->GetMMU()->tlb[tlbIndex];
+    tlbIndex = (tlbIndex + 1) % TLB_SIZE;
+
+    return entry;
+}
+#endif
+
 static void PageFaultHandler(ExceptionType et) {
     stats->numPageFaults++;
 
@@ -553,9 +569,7 @@ static void PageFaultHandler(ExceptionType et) {
     }
 
 #ifdef USE_TLB
-    static unsigned tlbIndex = 0;
-    TranslationEntry *entry = &machine->GetMMU()->tlb[tlbIndex];
-    tlbIndex = (tlbIndex + 1) % TLB_SIZE;
+    TranslationEntry *entry = PickTLBVictim();
 
     if (entry->valid) {
         TranslationEntry *victimPage = currentThread->space->GetPage(entry->virtualPage);
