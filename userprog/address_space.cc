@@ -46,16 +46,18 @@ AddressSpace::AddressSpace(OpenFile *_executable_file, int _pid) {
 
     ASSERT(fileSystem->Create(swapFileName, 0));
     ASSERT((swapFile = fileSystem->Open(swapFileName)) != nullptr);
+
+    swapBitmap = new Bitmap(numPages);
 #else
     ASSERT(numPages <= memoryMap->CountClear());
 #endif
 
     DEBUG('a', "Initializing address space, num pages %u, size %u\n", numPages, size);
 
-    // First, set up the translation.
     pageTable = new TranslationEntry[numPages];
     for (unsigned i = 0; i < numPages; i++) {
         pageTable[i].virtualPage = i;
+
         pageTable[i].use = false;
         pageTable[i].dirty = false;
 
@@ -64,66 +66,34 @@ AddressSpace::AddressSpace(OpenFile *_executable_file, int _pid) {
         pageTable[i].readOnly = false;
 
 #ifdef DEMAND_LOADING
-        pageTable[i].valid = false;  // Mark pages as not present initially
+        pageTable[i].valid = false;  // Mark page as not valid initially.
 #else
         int physicalPage = memoryMap->Find(this, i);
+#ifdef SWAP
+        if (physicalPage == -1) physicalPage = FreePageForVPN(i);
+#endif
         ASSERT(physicalPage != -1);
 
         pageTable[i].physicalPage = physicalPage;
         pageTable[i].valid = true;
-
-        memset(machine->GetMMU()->mainMemory + physicalPage * PAGE_SIZE, 0, PAGE_SIZE);
 #endif
     }
 
 #ifdef DEMAND_LOADING
-    // We're done.
+    // Nothing left to do
 #else
-    // Load the code and data segments into memory.
-
-    uint32_t codeSize = exe.GetCodeSize();
-    uint32_t codeAddr = exe.GetCodeAddr();
-    if (codeSize > 0) {
-        DEBUG('a', "Initializing code segment at 0x%X with size %u\n", codeAddr, codeSize);
-        loadSegment(exe, codeAddr, codeSize, &Executable::ReadCodeBlock);
-    }
-
-    uint32_t initDataSize = exe.GetInitDataSize();
-    uint32_t initDataAddr = exe.GetInitDataAddr();
-    if (initDataSize > 0) {
-        DEBUG('a', "Initializing data segment at 0x%X with size %u\n", initDataAddr, initDataSize);
-        loadSegment(exe, initDataAddr, initDataSize, &Executable::ReadDataBlock);
+    for (unsigned i = 0; i < numPages; i++) {
+        if (pageTable[i].valid) LoadPage(i);
     }
 #endif
-}
-
-void AddressSpace::loadSegment(Executable &exe, uint32_t virtualAddr, uint32_t segmentSize, ReadBlockFunction readBlock) {
-    char *mainMemory = machine->GetMMU()->mainMemory;
-
-    uint32_t totalRead = 0;
-    while (totalRead < segmentSize) {
-        uint32_t virtualPage = DivRoundDown(virtualAddr, PAGE_SIZE);
-        uint32_t pageOffset = virtualAddr % PAGE_SIZE;
-
-        char *dest = mainMemory + pageTable[virtualPage].physicalPage * PAGE_SIZE + pageOffset;
-        uint32_t size = Min(segmentSize - totalRead, PAGE_SIZE - pageOffset);
-        uint32_t offset = totalRead;
-
-        int read = (exe.*readBlock)(dest, size, offset);
-        if (read != (int)size) {
-            DEBUG('a', "Error reading segment: expected %u bytes, got %d bytes\n", size, read);
-            ASSERT(false);
-        }
-
-        virtualAddr += size;
-        totalRead += size;
-    }
 }
 
 /// Deallocate an address space.
 ///
 /// Nothing for now!
 AddressSpace::~AddressSpace() {
+    DEBUG('a', "Deallocating address space %p\n", this);
+
     for (unsigned i = 0; i < numPages; i++) {
         if (pageTable[i].valid) {
             memoryMap->Clear(pageTable[i].physicalPage);
@@ -209,14 +179,31 @@ void AddressSpace::LoadPage(unsigned vpn) {
     char *mainMemory = machine->GetMMU()->mainMemory;
 
     int physicalPage = memoryMap->Find(this, vpn);
+#ifdef SWAP
+    if (physicalPage == -1) physicalPage = FreePageForVPN(vpn);
+#endif
     ASSERT(physicalPage != -1);
 
+    pageTable[vpn].valid = true;
     pageTable[vpn].virtualPage = vpn;
     pageTable[vpn].physicalPage = physicalPage;
-    pageTable[vpn].valid = true;
     pageTable[vpn].use = false;
     pageTable[vpn].dirty = false;
+
+    // If the code segment was entirely on a separate page, we could
+    // set its pages to be read-only.
     pageTable[vpn].readOnly = false;
+
+#ifdef SWAP
+    if (swapBitmap->Test(vpn)) {
+        DEBUG('a', "Loading page %u from swap file %s\n", vpn, swapFileName);
+
+        swapFile->ReadAt(mainMemory + physicalPage * PAGE_SIZE, PAGE_SIZE, vpn * PAGE_SIZE);
+        return;
+    }
+#endif
+
+    DEBUG('a', "Loading page %u from executable\n", vpn);
 
     memset(mainMemory + physicalPage * PAGE_SIZE, 0, PAGE_SIZE);
 
@@ -258,6 +245,63 @@ void AddressSpace::LoadPage(unsigned vpn) {
 
     ASSERT(totalRead <= PAGE_SIZE);
 }
+
 #ifdef SWAP
+void AddressSpace::SendPageToSwap(unsigned vpn) {
+    ASSERT(vpn < numPages);
+
+    DEBUG('a', "Sending page %u to swap file %s\n", vpn, swapFileName);
+
+    // if the page is not valid, there's no need to write it to swap
+    if (!pageTable[vpn].valid) return;
+
+    pageTable[vpn].valid = false;
+
+    // if the page is not dirty and is already in swap, it is up to date so there's no need to write it to swap
+    if (!pageTable[vpn].dirty) return;
+
+    pageTable[vpn].dirty = false;
+
+    int written = swapFile->WriteAt(machine->GetMMU()->mainMemory + pageTable[vpn].physicalPage * PAGE_SIZE, PAGE_SIZE, vpn * PAGE_SIZE);
+    if (written != PAGE_SIZE) {
+        DEBUG('a', "Error writing to swap file %s: expected %u bytes, got %d bytes\n", swapFileName, PAGE_SIZE, written);
+        ASSERT(false);
+    }
+
+    swapBitmap->Mark(vpn);
+}
+
 unsigned PickVictim() { return SystemDep::Random() % NUM_PHYS_PAGES; }
+
+unsigned AddressSpace::FreePageForVPN(unsigned vpn) {
+    unsigned victim = PickVictim();
+    ASSERT(victim < NUM_PHYS_PAGES);
+
+    DEBUG('a', "Freeing page %u for virtual page %u\n", victim, vpn);
+
+    AddressSpace *victimSpace = memoryMap->GetSpace(victim);
+    ASSERT(victimSpace != nullptr);
+
+    unsigned victimPage = memoryMap->GetVPN(victim);
+
+#ifdef USE_TLB
+    if (victimSpace == currentThread->space) {
+        for (unsigned i = 0; i < TLB_SIZE; i++) {
+            TranslationEntry *entry = &machine->GetMMU()->tlb[i];
+            if (entry->valid && entry->virtualPage == victimPage) {
+                pageTable[victimPage].use = entry->use;
+                pageTable[victimPage].dirty = entry->dirty;
+                entry->valid = false;
+                break;
+            }
+        }
+    }
+#endif
+
+    victimSpace->SendPageToSwap(victimPage);
+
+    memoryMap->Mark(victim, this, vpn);
+
+    return victim;
+}
 #endif

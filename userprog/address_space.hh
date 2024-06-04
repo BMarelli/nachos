@@ -18,6 +18,7 @@
 
 #ifdef SWAP
 #include "filesys/directory_entry.hh"
+#include "lib/bitmap.hh"
 #endif
 
 /// ReadBlockFunction is a pointer to a member function of Executable that
@@ -53,9 +54,16 @@ class AddressSpace {
     void SaveState();
     void RestoreState();
 
+    /// Retrieve a page from the page table.
     TranslationEntry *GetPage(unsigned vpn);
 
+    /// Load a page and mark it as valid.
     void LoadPage(unsigned vpn);
+
+#ifdef SWAP
+    /// Send a page to the swap file.
+    void SendPageToSwap(unsigned vpn);
+#endif
 
    private:
     /// Assume linear page table translation for now!
@@ -64,9 +72,6 @@ class AddressSpace {
     /// Number of pages in the virtual address space.
     unsigned numPages;
 
-    /// loadSegment loads a segment of the executable file into memory.
-    void loadSegment(Executable &exe, uint32_t addr, uint32_t size, ReadBlockFunction readBlock);
-
     /// The executable file that contains the object code.
     OpenFile *executable_file;
 
@@ -74,6 +79,12 @@ class AddressSpace {
     int pid;
 
 #ifdef SWAP
+    /// Free a page for a given virtual page number.
+    unsigned FreePageForVPN(unsigned vpn);
+
+    /// Indicates which pages are in the swap file.
+    Bitmap *swapBitmap;
+
     /// The name of the swap file.
     char swapFileName[FILE_NAME_MAX_LEN + 1];
 
