@@ -258,3 +258,6 @@ void AddressSpace::LoadPage(unsigned vpn) {
 
     ASSERT(totalRead <= PAGE_SIZE);
 }
+#ifdef SWAP
+unsigned PickVictim() { return SystemDep::Random() % NUM_PHYS_PAGES; }
+#endif
