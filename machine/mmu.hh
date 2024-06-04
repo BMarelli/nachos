@@ -18,7 +18,11 @@
 const unsigned PAGE_SIZE = SECTOR_SIZE;  ///< Set the page size equal to the
                                          ///< disk sector size, for
                                          ///< simplicity.
+#ifdef SWAP
+const unsigned NUM_PHYS_PAGES = 20;  // We can get away with using a smaller page table if we are using swap files.
+#else
 const unsigned NUM_PHYS_PAGES = 128;
+#endif
 const unsigned MEMORY_SIZE = NUM_PHYS_PAGES * PAGE_SIZE;
 
 /// Number of entries in the TLB, if one is present.
