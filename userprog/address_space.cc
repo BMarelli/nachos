@@ -175,6 +175,7 @@ void AddressSpace::LoadPage(unsigned vpn) {
         DEBUG('a', "Loading page %u from swap file %s\n", vpn, swapFileName);
 
         swapFile->ReadAt(mainMemory + physicalPage * PAGE_SIZE, PAGE_SIZE, vpn * PAGE_SIZE);
+        stats->numPagesLoadedFromSwap++;
         return;
     }
 #endif
@@ -245,6 +246,7 @@ void AddressSpace::SendPageToSwap(unsigned vpn) {
     }
 
     swapBitmap->Mark(vpn);
+    stats->numPagesSentToSwap++;
 }
 
 unsigned PickVictim() { return SystemDep::Random() % NUM_PHYS_PAGES; }
