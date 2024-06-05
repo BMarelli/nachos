@@ -21,6 +21,11 @@ Statistics::Statistics() {
 #ifdef USE_TLB
     numTlbHits = numTlbMisses = 0;  // Initialize TLB hit and miss counters
 #endif
+
+#ifdef SWAP
+    numPagesSentToSwap = numPagesLoadedFromSwap = 0;
+#endif
+
 #ifdef DFS_TICKS_FIX
     tickResets = 0;
 #endif
@@ -51,5 +56,10 @@ void Statistics::Print() {
         printf("TLB: hit ratio %4.2f%%\n", tlbHitRatio * 100.0);
     }
 #endif
+
+#ifdef SWAP
+    printf("Swap: pages sent to swap %lu, pages loaded from swap %lu\n", numPagesSentToSwap, numPagesLoadedFromSwap);
+#endif
+
     printf("Network I/O: packets received %lu, sent %lu\n", numPacketsRecvd, numPacketsSent);
 }

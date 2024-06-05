@@ -59,6 +59,14 @@ class Statistics {
     unsigned long numTlbMisses;
 #endif
 
+#ifdef SWAP
+    /// Number of pages sent to swap.
+    unsigned long numPagesSentToSwap;
+
+    /// Number of pages loaded from swap.
+    unsigned long numPagesLoadedFromSwap;
+#endif
+
 #ifdef DFS_TICKS_FIX
     /// Number of times the tick count gets reset.
     unsigned long tickResets;
