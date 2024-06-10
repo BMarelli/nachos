@@ -46,6 +46,11 @@ void SysInfo() {
 #ifdef SWAP
         "SWAP "
 #endif
+#ifdef PRPOLICY_FIFO
+        "PRPOLICY_FIFO "
+#endif
+#ifdef PRPOLICY_CLOCK
+        "PRPOLICY_CLOCK "
 #endif
         ;
 
