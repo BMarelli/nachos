@@ -273,7 +273,74 @@ void AddressSpace::SendPageToSwap(unsigned vpn) {
     stats->numPagesSentToSwap++;
 }
 
-unsigned PickVictim() { return SystemDep::Random() % NUM_PHYS_PAGES; }
+TranslationEntry *GetEntryAtPhysicalPage(unsigned physicalPage) {
+    TranslationEntry *entry = memoryMap->GetSpace(physicalPage)->GetPage(memoryMap->GetVPN(physicalPage));
+    ASSERT(entry->physicalPage == physicalPage);
+    ASSERT(entry->valid);
+
+    return entry;
+}
+
+unsigned PickVictim() {
+#ifdef PRPOLICY_FIFO
+    static unsigned victim = -1;
+
+    victim = (victim + 1) % NUM_PHYS_PAGES;
+
+    return victim;
+#elif PRPOLICY_CLOCK
+    static unsigned hand = -1;
+
+    currentThread->space->SaveState();
+
+    TranslationEntry *entry;
+
+    // use = 0, dirty = 0
+    for (unsigned i = 0; i < NUM_PHYS_PAGES; i++) {
+        hand = (hand + 1) % NUM_PHYS_PAGES;
+
+        entry = GetEntryAtPhysicalPage(hand);
+
+        if (!entry->use && !entry->dirty) return hand;
+    }
+
+    // use = 0, dirty = 1
+    for (unsigned i = 0; i < NUM_PHYS_PAGES; i++) {
+        hand = (hand + 1) % NUM_PHYS_PAGES;
+
+        entry = GetEntryAtPhysicalPage(hand);
+
+        if (!entry->use && entry->dirty) return hand;
+
+        entry->use = false;
+    #ifdef USE_TLB
+        for (unsigned j = 0; j < TLB_SIZE; j++) {
+            if (machine->GetMMU()->tlb[j].valid && machine->GetMMU()->tlb[j].physicalPage == hand) {
+                machine->GetMMU()->tlb[j].use = false;
+                break;
+            }
+        }
+    #endif
+    }
+
+    // use = 1, dirty = 0
+    for (unsigned i = 0; i < NUM_PHYS_PAGES; i++) {
+        hand = (hand + 1) % NUM_PHYS_PAGES;
+
+        entry = GetEntryAtPhysicalPage(hand);
+
+        if (!entry->dirty) return hand;
+    }
+
+    // use = 1, dirty = 1
+    hand = (hand + 1) % NUM_PHYS_PAGES;
+
+    return hand;
+#else
+
+    return SystemDep::Random() % NUM_PHYS_PAGES;
+#endif
+}
 
 unsigned AddressSpace::FreePageForVPN(unsigned vpn) {
     unsigned victim = PickVictim();
