@@ -211,17 +211,21 @@ bool FileSystem::Create(const char *name, unsigned initialSize) {
 OpenFile *FileSystem::Open(const char *name) {
     ASSERT(name != nullptr);
 
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
-    OpenFile *openFile = nullptr;
-
     DEBUG('f', "Opening file %s\n", name);
+
+    Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(directoryFile);
+
     int sector = dir->Find(name);
-    if (sector >= 0) {
-        openFile = new OpenFile(sector);  // `name` was found in directory.
+    if (sector == -1) {
+        delete dir;
+
+        return nullptr;  // file not found
     }
+
     delete dir;
-    return openFile;  // Return null if not found.
+
+    return new OpenFile(sector);
 }
 
 /// Delete a file from the file system.
