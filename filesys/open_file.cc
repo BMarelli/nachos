@@ -21,12 +21,9 @@
 /// Open a Nachos file for reading and writing.  Bring the file header into
 /// memory while the file is open.
 ///
-/// * `sector` is the location on disk of the file header for this file.
-OpenFile::OpenFile(int sector) {
-    hdr = new FileHeader;
-    hdr->FetchFrom(sector);
-    seekPosition = 0;
-}
+/// * `_sector` is the location on disk of the file header for this file.
+/// * `_hdr` is the file header for this file.
+OpenFile::OpenFile(int _sector, FileHeader *_hdr) : sector(_sector), hdr(_hdr) { seekPosition = 0; }
 
 /// Close a Nachos file, de-allocating any in-memory data structures.
 OpenFile::~OpenFile() { delete hdr; }

@@ -48,6 +48,7 @@
 
 #include "directory.hh"
 #include "file_header.hh"
+#include "lib/assert.hh"
 #include "lib/bitmap.hh"
 #include "lib/debug.hh"
 
@@ -56,6 +57,18 @@
 /// sectors, so that they can be located on boot-up.
 static const unsigned FREE_MAP_SECTOR = 0;
 static const unsigned DIRECTORY_SECTOR = 1;
+
+inline OpenFile *openFreeMapFile() {
+    FileHeader *fileHeader = new FileHeader;
+
+    return new OpenFile(FREE_MAP_SECTOR, fileHeader);
+}
+
+inline OpenFile *openRootDirectoryFile() {
+    FileHeader *fileHeader = new FileHeader;
+
+    return new OpenFile(DIRECTORY_SECTOR, fileHeader);
+}
 
 /// Initialize the file system.  If `format == true`, the disk has nothing on
 /// it, and we need to initialize the disk to contain an empty directory, and
@@ -68,13 +81,15 @@ static const unsigned DIRECTORY_SECTOR = 1;
 /// * `format` -- should we initialize the disk?
 FileSystem::FileSystem(bool format) {
     DEBUG('f', "Initializing the file system.\n");
+
+    freeMapFile = openFreeMapFile();
+    directoryFile = openRootDirectoryFile();
+
     if (format) {
+        DEBUG('f', "Formatting the file system.\n");
+
         Bitmap *freeMap = new Bitmap(NUM_SECTORS);
         Directory *dir = new Directory(NUM_DIR_ENTRIES);
-        FileHeader *mapH = new FileHeader;
-        FileHeader *dirH = new FileHeader;
-
-        DEBUG('f', "Formatting the file system.\n");
 
         // First, allocate space for FileHeaders for the directory and bitmap
         // (make sure no one else grabs these!)
@@ -84,33 +99,18 @@ FileSystem::FileSystem(bool format) {
         // Second, allocate space for the data blocks containing the contents
         // of the directory and bitmap files.  There better be enough space!
 
-        ASSERT(mapH->Allocate(freeMap, FREE_MAP_FILE_SIZE));
-        ASSERT(dirH->Allocate(freeMap, DIRECTORY_FILE_SIZE));
+        ASSERT(freeMapFile->GetFileHeader()->Allocate(freeMap, FREE_MAP_FILE_SIZE));
+        ASSERT(directoryFile->GetFileHeader()->Allocate(freeMap, DIRECTORY_FILE_SIZE));
 
-        // Flush the bitmap and directory `FileHeader`s back to disk.
-        // We need to do this before we can `Open` the file, since open reads
-        // the file header off of disk (and currently the disk has garbage on
-        // it!).
+        freeMapFile->GetFileHeader()->WriteBack(FREE_MAP_SECTOR);
+        directoryFile->GetFileHeader()->WriteBack(DIRECTORY_SECTOR);
 
-        DEBUG('f', "Writing headers back to disk.\n");
-        mapH->WriteBack(FREE_MAP_SECTOR);
-        dirH->WriteBack(DIRECTORY_SECTOR);
-
-        // OK to open the bitmap and directory files now.
-        // The file system operations assume these two files are left open
-        // while Nachos is running.
-
-        freeMapFile = new OpenFile(FREE_MAP_SECTOR);
-        directoryFile = new OpenFile(DIRECTORY_SECTOR);
-
-        // Once we have the files “open”, we can write the initial version of
-        // each file back to disk.  The directory at this point is completely
-        // empty; but the bitmap has been changed to reflect the fact that
-        // sectors on the disk have been allocated for the file headers and
-        // to hold the file data for the directory and bitmap.
-
-        DEBUG('f', "Writing bitmap and directory back to disk.\n");
-        freeMap->WriteBack(freeMapFile);  // flush changes to disk
+        // Write the initial version of each file back to disk.
+        // The directory at this point is completely empty; but the bitmap
+        // has been changed to reflect the fact that sectors on the disk
+        // have been allocated for the file headers and to hold the file
+        // data for the directory and bitmap.
+        freeMap->WriteBack(freeMapFile);
         dir->WriteBack(directoryFile);
 
         if (debug.IsEnabled('f')) {
@@ -121,11 +121,8 @@ FileSystem::FileSystem(bool format) {
         delete freeMap;
         delete dir;
     } else {
-        // If we are not formatting the disk, just open the files
-        // representing the bitmap and directory; these are left open while
-        // Nachos is running.
-        freeMapFile = new OpenFile(FREE_MAP_SECTOR);
-        directoryFile = new OpenFile(DIRECTORY_SECTOR);
+        freeMapFile->GetFileHeader()->FetchFrom(FREE_MAP_SECTOR);
+        directoryFile->GetFileHeader()->FetchFrom(DIRECTORY_SECTOR);
     }
 }
 
@@ -209,17 +206,24 @@ bool FileSystem::Create(const char *name, unsigned initialSize) {
 OpenFile *FileSystem::Open(const char *name) {
     ASSERT(name != nullptr);
 
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
-    OpenFile *openFile = nullptr;
-
     DEBUG('f', "Opening file %s\n", name);
+
+    Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(directoryFile);
+
     int sector = dir->Find(name);
-    if (sector >= 0) {
-        openFile = new OpenFile(sector);  // `name` was found in directory.
+    if (sector == -1) {
+        delete dir;
+
+        return nullptr;  // file not found
     }
+
     delete dir;
-    return openFile;  // Return null if not found.
+
+    FileHeader *hdr = new FileHeader;
+    hdr->FetchFrom(sector);
+
+    return new OpenFile(sector, hdr);
 }
 
 /// Delete a file from the file system.
@@ -383,9 +387,7 @@ bool FileSystem::Check() {
 
     DEBUG('f', "Checking bitmap's file header.\n");
 
-    FileHeader *bitH = new FileHeader;
-    const RawFileHeader *bitRH = bitH->GetRaw();
-    bitH->FetchFrom(FREE_MAP_SECTOR);
+    const RawFileHeader *bitRH = freeMapFile->GetFileHeader()->GetRaw();
     DEBUG('f',
           "  File size: %u bytes, expected %u bytes.\n"
           "  Number of sectors: %u, expected %u.\n",
@@ -393,15 +395,11 @@ bool FileSystem::Check() {
     error |= CheckForError(bitRH->numBytes == FREE_MAP_FILE_SIZE, "bad bitmap header: wrong file size.");
     error |= CheckForError(bitRH->numSectors == FREE_MAP_FILE_SIZE / SECTOR_SIZE, "bad bitmap header: wrong number of sectors.");
     error |= CheckFileHeader(bitRH, FREE_MAP_SECTOR, shadowMap);
-    delete bitH;
 
     DEBUG('f', "Checking directory.\n");
 
-    FileHeader *dirH = new FileHeader;
-    const RawFileHeader *dirRH = dirH->GetRaw();
-    dirH->FetchFrom(DIRECTORY_SECTOR);
+    const RawFileHeader *dirRH = directoryFile->GetFileHeader()->GetRaw();
     error |= CheckFileHeader(dirRH, DIRECTORY_SECTOR, shadowMap);
-    delete dirH;
 
     Bitmap *freeMap = new Bitmap(NUM_SECTORS);
     freeMap->FetchFrom(freeMapFile);
@@ -429,30 +427,31 @@ bool FileSystem::Check() {
 ///   * the contents of the file header;
 ///   * the data in the file.
 void FileSystem::Print() {
-    FileHeader *bitH = new FileHeader;
-    FileHeader *dirH = new FileHeader;
+    printf("--------------------------------\n");
+
+    freeMapFile->GetFileHeader()->Print("Bitmap");
+
+    printf("--------------------------------\n");
+
+    directoryFile->GetFileHeader()->Print("Directory");
+
+    printf("--------------------------------\n");
+
     Bitmap *freeMap = new Bitmap(NUM_SECTORS);
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
 
-    printf("--------------------------------\n");
-    bitH->FetchFrom(FREE_MAP_SECTOR);
-    bitH->Print("Bitmap");
-
-    printf("--------------------------------\n");
-    dirH->FetchFrom(DIRECTORY_SECTOR);
-    dirH->Print("Directory");
-
-    printf("--------------------------------\n");
     freeMap->FetchFrom(freeMapFile);
     freeMap->Print();
 
-    printf("--------------------------------\n");
-    dir->FetchFrom(directoryFile);
-    dir->Print();
+    delete freeMap;
+
     printf("--------------------------------\n");
 
-    delete bitH;
-    delete dirH;
-    delete freeMap;
+    Directory *dir = new Directory(NUM_DIR_ENTRIES);
+
+    dir->FetchFrom(directoryFile);
+    dir->Print();
+
     delete dir;
+
+    printf("--------------------------------\n");
 }
