@@ -4,10 +4,14 @@ SHELL ["/bin/bash", "-c"]
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        build-essential \
-        gcc-mipsel-linux-gnu \
-        bear \
-        gdb \
+    ca-certificates \
+    curl \
+    wget \
+    git \
+    build-essential \
+    gcc-mipsel-linux-gnu \
+    bear \
+    gdb \
     && apt-get clean -y
 
 # Create a new user and give them sudo rights
