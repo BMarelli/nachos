@@ -1,0 +1,14 @@
+{
+    "name": "nachos",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "twxs.cmake",
+                "llvm-vs-code-extensions.vscode-clangd"
+            ]
+        }
+    }
+}
