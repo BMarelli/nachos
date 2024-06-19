@@ -102,7 +102,9 @@ static void HandleJoin() {
         return;
     }
 
-    int status = processTable->Remove(pid)->Join();
+    int status = processTable->Get(pid)->Join();
+
+    processTable->Remove(pid);
 
     DEBUG('e', "Thread `%s` joined with process %d with status %d.\n", currentThread->GetName(), pid, status);
 
