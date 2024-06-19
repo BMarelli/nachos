@@ -2,6 +2,8 @@ FROM ubuntu:23.10
 
 SHELL ["/bin/bash", "-c"]
 
+ARG USER=vscode
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     ca-certificates \
@@ -15,9 +17,9 @@ RUN apt-get update \
     && apt-get clean -y
 
 # Create a new user and give them sudo rights
-ARG USER=vscode
-RUN useradd -d /home/$USER -s /bin/bash -m $USER
-RUN echo "$USER ALL=NOPASSWD: ALL" >> /etc/sudoers
+RUN useradd -d /home/$USER -s /bin/bash -m $USER && \
+    echo "$USER ALL=NOPASSWD: ALL" >> /etc/sudoers
+
 USER $USER
 ENV HOME /home/$USER
 WORKDIR $HOME
