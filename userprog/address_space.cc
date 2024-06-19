@@ -56,36 +56,12 @@ AddressSpace::AddressSpace(OpenFile *_executable_file, int _pid) {
 
     pageTable = new TranslationEntry[numPages];
     for (unsigned i = 0; i < numPages; i++) {
-        pageTable[i].virtualPage = i;
-
-        pageTable[i].use = false;
-        pageTable[i].dirty = false;
-
-        // If the code segment was entirely on a separate page, we could
-        // set its pages to be read-only.
-        pageTable[i].readOnly = false;
-
 #ifdef DEMAND_LOADING
         pageTable[i].valid = false;  // Mark page as not valid initially.
 #else
-        int physicalPage = memoryMap->Find(this, i);
-#ifdef SWAP
-        if (physicalPage == -1) physicalPage = FreePageForVPN(i);
-#endif
-        ASSERT(physicalPage != -1);
-
-        pageTable[i].physicalPage = physicalPage;
-        pageTable[i].valid = true;
+        LoadPage(i);
 #endif
     }
-
-#ifdef DEMAND_LOADING
-    // Nothing left to do
-#else
-    for (unsigned i = 0; i < numPages; i++) {
-        if (pageTable[i].valid) LoadPage(i);
-    }
-#endif
 }
 
 /// Deallocate an address space.
@@ -313,14 +289,14 @@ unsigned PickVictim() {
         if (!entry->use && entry->dirty) return hand;
 
         entry->use = false;
-    #ifdef USE_TLB
+#ifdef USE_TLB
         for (unsigned j = 0; j < TLB_SIZE; j++) {
             if (machine->GetMMU()->tlb[j].valid && machine->GetMMU()->tlb[j].physicalPage == hand) {
                 machine->GetMMU()->tlb[j].use = false;
                 break;
             }
         }
-    #endif
+#endif
     }
 
     // use = 1, dirty = 0
