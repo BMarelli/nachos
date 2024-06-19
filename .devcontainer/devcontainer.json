@@ -10,5 +10,6 @@
                 "llvm-vs-code-extensions.vscode-clangd"
             ]
         }
-    }
+    },
+    "postStartCommand": "bear -- make"
 }

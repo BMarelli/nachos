@@ -24,6 +24,3 @@ RUN useradd -d /home/$USER -s /bin/bash -m $USER && \
 USER $USER
 ENV HOME /home/$USER
 WORKDIR $HOME
-
-# Run bear to generate compile_commands.json
-CMD bear -- make
