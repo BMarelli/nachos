@@ -14,6 +14,7 @@ RUN apt-get update \
     gcc-mipsel-linux-gnu \
     bear \
     gdb \
+    clangd \
     && apt-get clean -y
 
 # Create a new user and give them sudo rights
