@@ -68,6 +68,8 @@ class OpenFile {
         return SystemDep::Tell(file);
     }
 
+    int GetFileDescriptor() const { return file; }
+
    private:
     int file;
     unsigned currentOffset;
@@ -102,7 +104,11 @@ class OpenFile {
     // the UNIX idiom -- `lseek` to end of file, `tell`, `lseek` back).
     unsigned Length() const;
 
+    /// Get the sector of the file header
+    unsigned GetSector() const;
+
    private:
+    unsigned sector;        ///< Sector on disk where the file header is located.
     FileHeader *hdr;        ///< Header for this file.
     unsigned seekPosition;  ///< Current position within the file.
 };

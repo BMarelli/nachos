@@ -225,7 +225,17 @@ OpenFile *FileSystem::Open(const char *name) {
 
     delete dir;
 
+    openFileReferenceCount[sector]++;
+
     return new OpenFile(sector);
+}
+
+void FileSystem::Close(OpenFile *file) {
+    DEBUG('f', "Closing file %u\n", file->GetSector());
+
+    openFileReferenceCount[file->GetSector()]--;
+
+    delete file;
 }
 
 /// Delete a file from the file system.
