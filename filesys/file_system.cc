@@ -128,6 +128,27 @@ FileSystem::FileSystem(bool format) {
         // Nachos is running.
         freeMapFile = new OpenFile(FREE_MAP_SECTOR);
         directoryFile = new OpenFile(DIRECTORY_SECTOR);
+
+        Directory *dir = new Directory(NUM_DIR_ENTRIES);
+        dir->FetchFrom(directoryFile);
+
+        bool dirty = false;
+        for (unsigned i = 0; i < NUM_DIR_ENTRIES; i++) {
+            unsigned sector = dir->GetRaw()->table[i].sector;
+
+            if (dir->IsMarkedForDeletion(sector)) {
+                DEBUG('f', "Removing file marked for deletion at sector %u.\n", sector);
+
+                FreeFile(sector);
+
+                ASSERT(dir->RemoveMarkedForDeletion(sector));
+                dirty = true;
+            }
+        }
+
+        if (dirty) dir->WriteBack(directoryFile);
+
+        delete dir;
     }
 }
 
@@ -235,6 +256,24 @@ void FileSystem::Close(OpenFile *file) {
 
     openFileReferenceCount[file->GetSector()]--;
 
+    if (openFileReferenceCount[file->GetSector()] == 0) {
+        DEBUG('f', "Closing last reference to file at sector %u.\n", file->GetSector());
+
+        Directory *dir = new Directory(NUM_DIR_ENTRIES);
+        dir->FetchFrom(directoryFile);
+
+        if (dir->IsMarkedForDeletion(file->GetSector())) {
+            DEBUG('f', "File at sector %u is marked for deletion.\n", file->GetSector());
+
+            FreeFile(file->GetSector());
+
+            ASSERT(dir->RemoveMarkedForDeletion(file->GetSector()));
+            dir->WriteBack(directoryFile);  // Flush to disk.
+        }
+
+        delete dir;
+    }
+
     delete file;
 }
 
@@ -253,13 +292,40 @@ void FileSystem::Close(OpenFile *file) {
 bool FileSystem::Remove(const char *name) {
     ASSERT(name != nullptr);
 
+    DEBUG('f', "Removing file %s\n", name);
+
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(directoryFile);
+
     int sector = dir->Find(name);
     if (sector == -1) {
         delete dir;
+
         return false;  // file not found
     }
+
+    if (openFileReferenceCount[sector] > 0) {
+        DEBUG('f', "File %s is open, marking for deletion.\n", name);
+
+        dir->MarkForDeletion(name);
+        dir->WriteBack(directoryFile);
+
+        delete dir;
+
+        return true;
+    }
+
+    FreeFile(sector);
+
+    ASSERT(dir->Remove(name));
+    dir->WriteBack(directoryFile);  // Flush to disk.
+
+    delete dir;
+
+    return true;
+}
+
+void FileSystem::FreeFile(unsigned sector) {
     FileHeader *fileH = new FileHeader;
     fileH->FetchFrom(sector);
 
@@ -267,15 +333,12 @@ bool FileSystem::Remove(const char *name) {
     freeMap->FetchFrom(freeMapFile);
 
     fileH->Deallocate(freeMap);  // Remove data blocks.
-    freeMap->Clear(sector);      // Remove header block.
-    dir->Remove(name);
 
+    freeMap->Clear(sector);           // Remove header block.
     freeMap->WriteBack(freeMapFile);  // Flush to disk.
-    dir->WriteBack(directoryFile);    // Flush to disk.
+
     delete fileH;
-    delete dir;
     delete freeMap;
-    return true;
 }
 
 /// List all the files in the file system directory.

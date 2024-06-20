@@ -64,11 +64,14 @@ void Directory::WriteBack(OpenFile *file) {
 /// directory entries.  Return -1 if the name is not in the directory.
 ///
 /// * `name` is the file name to look up.
-int Directory::FindIndex(const char *name) {
+/// * `includeMarkedForDeletion` is whether to include files marked for deletion in the search.
+int Directory::FindIndex(const char *name, bool includeMarkedForDeletion) {
     ASSERT(name != nullptr);
 
     for (unsigned i = 0; i < raw.tableSize; i++) {
-        if (raw.table[i].inUse && !strncmp(raw.table[i].name, name, FILE_NAME_MAX_LEN)) {
+        bool valid = raw.table[i].inUse && (includeMarkedForDeletion || !raw.table[i].markedForDeletion);
+
+        if (valid && !strncmp(raw.table[i].name, name, FILE_NAME_MAX_LEN)) {
             return i;
         }
     }
@@ -127,6 +130,52 @@ bool Directory::Remove(const char *name) {
     }
     raw.table[i].inUse = false;
     return true;
+}
+
+/// Remove a file which is marked for deletion.
+///
+/// * `sector` is the sector of the file to be removed.
+bool Directory::RemoveMarkedForDeletion(unsigned sector) {
+    for (unsigned i = 0; i < raw.tableSize; i++) {
+        if (raw.table[i].sector == sector && raw.table[i].inUse) {
+            ASSERT(IsMarkedForDeletion(sector));
+
+            raw.table[i].inUse = false;
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/// Mark a file for deletion.
+///
+/// * `name` is the name of the file to be marked for deletion.
+bool Directory::MarkForDeletion(const char *name) {
+    ASSERT(name != nullptr);
+
+    int i = FindIndex(name);
+    if (i == -1) {
+        return false;  // name not in directory
+    }
+
+    raw.table[i].markedForDeletion = true;
+
+    return true;
+}
+
+/// Determine if a file is marked for deletion.
+///
+/// * `sector` is the sector of the file to check.
+bool Directory::IsMarkedForDeletion(unsigned sector) {
+    for (unsigned i = 0; i < raw.tableSize; i++) {
+        if (raw.table[i].inUse && raw.table[i].sector == sector) {
+            return raw.table[i].markedForDeletion;
+        }
+    }
+
+    return false;
 }
 
 /// List all the file names in the directory.

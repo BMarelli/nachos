@@ -139,7 +139,11 @@ class FileSystem {
     OpenFile *directoryFile;  ///< “Root” directory -- list of file names,
                               ///< represented as a file.
 
+    /// Map from file sector to the number of open files that reference it.
     std::map<unsigned, unsigned> openFileReferenceCount;
+
+    /// Free a file located at the given sector.
+    void FreeFile(unsigned sector);
 };
 
 #endif
