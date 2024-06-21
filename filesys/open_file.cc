@@ -22,8 +22,10 @@
 /// memory while the file is open.
 ///
 /// * `sector` is the location on disk of the file header for this file.
-OpenFile::OpenFile(int _sector) {
+OpenFile::OpenFile(int _sector, RWLock *_rwLock) {
     sector = _sector;
+    rwLock = _rwLock;
+
     hdr = new FileHeader;
     hdr->FetchFrom(sector);
     seekPosition = 0;
@@ -100,11 +102,15 @@ int OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position) {
     ASSERT(into != nullptr);
     ASSERT(numBytes > 0);
 
+    rwLock->AcquireRead();
+
     unsigned fileLength = hdr->FileLength();
     unsigned firstSector, lastSector, numSectors;
     char *buf;
 
     if (position >= fileLength) {
+        rwLock->ReleaseRead();
+
         return 0;  // Check request.
     }
     if (position + numBytes > fileLength) {
@@ -125,6 +131,9 @@ int OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position) {
     // Copy the part we want.
     memcpy(into, &buf[position - firstSector * SECTOR_SIZE], numBytes);
     delete[] buf;
+
+    rwLock->ReleaseRead();
+
     return numBytes;
 }
 
@@ -132,12 +141,16 @@ int OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position) {
     ASSERT(from != nullptr);
     ASSERT(numBytes > 0);
 
+    rwLock->AcquireWrite();
+
     unsigned fileLength = hdr->FileLength();
     unsigned firstSector, lastSector, numSectors;
     bool firstAligned, lastAligned;
     char *buf;
 
     if (position >= fileLength) {
+        rwLock->ReleaseWrite();
+
         return 0;  // Check request.
     }
     if (position + numBytes > fileLength) {
@@ -170,6 +183,9 @@ int OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position) {
         synchDisk->WriteSector(hdr->ByteToSector(i * SECTOR_SIZE), &buf[(i - firstSector) * SECTOR_SIZE]);
     }
     delete[] buf;
+
+    rwLock->ReleaseWrite();
+
     return numBytes;
 }
 

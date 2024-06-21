@@ -38,6 +38,7 @@ THREAD_HDR = threads/condition.hh              \
              threads/channel.hh                \
              threads/copyright.h               \
              threads/lock.hh                   \
+             threads/rwlock.hh                 \
              threads/priority.hh               \
              threads/scheduler.hh              \
              threads/semaphore.hh              \
@@ -52,6 +53,7 @@ THREAD_HDR = threads/condition.hh              \
              threads/thread_test_join.cc       \
              threads/thread_test_prod_cons.hh  \
              threads/thread_test_simple.hh     \
+             threads/thread_test_rwlock.hh     \
              lib/assert.hh                     \
              lib/debug.hh                      \
              lib/debug_opts.hh                 \
@@ -66,6 +68,7 @@ THREAD_SRC = threads/main.cc                   \
              threads/condition.cc              \
              threads/channel.cc                \
              threads/lock.cc                   \
+             threads/rwlock.cc                 \
              threads/priority.cc               \
              threads/scheduler.cc              \
              threads/semaphore.cc              \
@@ -80,6 +83,7 @@ THREAD_SRC = threads/main.cc                   \
              threads/thread_test_join.cc       \
              threads/thread_test_prod_cons.cc  \
              threads/thread_test_simple.cc     \
+             threads/thread_test_rwlock.cc     \
              lib/assert.cc                     \
              lib/debug.cc                      \
              machine/interrupt.cc              \

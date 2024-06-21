@@ -76,12 +76,15 @@ class OpenFile {
 };
 
 #else  // FILESYS
+
+class RWLock;
+
 class FileHeader;
 
 class OpenFile {
    public:
     /// Open a file whose header is located at `sector` on the disk.
-    OpenFile(int sector);
+    OpenFile(int sector, RWLock *rwLock);
 
     /// Close the file.
     ~OpenFile();
@@ -109,6 +112,7 @@ class OpenFile {
 
    private:
     unsigned sector;        ///< Sector on disk where the file header is located.
+    RWLock *rwLock;         ///< Lock for concurrent access to the file.
     FileHeader *hdr;        ///< Header for this file.
     unsigned seekPosition;  ///< Current position within the file.
 };

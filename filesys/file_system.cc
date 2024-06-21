@@ -50,6 +50,7 @@
 #include "file_header.hh"
 #include "lib/bitmap.hh"
 #include "lib/debug.hh"
+#include "rwlock.hh"
 
 /// Sectors containing the file headers for the bitmap of free sectors, and
 /// the directory of files.  These file headers are placed in well-known
@@ -100,8 +101,8 @@ FileSystem::FileSystem(bool format) {
         // The file system operations assume these two files are left open
         // while Nachos is running.
 
-        freeMapFile = new OpenFile(FREE_MAP_SECTOR);
-        directoryFile = new OpenFile(DIRECTORY_SECTOR);
+        freeMapFile = new OpenFile(FREE_MAP_SECTOR, new RWLock());
+        directoryFile = new OpenFile(DIRECTORY_SECTOR, new RWLock());
 
         // Once we have the files “open”, we can write the initial version of
         // each file back to disk.  The directory at this point is completely
@@ -126,8 +127,8 @@ FileSystem::FileSystem(bool format) {
         // If we are not formatting the disk, just open the files
         // representing the bitmap and directory; these are left open while
         // Nachos is running.
-        freeMapFile = new OpenFile(FREE_MAP_SECTOR);
-        directoryFile = new OpenFile(DIRECTORY_SECTOR);
+        freeMapFile = new OpenFile(FREE_MAP_SECTOR, new RWLock());
+        directoryFile = new OpenFile(DIRECTORY_SECTOR, new RWLock());
 
         Directory *dir = new Directory(NUM_DIR_ENTRIES);
         dir->FetchFrom(directoryFile);
@@ -155,6 +156,8 @@ FileSystem::FileSystem(bool format) {
 FileSystem::~FileSystem() {
     delete freeMapFile;
     delete directoryFile;
+
+    for (auto &pair : openFileRWLocks) delete pair.second;
 }
 
 /// Create a file in the Nachos file system (similar to UNIX `create`).
@@ -248,7 +251,9 @@ OpenFile *FileSystem::Open(const char *name) {
 
     openFileReferenceCount[sector]++;
 
-    return new OpenFile(sector);
+    if (openFileRWLocks.find(sector) == openFileRWLocks.end()) openFileRWLocks[sector] = new RWLock();
+
+    return new OpenFile(sector, openFileRWLocks[sector]);
 }
 
 void FileSystem::Close(OpenFile *file) {
