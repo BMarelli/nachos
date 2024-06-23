@@ -18,7 +18,10 @@
 
 #include "system.hh"
 
-Lock::Lock() { semaphore = new Semaphore(1); }
+Lock::Lock() {
+    semaphore = new Semaphore(1);
+    thread = nullptr;
+}
 
 Lock::~Lock() { delete semaphore; }
 
