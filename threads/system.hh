@@ -29,6 +29,7 @@ extern Scheduler *scheduler;         ///< The ready list.
 extern Interrupt *interrupt;         ///< Interrupt status.
 extern Statistics *stats;            ///< Performance metrics.
 extern Timer *timer;                 ///< The hardware alarm clock.
+extern bool disablePeriodicYield;    ///< Disables context switches caused by the timer device.
 
 #ifdef USER_PROGRAM
 #include "lib/table.hh"
