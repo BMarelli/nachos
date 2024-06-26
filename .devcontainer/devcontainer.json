@@ -13,6 +13,5 @@
     },
     "runArgs": [
         "--platform=linux/amd64"
-    ],
-    "postStartCommand": "bear -- make"
+    ]
 }
