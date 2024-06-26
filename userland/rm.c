@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
     int deleted = 0;
     for (unsigned i = 1; i < argc; i++) {
         if (Remove(argv[i]) < 0) {
-            puts("Error: failed to remove file from directory:");
+            puts("Error: failed to remove file from directory: ");
             puts(argv[i]);
             puts("\n");
 
