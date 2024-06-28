@@ -63,6 +63,7 @@ class FileHeader {
    private:
     RawFileHeader raw;
     unsigned *indirectDataSectors;
+    unsigned **doubleIndirectDataSectors;
 
     unsigned GetSector(unsigned i);
 };
