@@ -21,3 +21,4 @@ userland/cat
 .cache
 compile_commands.json
 SWAP.*
+DISK
