@@ -27,9 +27,9 @@
 #include <ctype.h>
 #include <stdio.h>
 
-#include "core_map.hh"
 #include "disk.hh"
 #include "filesys/raw_file_header.hh"
+#include "lib/assert.hh"
 #include "lib/utility.hh"
 #include "threads/system.hh"
 
@@ -39,8 +39,8 @@
 ///
 /// * `freeMap` is the bit map of free disk sectors.
 /// * `fileSize` is the bit map of free disk sectors.
-bool FileHeader::Allocate(Bitmap *freeMap, unsigned fileSize) {
-    ASSERT(freeMap != nullptr);
+bool FileHeader::Allocate(Bitmap *bitmap, unsigned fileSize) {
+    ASSERT(bitmap != nullptr);
 
     if (fileSize > MAX_FILE_SIZE) return false;
 
@@ -54,34 +54,34 @@ bool FileHeader::Allocate(Bitmap *freeMap, unsigned fileSize) {
         requiredSectors += DivRoundUp(raw.numSectors - NUM_DIRECT - NUM_INDIRECT, NUM_INDIRECT);  // Sector for double indirect blocks
     }
 
-    if (freeMap->CountClear() < requiredSectors) return false;
+    if (bitmap->CountClear() < requiredSectors) return false;
 
     unsigned remainingSectors = raw.numSectors;
 
     // Allocate direct sectors
-    for (unsigned i = 0; i < Min(raw.numSectors, NUM_DIRECT); i++) raw.dataSectors[i] = freeMap->Find();
+    for (unsigned i = 0; i < Min(raw.numSectors, NUM_DIRECT); i++) raw.dataSectors[i] = bitmap->Find();
     remainingSectors -= Min(raw.numSectors, NUM_DIRECT);
 
     if (remainingSectors == 0) return true;
 
     // Allocate indirect sectors
-    raw.indirectionSector = freeMap->Find();
+    raw.indirectionSector = bitmap->Find();
 
     indirectDataSectors = new unsigned[NUM_INDIRECT];
-    for (unsigned i = 0; i < Min(remainingSectors, NUM_INDIRECT); i++) indirectDataSectors[i] = freeMap->Find();
+    for (unsigned i = 0; i < Min(remainingSectors, NUM_INDIRECT); i++) indirectDataSectors[i] = bitmap->Find();
     remainingSectors -= Min(remainingSectors, NUM_INDIRECT);
 
     if (remainingSectors == 0) return true;
 
     // Allocate doubly indirect sectors
-    raw.doubleIndirectionSector = freeMap->Find();
+    raw.doubleIndirectionSector = bitmap->Find();
 
     doubleIndirectDataSectors = new unsigned *[NUM_INDIRECT];
 
     unsigned numDoubleIndirectSectors = DivRoundUp(remainingSectors, NUM_INDIRECT);
     for (unsigned i = 0; i < numDoubleIndirectSectors; i++) {
         doubleIndirectDataSectors[i] = new unsigned[NUM_INDIRECT];
-        for (unsigned j = 0; j < Min(remainingSectors, NUM_INDIRECT); j++) doubleIndirectDataSectors[i][j] = freeMap->Find();
+        for (unsigned j = 0; j < Min(remainingSectors, NUM_INDIRECT); j++) doubleIndirectDataSectors[i][j] = bitmap->Find();
         remainingSectors -= Min(remainingSectors, NUM_INDIRECT);
     }
 
@@ -93,46 +93,46 @@ bool FileHeader::Allocate(Bitmap *freeMap, unsigned fileSize) {
 /// De-allocate all the space allocated for data blocks for this file.
 ///
 /// * `freeMap` is the bit map of free disk sectors.
-void FileHeader::Deallocate(Bitmap *freeMap) {
-    ASSERT(freeMap != nullptr);
+void FileHeader::Deallocate(Bitmap *bitmap) {
+    ASSERT(bitmap != nullptr);
 
     unsigned remainingSectors = raw.numSectors;
 
     // Deallocate direct sectors
     for (unsigned i = 0; i < Min(raw.numSectors, NUM_DIRECT); i++) {
-        ASSERT(freeMap->Test(raw.dataSectors[i]));  // ought to be marked!
+        ASSERT(bitmap->Test(raw.dataSectors[i]));  // ought to be marked!
 
-        freeMap->Clear(raw.dataSectors[i]);
+        bitmap->Clear(raw.dataSectors[i]);
     }
     remainingSectors -= Min(remainingSectors, NUM_DIRECT);
 
     if (remainingSectors == 0) return;
 
-    ASSERT(freeMap->Test(raw.indirectionSector));  // ought to be marked!
+    ASSERT(bitmap->Test(raw.indirectionSector));  // ought to be marked!
 
-    freeMap->Clear(raw.indirectionSector);
+    bitmap->Clear(raw.indirectionSector);
 
     // Deallocate indirect sectors
     for (unsigned i = 0; i < Min(remainingSectors, NUM_INDIRECT); i++) {
-        ASSERT(freeMap->Test(indirectDataSectors[i]));  // ought to be marked!
+        ASSERT(bitmap->Test(indirectDataSectors[i]));  // ought to be marked!
 
-        freeMap->Clear(indirectDataSectors[i]);
+        bitmap->Clear(indirectDataSectors[i]);
     }
     remainingSectors -= Min(remainingSectors, NUM_INDIRECT);
 
     if (remainingSectors == 0) return;
 
-    ASSERT(freeMap->Test(raw.doubleIndirectionSector));  // ought to be marked!
+    ASSERT(bitmap->Test(raw.doubleIndirectionSector));  // ought to be marked!
 
-    freeMap->Clear(raw.doubleIndirectionSector);
+    bitmap->Clear(raw.doubleIndirectionSector);
 
     // Deallocate doubly indirect sectors
     unsigned numDoubleIndirectSectors = DivRoundUp(remainingSectors, NUM_INDIRECT);
     for (unsigned i = 0; i < numDoubleIndirectSectors; i++) {
         for (unsigned j = 0; j < Min(remainingSectors, NUM_INDIRECT); j++) {
-            ASSERT(freeMap->Test(doubleIndirectDataSectors[i][j]));  // ought to be marked!
+            ASSERT(bitmap->Test(doubleIndirectDataSectors[i][j]));  // ought to be marked!
 
-            freeMap->Clear(doubleIndirectDataSectors[i][j]);
+            bitmap->Clear(doubleIndirectDataSectors[i][j]);
         }
         remainingSectors -= Min(remainingSectors, NUM_INDIRECT);
     }
