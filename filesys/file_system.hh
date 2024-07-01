@@ -88,12 +88,10 @@ class FileSystem {
 
 #else  // FILESYS
 
-#include <map>
-
 #include "directory_entry.hh"
 #include "lib/utility.hh"
 #include "machine/disk.hh"
-#include "threads/rwlock.hh"
+#include "open_file_manager.hh"
 
 /// Initial file sizes for the bitmap and directory; until the file system
 /// supports extensible files, the directory size sets the maximum number of
@@ -140,11 +138,7 @@ class FileSystem {
     OpenFile *directoryFile;  ///< “Root” directory -- list of file names,
                               ///< represented as a file.
 
-    /// Map from file sector to the number of open files that reference it.
-    std::map<unsigned, unsigned> openFileReferenceCount;
-
-    /// Map from file sector to a read/write lock.
-    std::map<unsigned, RWLock *> openFileRWLocks;
+    OpenFileManager *openFileManager;
 
     /// Free a file located at the given sector.
     void FreeFile(unsigned sector);

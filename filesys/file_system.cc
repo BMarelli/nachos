@@ -69,6 +69,9 @@ static const unsigned DIRECTORY_SECTOR = 1;
 /// * `format` -- should we initialize the disk?
 FileSystem::FileSystem(bool format) {
     DEBUG('f', "Initializing the file system.\n");
+
+    openFileManager = new OpenFileManager();
+
     if (format) {
         Bitmap *freeMap = new Bitmap(NUM_SECTORS);
         Directory *dir = new Directory(NUM_DIR_ENTRIES);
@@ -130,6 +133,9 @@ FileSystem::FileSystem(bool format) {
         freeMapFile = new OpenFile(FREE_MAP_SECTOR, new RWLock());
         directoryFile = new OpenFile(DIRECTORY_SECTOR, new RWLock());
 
+        Bitmap *freeMap = new Bitmap(NUM_SECTORS);
+        freeMap->FetchFrom(freeMapFile);
+
         Directory *dir = new Directory(NUM_DIR_ENTRIES);
         dir->FetchFrom(directoryFile);
 
@@ -140,15 +146,25 @@ FileSystem::FileSystem(bool format) {
             if (dir->IsMarkedForDeletion(sector)) {
                 DEBUG('f', "Removing file marked for deletion at sector %u.\n", sector);
 
-                FreeFile(sector);
+                FileHeader *hdr = new FileHeader;
+                hdr->FetchFrom(sector);
+                hdr->Deallocate(freeMap);
+                delete hdr;
+
+                freeMap->Clear(sector);
 
                 ASSERT(dir->RemoveMarkedForDeletion(sector));
+
                 dirty = true;
             }
         }
 
-        if (dirty) dir->WriteBack(directoryFile);
+        if (dirty) {
+            freeMap->WriteBack(freeMapFile);
+            dir->WriteBack(directoryFile);
+        }
 
+        delete freeMap;
         delete dir;
     }
 }
@@ -156,8 +172,7 @@ FileSystem::FileSystem(bool format) {
 FileSystem::~FileSystem() {
     delete freeMapFile;
     delete directoryFile;
-
-    for (auto &pair : openFileRWLocks) delete pair.second;
+    delete openFileManager;
 }
 
 /// Create a file in the Nachos file system (similar to UNIX `create`).
@@ -249,20 +264,25 @@ OpenFile *FileSystem::Open(const char *name) {
 
     delete dir;
 
-    openFileReferenceCount[sector]++;
+    if (!openFileManager->IsManaged(sector)) {
+        RWLock *rwLock = new RWLock();
+        openFileManager->Manage(sector, 0, rwLock);
+    }
 
-    if (openFileRWLocks.find(sector) == openFileRWLocks.end()) openFileRWLocks[sector] = new RWLock();
+    openFileManager->IncrementReferenceCount(sector);
 
-    return new OpenFile(sector, openFileRWLocks[sector]);
+    return new OpenFile(sector, openFileManager->GetRWLock(sector));
 }
 
 void FileSystem::Close(OpenFile *file) {
     DEBUG('f', "Closing file %u\n", file->GetSector());
 
-    openFileReferenceCount[file->GetSector()]--;
+    unsigned referenceCount = openFileManager->DecrementReferenceCount(file->GetSector());
 
-    if (openFileReferenceCount[file->GetSector()] == 0) {
+    if (referenceCount == 0) {
         DEBUG('f', "Closing last reference to file at sector %u.\n", file->GetSector());
+
+        openFileManager->Unmanage(file->GetSector());
 
         Directory *dir = new Directory(NUM_DIR_ENTRIES);
         dir->FetchFrom(directoryFile);
@@ -309,7 +329,7 @@ bool FileSystem::Remove(const char *name) {
         return false;  // file not found
     }
 
-    if (openFileReferenceCount[sector] > 0) {
+    if (openFileManager->GetReferenceCount(sector) > 0) {
         DEBUG('f', "File %s is open, marking for deletion.\n", name);
 
         dir->MarkForDeletion(name);
@@ -341,6 +361,8 @@ void FileSystem::FreeFile(unsigned sector) {
 
     freeMap->Clear(sector);           // Remove header block.
     freeMap->WriteBack(freeMapFile);  // Flush to disk.
+
+    openFileManager->Unmanage(sector);
 
     delete fileH;
     delete freeMap;
