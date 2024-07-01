@@ -31,9 +31,6 @@ OpenFile::OpenFile(int _sector, RWLock *_rwLock) {
     seekPosition = 0;
 }
 
-/// Get the sector number of the file.
-unsigned OpenFile::GetSector() const { return sector; }
-
 /// Close a Nachos file, de-allocating any in-memory data structures.
 OpenFile::~OpenFile() { delete hdr; }
 

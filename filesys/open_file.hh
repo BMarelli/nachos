@@ -108,7 +108,7 @@ class OpenFile {
     unsigned Length() const;
 
     /// Get the sector of the file header
-    unsigned GetSector() const;
+    unsigned GetSector() const { return sector; }
 
    private:
     unsigned sector;        ///< Sector on disk where the file header is located.
