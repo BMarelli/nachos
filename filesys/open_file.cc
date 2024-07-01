@@ -22,17 +22,16 @@
 /// memory while the file is open.
 ///
 /// * `sector` is the location on disk of the file header for this file.
-OpenFile::OpenFile(int _sector, RWLock *_rwLock) {
+OpenFile::OpenFile(int _sector, FileHeader *_fileHeader, RWLock *_rwLock) {
     sector = _sector;
+    fileHeader = _fileHeader;
     rwLock = _rwLock;
 
-    hdr = new FileHeader;
-    hdr->FetchFrom(sector);
     seekPosition = 0;
 }
 
 /// Close a Nachos file, de-allocating any in-memory data structures.
-OpenFile::~OpenFile() { delete hdr; }
+OpenFile::~OpenFile() {}
 
 /// Change the current location within the open file -- the point at which
 /// the next `Read` or `Write` will start from.
@@ -101,7 +100,7 @@ int OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position) {
 
     rwLock->AcquireRead();
 
-    unsigned fileLength = hdr->FileLength();
+    unsigned fileLength = fileHeader->FileLength();
     unsigned firstSector, lastSector, numSectors;
     char *buf;
 
@@ -122,7 +121,7 @@ int OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position) {
     // Read in all the full and partial sectors that we need.
     buf = new char[numSectors * SECTOR_SIZE];
     for (unsigned i = firstSector; i <= lastSector; i++) {
-        synchDisk->ReadSector(hdr->ByteToSector(i * SECTOR_SIZE), &buf[(i - firstSector) * SECTOR_SIZE]);
+        synchDisk->ReadSector(fileHeader->ByteToSector(i * SECTOR_SIZE), &buf[(i - firstSector) * SECTOR_SIZE]);
     }
 
     // Copy the part we want.
@@ -140,7 +139,7 @@ int OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position) {
 
     rwLock->AcquireWrite();
 
-    unsigned fileLength = hdr->FileLength();
+    unsigned fileLength = fileHeader->FileLength();
     unsigned firstSector, lastSector, numSectors;
     bool firstAligned, lastAligned;
     char *buf;
@@ -177,7 +176,7 @@ int OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position) {
 
     // Write modified sectors back.
     for (unsigned i = firstSector; i <= lastSector; i++) {
-        synchDisk->WriteSector(hdr->ByteToSector(i * SECTOR_SIZE), &buf[(i - firstSector) * SECTOR_SIZE]);
+        synchDisk->WriteSector(fileHeader->ByteToSector(i * SECTOR_SIZE), &buf[(i - firstSector) * SECTOR_SIZE]);
     }
     delete[] buf;
 
@@ -187,4 +186,4 @@ int OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position) {
 }
 
 /// Return the number of bytes in the file.
-unsigned OpenFile::Length() const { return hdr->FileLength(); }
+unsigned OpenFile::Length() const { return fileHeader->FileLength(); }

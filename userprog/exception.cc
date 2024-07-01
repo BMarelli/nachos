@@ -188,7 +188,7 @@ static void HandleCreate() {
 
     DEBUG('e', "`Create` requested for file `%s`.\n", filename);
 
-    if (!fileSystem->Create(filename, 0)) {
+    if (!fileSystem->Create(filename, 4096)) {
         DEBUG('e', "Error: file `%s` could not be created.\n", filename);
 
         machine->WriteRegister(2, -1);

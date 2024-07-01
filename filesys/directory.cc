@@ -26,38 +26,91 @@
 
 #include "directory_entry.hh"
 #include "file_header.hh"
+#include "filesys/file_system.hh"
 
-/// Initialize a directory; initially, the directory is completely empty.  If
+/// Create a directory; initially, the directory is completely empty.  If
 /// the disk is being formatted, an empty directory is all we need, but
 /// otherwise, we need to call FetchFrom in order to initialize it from disk.
 ///
 /// * `size` is the number of entries in the directory.
-Directory::Directory(unsigned size) {
-    ASSERT(size > 0);
-    raw.table = new DirectoryEntry[size];
-    raw.tableSize = size;
-    for (unsigned i = 0; i < raw.tableSize; i++) {
-        raw.table[i].inUse = false;
-    }
+Directory::Directory(unsigned sector) {
+    valid = false;
+    dirty = false;
+    lock = new Lock();
+    fileHeader = new FileHeader;
+    rwLock = new RWLock();
+    file = new OpenFile(sector, fileHeader, rwLock);
+
+    raw.tableSize = NUM_DIR_ENTRIES;
+    raw.table = new DirectoryEntry[NUM_DIR_ENTRIES];
 }
 
 /// De-allocate directory data structure.
-Directory::~Directory() { delete[] raw.table; }
+Directory::~Directory() {
+    delete lock;
+    delete fileHeader;
+    delete rwLock;
+    delete file;
 
-/// Read the contents of the directory from disk.
-///
-/// * `file` is file containing the directory contents.
-void Directory::FetchFrom(OpenFile *file) {
-    ASSERT(file != nullptr);
-    file->ReadAt((char *)raw.table, raw.tableSize * sizeof(DirectoryEntry), 0);
+    delete[] raw.table;
 }
 
-/// Write any modifications to the directory back to disk.
-///
-/// * `file` is a file to contain the new directory contents.
-void Directory::WriteBack(OpenFile *file) {
-    ASSERT(file != nullptr);
+// Initialize a directory by allocating the necessary space in the bitmap.
+void Directory::Initialize(Bitmap *bitmap) {
+    ASSERT(!valid);
+
+    Begin();
+
+    fileHeader->Allocate(bitmap, DIRECTORY_FILE_SIZE);
+    fileHeader->WriteBack(file->GetSector());
+
     file->WriteAt((char *)raw.table, raw.tableSize * sizeof(DirectoryEntry), 0);
+
+    valid = true;
+
+    Commit();
+}
+
+/// Load the contents of the directory from disk.
+void Directory::Load() {
+    if (valid) return;
+
+    Begin();
+
+    fileHeader->FetchFrom(file->GetSector());
+    file->ReadAt((char *)raw.table, raw.tableSize * sizeof(DirectoryEntry), 0);
+
+    valid = true;
+
+    Commit();
+}
+
+void Directory::Begin() {
+    ASSERT(!lock->IsHeldByCurrentThread());
+    ASSERT(!dirty);
+
+    lock->Acquire();
+}
+
+void Directory::Commit() {
+    ASSERT(valid);
+    ASSERT(lock->IsHeldByCurrentThread());
+
+    if (dirty) file->WriteAt((char *)raw.table, raw.tableSize * sizeof(DirectoryEntry), 0);
+
+    dirty = false;
+
+    lock->Release();
+}
+
+void Directory::Abort() {
+    ASSERT(lock->IsHeldByCurrentThread());
+
+    if (dirty) file->ReadAt((char *)raw.table, raw.tableSize * sizeof(DirectoryEntry), 0);
+
+    dirty = false;
+
+    lock->Release();
 }
 
 /// Look up file name in directory, and return its location in the table of
@@ -67,14 +120,14 @@ void Directory::WriteBack(OpenFile *file) {
 /// * `includeMarkedForDeletion` is whether to include files marked for deletion in the search.
 int Directory::FindIndex(const char *name, bool includeMarkedForDeletion) {
     ASSERT(name != nullptr);
+    ASSERT(lock->IsHeldByCurrentThread());
 
     for (unsigned i = 0; i < raw.tableSize; i++) {
-        bool valid = raw.table[i].inUse && (includeMarkedForDeletion || !raw.table[i].markedForDeletion);
+        bool want = raw.table[i].inUse && (includeMarkedForDeletion || !raw.table[i].markedForDeletion);
 
-        if (valid && !strncmp(raw.table[i].name, name, FILE_NAME_MAX_LEN)) {
-            return i;
-        }
+        if (want && !strncmp(raw.table[i].name, name, FILE_NAME_MAX_LEN)) return i;
     }
+
     return -1;  // name not in directory
 }
 
@@ -84,13 +137,13 @@ int Directory::FindIndex(const char *name, bool includeMarkedForDeletion) {
 ///
 /// * `name` is the file name to look up.
 int Directory::Find(const char *name) {
+    ASSERT(lock->IsHeldByCurrentThread());
     ASSERT(name != nullptr);
 
     int i = FindIndex(name);
-    if (i != -1) {
-        return raw.table[i].sector;
-    }
-    return -1;
+    if (i == -1) return -1;
+
+    return raw.table[i].sector;
 }
 
 /// Add a file into the directory.  Return true if successful; return false
@@ -100,21 +153,24 @@ int Directory::Find(const char *name) {
 /// * `name` is the name of the file being added.
 /// * `newSector` is the disk sector containing the added file's header.
 bool Directory::Add(const char *name, int newSector) {
+    ASSERT(lock->IsHeldByCurrentThread());
     ASSERT(name != nullptr);
 
-    if (FindIndex(name) != -1) {
-        return false;
-    }
+    if (FindIndex(name) != -1) return false;
 
     for (unsigned i = 0; i < raw.tableSize; i++) {
         if (!raw.table[i].inUse) {
             raw.table[i].inUse = true;
             strncpy(raw.table[i].name, name, FILE_NAME_MAX_LEN);
             raw.table[i].sector = newSector;
+
+            dirty = true;
+
             return true;
         }
     }
-    return false;  // no space.  Fix when we have extensible files.
+
+    return false;  // FIXME: no space in directory. Fix when we implement extensible files.
 }
 
 /// Remove a file name from the directory.   Return true if successful;
@@ -122,25 +178,33 @@ bool Directory::Add(const char *name, int newSector) {
 ///
 /// * `name` is the file name to be removed.
 bool Directory::Remove(const char *name) {
+    ASSERT(lock->IsHeldByCurrentThread());
     ASSERT(name != nullptr);
 
     int i = FindIndex(name);
-    if (i == -1) {
-        return false;  // name not in directory
-    }
+    if (i == -1) return false;  // name not in directory
+
     raw.table[i].inUse = false;
+
+    dirty = true;
+
     return true;
 }
 
 /// Remove a file which is marked for deletion.
 ///
 /// * `sector` is the sector of the file to be removed.
-bool Directory::RemoveMarkedForDeletion(unsigned sector) {
+bool Directory::RemoveMarkedForDeletion(unsigned which) {
+    ASSERT(lock->IsHeldByCurrentThread());
+    ASSERT(which < raw.tableSize);
+
     for (unsigned i = 0; i < raw.tableSize; i++) {
-        if (raw.table[i].sector == sector && raw.table[i].inUse) {
-            ASSERT(IsMarkedForDeletion(sector));
+        if (raw.table[i].sector == which && raw.table[i].inUse) {
+            ASSERT(IsMarkedForDeletion(which));
 
             raw.table[i].inUse = false;
+
+            dirty = true;
 
             return true;
         }
@@ -153,14 +217,15 @@ bool Directory::RemoveMarkedForDeletion(unsigned sector) {
 ///
 /// * `name` is the name of the file to be marked for deletion.
 bool Directory::MarkForDeletion(const char *name) {
+    ASSERT(lock->IsHeldByCurrentThread());
     ASSERT(name != nullptr);
 
     int i = FindIndex(name);
-    if (i == -1) {
-        return false;  // name not in directory
-    }
+    if (i == -1) return false;  // name not in directory
 
     raw.table[i].markedForDeletion = true;
+
+    dirty = true;
 
     return true;
 }
@@ -169,6 +234,8 @@ bool Directory::MarkForDeletion(const char *name) {
 ///
 /// * `sector` is the sector of the file to check.
 bool Directory::IsMarkedForDeletion(unsigned sector) {
+    ASSERT(lock->IsHeldByCurrentThread());
+
     for (unsigned i = 0; i < raw.tableSize; i++) {
         if (raw.table[i].inUse && raw.table[i].sector == sector) {
             return raw.table[i].markedForDeletion;
@@ -180,6 +247,8 @@ bool Directory::IsMarkedForDeletion(unsigned sector) {
 
 /// List all the file names in the directory.
 void Directory::List() const {
+    ASSERT(lock->IsHeldByCurrentThread());
+
     for (unsigned i = 0; i < raw.tableSize; i++) {
         if (raw.table[i].inUse) {
             printf("%s\n", raw.table[i].name);
@@ -190,6 +259,10 @@ void Directory::List() const {
 /// List all the file names in the directory, their `FileHeader` locations,
 /// and the contents of each file.  For debugging.
 void Directory::Print() const {
+    ASSERT(lock->IsHeldByCurrentThread());
+
+    fileHeader->Print("Directory");
+
     FileHeader *hdr = new FileHeader;
 
     printf("Directory contents:\n");

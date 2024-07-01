@@ -21,7 +21,7 @@ const unsigned PAGE_SIZE = SECTOR_SIZE;  ///< Set the page size equal to the
 #ifdef SWAP
 const unsigned NUM_PHYS_PAGES = 20;  // We can get away with using a smaller page table if we are using swap files.
 #else
-const unsigned NUM_PHYS_PAGES = 128;
+const unsigned NUM_PHYS_PAGES = 256;
 #endif
 const unsigned MEMORY_SIZE = NUM_PHYS_PAGES * PAGE_SIZE;
 

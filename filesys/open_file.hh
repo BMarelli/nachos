@@ -84,7 +84,7 @@ class FileHeader;
 class OpenFile {
    public:
     /// Open a file whose header is located at `sector` on the disk.
-    OpenFile(int sector, RWLock *rwLock);
+    OpenFile(int sector, FileHeader *fileHeader, RWLock *rwLock);
 
     /// Close the file.
     ~OpenFile();
@@ -110,11 +110,14 @@ class OpenFile {
     /// Get the sector of the file header
     unsigned GetSector() const { return sector; }
 
+    /// Get the file header
+    FileHeader *GetFileHeader() const { return fileHeader; }
+
    private:
-    unsigned sector;        ///< Sector on disk where the file header is located.
-    RWLock *rwLock;         ///< Lock for concurrent access to the file.
-    FileHeader *hdr;        ///< Header for this file.
-    unsigned seekPosition;  ///< Current position within the file.
+    unsigned sector;         ///< Sector on disk where the file header is located.
+    RWLock *rwLock;          ///< Lock for concurrent access to the file.
+    FileHeader *fileHeader;  ///< Header for this file.
+    unsigned seekPosition;   ///< Current position within the file.
 };
 
 #endif

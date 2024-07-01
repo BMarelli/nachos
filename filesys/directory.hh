@@ -14,8 +14,16 @@
 #ifndef NACHOS_FILESYS_DIRECTORY__HH
 #define NACHOS_FILESYS_DIRECTORY__HH
 
+#include "lib/bitmap.hh"
 #include "open_file.hh"
 #include "raw_directory.hh"
+#include "threads/lock.hh"
+#include "threads/rwlock.hh"
+
+/// Initial file sizes for the bitmap and directory; until the file system
+/// supports extensible files, the directory size sets the maximum number of
+/// files that can be loaded onto the disk.
+static const unsigned NUM_DIR_ENTRIES = 10;
 
 /// The following class defines a UNIX-like “directory”.  Each entry in the
 /// directory describes a file, and where to find it on disk.
@@ -28,17 +36,15 @@
 /// from/to disk.
 class Directory {
    public:
-    /// Initialize an empty directory with space for `size` files.
+    /// Create an empty directory with space for `size` files.
     Directory(unsigned size);
 
     /// De-allocate the directory.
     ~Directory();
 
-    /// Initialize directory contents from disk.
-    void FetchFrom(OpenFile *file);
+    void Initialize(Bitmap *bitmap);
 
-    /// Write modifications to directory contents back to disk.
-    void WriteBack(OpenFile *file);
+    void Load();
 
     /// Find the sector number of the `FileHeader` for file: `name`.
     int Find(const char *name);
@@ -65,6 +71,10 @@ class Directory {
     /// and their contents.
     void Print() const;
 
+    void Begin();
+    void Commit();
+    void Abort();
+
     /// Get the raw directory structure.
     ///
     /// NOTE: this should only be used by routines that operating on the file
@@ -72,10 +82,20 @@ class Directory {
     const RawDirectory *GetRaw() const;
 
    private:
-    /// Find the index into the directory table corresponding to `name`.
-    int FindIndex(const char *name, bool includeMarkedForDeletion = false);
+    bool valid;
+    bool dirty;
+
+    Lock *lock;
+
+    FileHeader *fileHeader;
+    RWLock *rwLock;
+
+    OpenFile *file;
 
     RawDirectory raw;
+
+    /// Find the index into the directory table corresponding to `name`.
+    int FindIndex(const char *name, bool includeMarkedForDeletion = false);
 };
 
 #endif
