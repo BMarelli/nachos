@@ -88,16 +88,11 @@ class FileSystem {
 
 #else  // FILESYS
 
+#include "directory.hh"
 #include "directory_entry.hh"
-#include "lib/utility.hh"
-#include "machine/disk.hh"
+#include "free_map.hh"
 #include "open_file_manager.hh"
 
-/// Initial file sizes for the bitmap and directory; until the file system
-/// supports extensible files, the directory size sets the maximum number of
-/// files that can be loaded onto the disk.
-static const unsigned FREE_MAP_FILE_SIZE = NUM_SECTORS / BITS_IN_BYTE;
-static const unsigned NUM_DIR_ENTRIES = 10;
 static const unsigned DIRECTORY_FILE_SIZE = sizeof(DirectoryEntry) * NUM_DIR_ENTRIES;
 
 class FileSystem {
@@ -133,10 +128,8 @@ class FileSystem {
     void Print();
 
    private:
-    OpenFile *freeMapFile;    ///< Bit map of free disk blocks, represented as a
-                              ///< file.
-    OpenFile *directoryFile;  ///< “Root” directory -- list of file names,
-                              ///< represented as a file.
+    FreeMap *freeMap;      /// Map of free sectors.
+    Directory *directory;  /// The root directory.
 
     OpenFileManager *openFileManager;
 

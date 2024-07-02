@@ -111,6 +111,9 @@ class OpenFile {
     /// Get the sector of the file header
     unsigned GetSector() const { return sector; }
 
+    /// Get the file header
+    FileHeader *GetFileHeader() const { return fileHeader; }
+
    private:
     unsigned sector;         ///< Sector on disk where the file header is located.
     RWLock *rwLock;          ///< Lock for concurrent access to the file.
