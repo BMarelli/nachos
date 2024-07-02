@@ -26,6 +26,7 @@
 
 #include "directory_entry.hh"
 #include "file_header.hh"
+#include "lib/assert.hh"
 
 /// Initialize a directory; initially, the directory is completely empty.  If
 /// the disk is being formatted, an empty directory is all we need, but

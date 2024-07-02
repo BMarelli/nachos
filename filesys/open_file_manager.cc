@@ -1,21 +1,25 @@
 #include "open_file_manager.hh"
 
 OpenFileManager::~OpenFileManager() {
-    for (auto &openFile : openFiles) delete openFile.second.rwLock;
+    for (auto &openFile : openFiles) {
+        delete openFile.second.rwLock;
+        delete openFile.second.fileHeader;
+    }
 }
 
 bool OpenFileManager::IsManaged(unsigned sector) { return openFiles.find(sector) != openFiles.end(); }
 
-void OpenFileManager::Manage(unsigned sector, unsigned referenceCount, RWLock *rwLock) {
+void OpenFileManager::Manage(unsigned sector, unsigned referenceCount, RWLock *rwLock, FileHeader *fileHeader) {
     ASSERT(!IsManaged(sector));
 
-    openFiles[sector] = {referenceCount, rwLock};
+    openFiles[sector] = {referenceCount, rwLock, fileHeader};
 }
 
 void OpenFileManager::Unmanage(unsigned sector) {
     ASSERT(IsManaged(sector));
 
     delete openFiles[sector].rwLock;
+    delete openFiles[sector].fileHeader;
 
     openFiles.erase(sector);
 }
@@ -48,4 +52,10 @@ RWLock *OpenFileManager::GetRWLock(unsigned sector) {
     ASSERT(IsManaged(sector));
 
     return openFiles[sector].rwLock;
+}
+
+FileHeader *OpenFileManager::GetFileHeader(unsigned sector) {
+    ASSERT(IsManaged(sector));
+
+    return openFiles[sector].fileHeader;
 }
