@@ -132,6 +132,9 @@ class FileSystem {
     /// List all the files and their contents.
     void Print();
 
+    /// Extend a file by a number of bytes.
+    bool ExtendFile(unsigned sector, unsigned bytes);
+
    private:
     OpenFile *freeMapFile;    ///< Bit map of free disk blocks, represented as a
                               ///< file.

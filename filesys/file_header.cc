@@ -90,6 +90,11 @@ bool FileHeader::Allocate(Bitmap *bitmap, unsigned fileSize) {
     return true;
 }
 
+// Extend a file header by a number of bytes, allocating more space on disk for the file data.
+bool FileHeader::Extend(Bitmap *bitmap, unsigned bytes) {
+    return false;  // TODO: implement
+}
+
 /// De-allocate all the space allocated for data blocks for this file.
 ///
 /// * `freeMap` is the bit map of free disk sectors.

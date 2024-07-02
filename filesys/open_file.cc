@@ -113,6 +113,7 @@ int OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position) {
     if (position + numBytes > fileLength) {
         numBytes = fileLength - position;
     }
+
     DEBUG('f', "Reading %u bytes at %u, from file of length %u.\n", numBytes, position, fileLength);
 
     firstSector = DivRoundDown(position, SECTOR_SIZE);
@@ -145,14 +146,16 @@ int OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position) {
     bool firstAligned, lastAligned;
     char *buf;
 
-    if (position >= fileLength) {
-        rwLock->ReleaseWrite();
-
-        return 0;  // Check request.
-    }
     if (position + numBytes > fileLength) {
-        numBytes = fileLength - position;
+        if (!fileSystem->ExtendFile(sector, position + numBytes - fileLength)) {
+            rwLock->ReleaseWrite();
+
+            return 0;
+        }
+
+        ASSERT(fileHeader->FileLength() == position + numBytes);
     }
+
     DEBUG('f', "Writing %u bytes at %u, from file of length %u.\n", numBytes, position, fileLength);
 
     firstSector = DivRoundDown(position, SECTOR_SIZE);

@@ -115,7 +115,8 @@ bool Directory::Add(const char *name, int newSector) {
             return true;
         }
     }
-    return false;  // no space.  Fix when we have extensible files.
+
+    return false;  // TODO: implement expansion
 }
 
 /// Remove a file name from the directory.   Return true if successful;

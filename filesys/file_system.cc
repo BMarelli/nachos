@@ -359,6 +359,26 @@ bool FileSystem::Remove(const char *name) {
     return true;
 }
 
+bool FileSystem::ExtendFile(unsigned sector, unsigned bytes) {
+    ASSERT(openFileManager->IsManaged(sector));
+
+    FileHeader *fileHeader = openFileManager->GetFileHeader(sector);
+
+    Bitmap *bitmap = new Bitmap(NUM_SECTORS);
+    bitmap->FetchFrom(freeMapFile);
+
+    bool success = fileHeader->Extend(bitmap, bytes);
+
+    if (success) {
+        bitmap->WriteBack(freeMapFile);
+        fileHeader->WriteBack(sector);
+    }
+
+    delete bitmap;
+
+    return success;
+}
+
 void FileSystem::FreeFile(unsigned sector) {
     FileHeader *fileH = new FileHeader;
     fileH->FetchFrom(sector);

@@ -35,6 +35,10 @@ class FileHeader {
     /// file data.
     bool Allocate(Bitmap *bitmap, unsigned fileSize);
 
+    /// Extend a file header by a number of bytes, allocating more space on disk
+    /// for the file data.
+    bool Extend(Bitmap *bitmap, unsigned bytes);
+
     /// De-allocate this file's data blocks.
     void Deallocate(Bitmap *bitmap);
 
