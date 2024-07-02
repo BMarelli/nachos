@@ -104,8 +104,8 @@ FileSystem::FileSystem(bool format) {
         // The file system operations assume these two files are left open
         // while Nachos is running.
 
-        freeMapFile = new OpenFile(FREE_MAP_SECTOR, new RWLock());
-        directoryFile = new OpenFile(DIRECTORY_SECTOR, new RWLock());
+        freeMapFile = new OpenFile(FREE_MAP_SECTOR, new RWLock(), mapH);
+        directoryFile = new OpenFile(DIRECTORY_SECTOR, new RWLock(), dirH);
 
         // Once we have the files “open”, we can write the initial version of
         // each file back to disk.  The directory at this point is completely
@@ -130,8 +130,14 @@ FileSystem::FileSystem(bool format) {
         // If we are not formatting the disk, just open the files
         // representing the bitmap and directory; these are left open while
         // Nachos is running.
-        freeMapFile = new OpenFile(FREE_MAP_SECTOR, new RWLock());
-        directoryFile = new OpenFile(DIRECTORY_SECTOR, new RWLock());
+        FileHeader *mapH = new FileHeader;
+        mapH->FetchFrom(FREE_MAP_SECTOR);
+
+        FileHeader *dirH = new FileHeader;
+        dirH->FetchFrom(DIRECTORY_SECTOR);
+
+        freeMapFile = new OpenFile(FREE_MAP_SECTOR, new RWLock(), mapH);
+        directoryFile = new OpenFile(DIRECTORY_SECTOR, new RWLock(), dirH);
 
         Bitmap *freeMap = new Bitmap(NUM_SECTORS);
         freeMap->FetchFrom(freeMapFile);
@@ -259,19 +265,22 @@ OpenFile *FileSystem::Open(const char *name) {
     if (sector == -1) {
         delete dir;
 
-        return nullptr;  // file not found
+        return nullptr;
     }
 
     delete dir;
 
     if (!openFileManager->IsManaged(sector)) {
         RWLock *rwLock = new RWLock();
-        openFileManager->Manage(sector, 0, rwLock);
+        FileHeader *fileHeader = new FileHeader;
+        fileHeader->FetchFrom(sector);
+
+        openFileManager->Manage(sector, 0, rwLock, fileHeader);
     }
 
     openFileManager->IncrementReferenceCount(sector);
 
-    return new OpenFile(sector, openFileManager->GetRWLock(sector));
+    return new OpenFile(sector, openFileManager->GetRWLock(sector), openFileManager->GetFileHeader(sector));
 }
 
 void FileSystem::Close(OpenFile *file) {
@@ -326,7 +335,7 @@ bool FileSystem::Remove(const char *name) {
     if (sector == -1) {
         delete dir;
 
-        return false;  // file not found
+        return false;
     }
 
     if (openFileManager->GetReferenceCount(sector) > 0) {

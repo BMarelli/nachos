@@ -5,6 +5,7 @@
 
 #include "executable.hh"
 
+#include "lib/assert.hh"
 #include "machine/endianness.hh"
 
 /// Do little endian to big endian conversion on the bytes in the object file

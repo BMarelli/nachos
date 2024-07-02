@@ -2,6 +2,7 @@
 
 #include <map>
 
+#include "filesys/file_header.hh"
 #include "threads/rwlock.hh"
 
 class OpenFileManager {
@@ -10,7 +11,7 @@ class OpenFileManager {
     ~OpenFileManager();
 
     bool IsManaged(unsigned sector);
-    void Manage(unsigned sector, unsigned referenceCount, RWLock *rwLock);
+    void Manage(unsigned sector, unsigned referenceCount, RWLock *rwLock, FileHeader *fileHeader);
     void Unmanage(unsigned sector);
 
     unsigned GetReferenceCount(unsigned sector);
@@ -19,10 +20,13 @@ class OpenFileManager {
 
     RWLock *GetRWLock(unsigned sector);
 
+    FileHeader *GetFileHeader(unsigned sector);
+
    private:
     struct OpenFileInfo {
         unsigned referenceCount;
         RWLock *rwLock;
+        FileHeader *fileHeader;
     };
 
     std::map<unsigned, OpenFileInfo> openFiles;
