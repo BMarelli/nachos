@@ -31,6 +31,9 @@
 /// reading it from disk.
 class FileHeader {
    public:
+    FileHeader() = default;
+    ~FileHeader();
+
     /// Initialize a file header, including allocating space on disk for the
     /// file data.
     bool Allocate(Bitmap *bitmap, unsigned fileSize);
@@ -67,6 +70,7 @@ class FileHeader {
    private:
     RawFileHeader raw;
     unsigned *indirectDataSectors;
+    unsigned *doubleIndirectSectors;
     unsigned **doubleIndirectDataSectors;
 
     unsigned GetSector(unsigned i);
