@@ -74,6 +74,8 @@ class FileHeader {
     unsigned **doubleIndirectDataSectors;
 
     unsigned GetSector(unsigned i);
+
+    unsigned CalculateRequiredSectors(unsigned fileSize);
 };
 
 #endif
