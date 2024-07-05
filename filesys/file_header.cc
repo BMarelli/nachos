@@ -33,6 +33,15 @@
 #include "lib/utility.hh"
 #include "threads/system.hh"
 
+FileHeader::FileHeader() {
+    raw.numBytes = 0;
+    raw.numSectors = 0;
+
+    indirectDataSectors = nullptr;
+    doubleIndirectSectors = nullptr;
+    doubleIndirectDataSectors = nullptr;
+}
+
 FileHeader::~FileHeader() {
     if (raw.numSectors <= NUM_DIRECT) return;
 
@@ -42,8 +51,9 @@ FileHeader::~FileHeader() {
 
     delete[] doubleIndirectSectors;
 
-    unsigned numDoubleIndirectSectors = DivRoundUp(raw.numSectors - NUM_DIRECT - NUM_INDIRECT, NUM_INDIRECT);
-    for (unsigned i = 0; i < numDoubleIndirectSectors; i++) delete[] doubleIndirectDataSectors[i];
+    for (unsigned i = 0; i < DivRoundUp(raw.numSectors - NUM_DIRECT - NUM_INDIRECT, NUM_INDIRECT); i++) {
+        delete[] doubleIndirectDataSectors[i];
+    }
 
     delete[] doubleIndirectDataSectors;
 }
@@ -52,7 +62,7 @@ FileHeader::~FileHeader() {
 /// blocks for the file out of the map of free disk blocks.  Return false if
 /// there are not enough free blocks to accomodate the new file.
 ///
-/// * `freeMap` is the bit map of free disk sectors.
+/// * `bitmap` is the bit map of free disk sectors.
 /// * `fileSize` is the bit map of free disk sectors.
 bool FileHeader::Allocate(Bitmap *bitmap, unsigned fileSize) {
     ASSERT(bitmap != nullptr);
@@ -121,7 +131,7 @@ bool FileHeader::Extend(Bitmap *bitmap, unsigned bytes) {
 
 /// De-allocate all the space allocated for data blocks for this file.
 ///
-/// * `freeMap` is the bit map of free disk sectors.
+/// * `bitmap` is the bit map of free disk sectors.
 void FileHeader::Deallocate(Bitmap *bitmap) {
     ASSERT(bitmap != nullptr);
 

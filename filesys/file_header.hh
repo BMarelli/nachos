@@ -31,7 +31,7 @@
 /// reading it from disk.
 class FileHeader {
    public:
-    FileHeader() = default;
+    FileHeader();
     ~FileHeader();
 
     /// Initialize a file header, including allocating space on disk for the
