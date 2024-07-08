@@ -100,7 +100,7 @@ int Directory::Find(const char *name) {
 ///
 /// * `name` is the name of the file being added.
 /// * `newSector` is the disk sector containing the added file's header.
-bool Directory::Add(const char *name, int newSector) {
+bool Directory::Add(const char *name, int newSector, bool isDirectory = false) {
     ASSERT(name != nullptr);
 
     if (FindIndex(name) != -1) {
@@ -110,6 +110,7 @@ bool Directory::Add(const char *name, int newSector) {
     for (unsigned i = 0; i < raw.tableSize; i++) {
         if (!raw.table[i].inUse) {
             raw.table[i].inUse = true;
+            raw.table[i].isDirectory = isDirectory;
             strncpy(raw.table[i].name, name, FILE_NAME_MAX_LEN);
             raw.table[i].sector = newSector;
             return true;

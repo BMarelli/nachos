@@ -25,6 +25,8 @@ class DirectoryEntry {
     unsigned sector;
     /// Text name for file, with +1 for the trailing `'\0'`.
     char name[FILE_NAME_MAX_LEN + 1];
+    /// Is this directory entry a directory?
+    bool isDirectory;
 };
 
 #endif
