@@ -100,7 +100,7 @@ int Directory::Find(const char *name) {
 ///
 /// * `name` is the name of the file being added.
 /// * `newSector` is the disk sector containing the added file's header.
-bool Directory::Add(const char *name, int newSector, bool isDirectory = false) {
+bool Directory::Add(const char *name, int newSector, bool isDirectory) {
     ASSERT(name != nullptr);
 
     if (FindIndex(name) != -1) {
