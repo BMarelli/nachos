@@ -20,6 +20,12 @@
 #include "userprog/exception.hh"
 #endif
 
+#define FILESYS_DISK_CACHE
+
+#ifdef FILESYS
+#include "filesys/cached_synch_disk.hh"
+#endif
+
 /// This defines *all* of the global data structures used by Nachos.
 ///
 /// These are all initialized and de-allocated by this file.
@@ -245,7 +251,11 @@ void Initialize(int argc, char **argv) {
 #endif
 
 #ifdef FILESYS
+#ifdef FILESYS_DISK_CACHE
+    synchDisk = new CachedSynchDisk("DISK");
+#else
     synchDisk = new SynchDisk("DISK");
+#endif
 #endif
 
 #ifdef FILESYS_NEEDED
@@ -268,19 +278,19 @@ void Cleanup() {
     delete postOffice;
 #endif
 
-#ifdef USER_PROGRAM
-    delete machine;
-    delete memoryMap;
-    delete synchConsole;
-    delete processTable;
-#endif
-
 #ifdef FILESYS_NEEDED
     delete fileSystem;
 #endif
 
 #ifdef FILESYS
     delete synchDisk;
+#endif
+
+#ifdef USER_PROGRAM
+    delete machine;
+    delete memoryMap;
+    delete synchConsole;
+    delete processTable;
 #endif
 
     delete timer;

@@ -28,14 +28,14 @@ class SynchDisk {
     SynchDisk(const char *name);
 
     /// De-allocate the synch disk data.
-    ~SynchDisk();
+    virtual ~SynchDisk();
 
     /// Read/write a disk sector, returning only once the data is actually
     /// read or written.  These call `Disk::ReadRequest`/`WriteRequest` and
     /// then wait until the request is done.
 
-    void ReadSector(int sectorNumber, char *data);
-    void WriteSector(int sectorNumber, const char *data);
+    virtual void ReadSector(int sectorNumber, char *data);
+    virtual void WriteSector(int sectorNumber, const char *data);
 
     /// Called by the disk device interrupt handler, to signal that the
     /// current disk operation is complete.
