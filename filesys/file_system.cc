@@ -46,10 +46,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "directory.hh"
 #include "file_header.hh"
+#include "filesys/directory.hh"
 #include "lib/bitmap.hh"
 #include "lib/debug.hh"
+#include "lib/utility.hh"
+#include "rwlock.hh"
 
 /// Sectors containing the file headers for the bitmap of free sectors, and
 /// the directory of files.  These file headers are placed in well-known
@@ -146,7 +148,7 @@ FileSystem::FileSystem(bool format) {
         dir->FetchFrom(directoryFile);
 
         bool dirty = false;
-        for (unsigned i = 0; i < NUM_DIR_ENTRIES; i++) {
+        for (unsigned i = 0; i < NUM_DIR_ENTRIES; i++) {  // FIXME: once we have extensible directories, this may not cover all entries
             unsigned sector = dir->GetRaw()->table[i].sector;
 
             if (dir->IsMarkedForDeletion(sector)) {
@@ -207,7 +209,7 @@ FileSystem::~FileSystem() {
 ///
 /// * `name` is the name of file to be created.
 /// * `initialSize` is the size of file to be created.
-bool FileSystem::Create(const char *name, unsigned initialSize) {
+bool FileSystem::CreateFile(const char *name, unsigned initialSize) {
     ASSERT(name != nullptr);
     ASSERT(initialSize < MAX_FILE_SIZE);
 
@@ -251,6 +253,59 @@ bool FileSystem::Create(const char *name, unsigned initialSize) {
         }
         delete freeMap;
     }
+    delete dir;
+
+    lock->Release();
+
+    return success;
+}
+
+bool FileSystem::CreateDirectory(const char *path) {
+    ASSERT(path != nullptr);
+
+    lock->Acquire();
+
+    Directory *dir = new Directory(NUM_DIR_ENTRIES);
+    dir->FetchFrom(directoryFile);
+
+    bool success;
+
+    if (dir->Find(path) != -1) {  // FIXME: should check for either file or directory
+        success = false;
+    } else {
+        Bitmap *freeMap = new Bitmap(NUM_SECTORS);
+        freeMap->FetchFrom(freeMapFile);
+
+        int sector = freeMap->Find();
+        if (sector == -1) {
+            success = false;
+        } else {
+            FileHeader *fileHeader = new FileHeader;
+            if (!fileHeader->Allocate(freeMap, DIRECTORY_FILE_SIZE)) {
+                success = false;
+            } else {
+                Directory *newDir = new Directory(NUM_DIR_ENTRIES);
+
+                if (!dir->Add(path, sector, true)) {
+                    success = false;
+                } else {
+                    newDir->WriteBack(new OpenFile(sector, new RWLock(), fileHeader));  // FIXME: memory leak
+                    fileHeader->WriteBack(sector);
+                    dir->WriteBack(directoryFile);
+                    freeMap->WriteBack(freeMapFile);
+
+                    success = true;
+                }
+
+                delete newDir;
+            }
+
+            delete fileHeader;
+        }
+
+        delete freeMap;
+    }
+
     delete dir;
 
     lock->Release();
@@ -321,7 +376,7 @@ void FileSystem::Close(OpenFile *file) {
 
         openFileManager->Unmanage(file->GetSector());
 
-        Directory *dir = new Directory(NUM_DIR_ENTRIES);
+        Directory *dir = new Directory(NUM_DIR_ENTRIES);  // TODO: seems like this will be a challenge
         dir->FetchFrom(directoryFile);
 
         if (dir->IsMarkedForDeletion(file->GetSector())) {
@@ -447,18 +502,41 @@ void FileSystem::FreeFile(unsigned sector) {
     delete freeMap;
 }
 
-/// List all the files in the file system directory.
-void FileSystem::List() {
+/// List files in a directory.
+char *FileSystem::ListDirectoryContents(const char *path) {
     lock->Acquire();
 
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
-
     dir->FetchFrom(directoryFile);
-    dir->List();
+
+    if (path != nullptr) {
+        unsigned sector = dir->FindDirectory(path);
+        if (sector == -1) {
+            delete dir;
+
+            lock->Release();
+
+            return nullptr;
+        }
+
+        FileHeader *fileHeader = new FileHeader;
+        fileHeader->FetchFrom(sector);
+
+        RWLock *dummy = new RWLock();
+        OpenFile *file = new OpenFile(sector, dummy, fileHeader);
+
+        dir->FetchFrom(file);
+
+        delete dummy;
+    }
+
+    char *contents = nullptr;  // FIXME: list
 
     delete dir;
 
     lock->Release();
+
+    return contents;
 }
 
 static bool AddToShadowBitmap(unsigned sector, Bitmap *map) {

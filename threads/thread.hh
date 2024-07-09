@@ -181,6 +181,10 @@ class Thread {
     /// state while executing kernel code.
     int userRegisters[NUM_TOTAL_REGS];
 #endif
+
+#ifdef FILESYS
+// current directory?
+#endif
 };
 
 /// Magical machine-dependent routines, defined in `switch.s`.

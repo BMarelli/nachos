@@ -50,4 +50,20 @@ inline T Max(T a, T b) {
     return a > b ? a : b;
 }
 
+// strlen(source) if missing
+inline size_t Find(const char* source, char c) {
+    unsigned i = 0;
+    while (source[i] != c && source[i] != '\0') ++i;
+
+    return i;
+}
+
+// -1 if missing
+inline size_t FindLast(const char* source, char c) {
+    unsigned i = strlen(source);
+    while (i > 0 && source[i - 1] != c) --i;
+
+    return i - 1;
+}
+
 #endif

@@ -81,17 +81,34 @@ int Directory::FindIndex(const char *name, bool includeMarkedForDeletion) {
 
 /// Look up file name in directory, and return the disk sector number where
 /// the file's header is stored.  Return -1 if the name is not in the
-/// directory.
+/// directory, or if the entry is not a file (i.e. it is a subdirectory).
 ///
 /// * `name` is the file name to look up.
 int Directory::Find(const char *name) {
     ASSERT(name != nullptr);
 
     int i = FindIndex(name);
-    if (i != -1) {
-        return raw.table[i].sector;
-    }
-    return -1;
+    if (i == -1) return -1;
+
+    if (raw.table[i].isDirectory) return -1;
+
+    return raw.table[i].sector;
+}
+
+/// Look up directory name in directory, and return the disk sector number
+/// where the directory's file header is stored.  Return -1 if the name is not
+/// in the directory, or if the entry is not a directory.
+///
+/// * `name` is the directory name to look up.
+int Directory::FindDirectory(const char *name) {
+    ASSERT(name != nullptr);
+
+    int i = FindIndex(name);
+    if (i == -1) return -1;
+
+    if (!raw.table[i].isDirectory) return -1;
+
+    return raw.table[i].sector;
 }
 
 /// Add a file into the directory.  Return true if successful; return false
@@ -181,6 +198,25 @@ bool Directory::IsMarkedForDeletion(unsigned sector) {
     return false;
 }
 
+// FIXME: wip
+char *Directory::ListContents() const {
+    char *buffer = new char[raw.tableSize * (FILE_NAME_MAX_LEN + 1)];
+    char *ptr = buffer;
+
+    for (unsigned i = 0; i < raw.tableSize; i++) {
+        if (raw.table[i].inUse) {
+            strncpy(ptr, raw.table[i].name, strlen(raw.table[i].name) + 1);
+            ptr += strlen(raw.table[i].name) + 1;
+            *ptr = ' ';
+            ptr++;
+        }
+    }
+
+    *ptr = '\0';
+
+    return buffer;
+}
+
 /// List all the file names in the directory.
 void Directory::List() const {
     for (unsigned i = 0; i < raw.tableSize; i++) {
@@ -192,6 +228,7 @@ void Directory::List() const {
 
 /// List all the file names in the directory, their `FileHeader` locations,
 /// and the contents of each file.  For debugging.
+/// TODO: recursive print
 void Directory::Print() const {
     FileHeader *hdr = new FileHeader;
 

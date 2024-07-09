@@ -30,6 +30,7 @@
 #include "lib/debug.hh"
 #include "lib/utility.hh"
 #include "machine.hh"
+#include "synch_console.hh"
 #include "syscall.h"
 #include "threads/system.hh"
 #include "transfer.hh"
@@ -186,7 +187,7 @@ static void HandleCreate() {
 
     DEBUG('e', "`Create` requested for file `%s`.\n", filepath);
 
-    if (!fileSystem->Create(filepath, 0)) {
+    if (!fileSystem->CreateFile(filepath, 0)) {
         DEBUG('e', "Error: file `%s` could not be created.\n", filepath);
 
         machine->WriteRegister(2, -1);
@@ -444,36 +445,42 @@ static void HandlePS() {
 }
 
 static void HandleCD() {
-    char path[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromFirstArgument(path)) {
-        machine->WriteRegister(2, -1);
-        return;
-    }
-
-    DEBUG('e', "Cd requested.\n");
-
     // TODO: implement
 }
 
 static void HandleMkdir() {
     char filepath[FILE_NAME_MAX_LEN + 1];
-    ReadStringFromFirstArgument(filepath);
+    if (!ReadStringFromFirstArgument(filepath)) {
+        machine->WriteRegister(2, -1);
+        return;
+    }
 
     DEBUG('e', "Mkdir requested.\n");
 
-    // TODO: implement
+    if (!fileSystem->CreateDirectory(filepath)) {
+        machine->WriteRegister(2, -1);
+        return;
+    }
+
+    machine->WriteRegister(2, 0);
 }
 
 static void HandleLs() {
+    // FIXME: empty string for ls vs nullptr
+
     char filepath[FILE_NAME_MAX_LEN + 1];
-    ReadStringFromFirstArgument(filepath);
+    if (!ReadStringFromFirstArgument(filepath)) {
+        machine->WriteRegister(2, -1);
+        return;
+    }
 
     DEBUG('e', "Ls requested.\n");
 
-    // TODO: implement
-    // char* contents = fileSystem->ListDirectory(filepath);
-    // synchConsole->Write(contents, sizeof contents);
-    // delete contents;
+    char *contents = fileSystem->List(filepath);
+
+    synchConsole->Write(contents, sizeof contents);
+
+    delete contents;
 }
 
 /// Handle a system call exception.

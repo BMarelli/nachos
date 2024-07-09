@@ -172,9 +172,9 @@ int main(int argc, char **argv) {
             ASSERT(argc > 1);
             fileSystem->Remove(*(argv + 1));
             argCount = 2;
-        } else if (!strcmp(*argv, "-ls")) {  // List Nachos directory.
-            fileSystem->List();
-            printf("\n");
+            // } else if (!strcmp(*argv, "-ls")) {  // List Nachos directory.
+            //     fileSystem->List();
+            //     printf("\n");
         } else if (!strcmp(*argv, "-D")) {  // Print entire filesystem.
             fileSystem->Print();
             printf("\n");

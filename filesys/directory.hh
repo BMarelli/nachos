@@ -43,6 +43,9 @@ class Directory {
     /// Find the sector number of the `FileHeader` for file: `name`.
     int Find(const char *name);
 
+    /// Find the sector number of the `FileHeader` for directory: `name`.
+    int FindDirectory(const char *name);
+
     /// Add a file name into the directory.
     bool Add(const char *name, int newSector, bool isDirectory = false);
 

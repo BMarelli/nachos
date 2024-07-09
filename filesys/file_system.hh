@@ -54,7 +54,7 @@ class FileSystem {
 
     ~FileSystem() {}
 
-    bool Create(const char *name, unsigned initialSize) {
+    bool CreateFile(const char *name, unsigned initialSize) {
         ASSERT(name != nullptr);
 
         int fileDescriptor = SystemDep::OpenForWrite(name);
@@ -63,6 +63,20 @@ class FileSystem {
         }
         SystemDep::Close(fileDescriptor);
         return true;
+    }
+
+    // FIXME: fixme
+    bool CreateDirectory(const char *path) {
+        ASSERT(path != nullptr);
+
+        return false;
+    }
+
+    // FIXME: fixme
+    char *List(const char *path) {
+        ASSERT(path != nullptr);
+
+        return nullptr;
     }
 
     OpenFile *Open(const char *name) {
@@ -88,6 +102,7 @@ class FileSystem {
 
 #else  // FILESYS
 
+#include "directory.hh"
 #include "directory_entry.hh"
 #include "lib/utility.hh"
 #include "machine/disk.hh"
@@ -112,7 +127,10 @@ class FileSystem {
     ~FileSystem();
 
     /// Create a file (UNIX `creat`).
-    bool Create(const char *name, unsigned initialSize);
+    bool CreateFile(const char *name, unsigned initialSize);
+
+    /// Create a directory (UNIX `mkdir`).
+    bool CreateDirectory(const char *path);
 
     /// Open a file (UNIX `open`).
     OpenFile *Open(const char *name);
@@ -123,8 +141,8 @@ class FileSystem {
     /// Delete a file (UNIX `unlink`).
     bool Remove(const char *name);
 
-    /// List all the files in the file system.
-    void List();
+    /// List all files in a directory (UNIX `ls`).
+    char *ListDirectoryContents(const char *path);
 
     /// Check the filesystem.
     bool Check();
@@ -132,14 +150,8 @@ class FileSystem {
     /// List all the files and their contents.
     void Print();
 
-    /// List all content in directory
-    // char* ListDirectory(const char *name);
-
     // Change current directory.
     // void ChangeDirectory(const char *name);
-
-    // Create a directory.
-    // bool CreateDirectory(const char *name);
 
     /// Extend a file by a number of bytes.
     bool ExtendFile(unsigned sector, unsigned bytes);
@@ -153,6 +165,9 @@ class FileSystem {
                               ///< represented as a file.
 
     OpenFileManager *openFileManager;
+
+    /// Load a directory from disk.
+    Directory *LoadDirectory(char *path);
 
     /// Free a file located at the given sector.
     void FreeFile(unsigned sector);
