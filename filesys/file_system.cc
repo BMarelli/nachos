@@ -70,6 +70,7 @@ static const unsigned DIRECTORY_SECTOR = 1;
 FileSystem::FileSystem(bool format) {
     DEBUG('f', "Initializing the file system.\n");
 
+    lock = new Lock();
     openFileManager = new OpenFileManager();
 
     if (format) {
@@ -176,6 +177,7 @@ FileSystem::FileSystem(bool format) {
 }
 
 FileSystem::~FileSystem() {
+    delete lock;
     delete freeMapFile;
     delete directoryFile;
     delete openFileManager;
@@ -210,6 +212,8 @@ bool FileSystem::Create(const char *name, unsigned initialSize) {
     ASSERT(name != nullptr);
     ASSERT(initialSize < MAX_FILE_SIZE);
 
+    lock->Acquire();
+
     DEBUG('f', "Creating file %s, size %u\n", name, initialSize);
 
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
@@ -243,6 +247,9 @@ bool FileSystem::Create(const char *name, unsigned initialSize) {
         delete freeMap;
     }
     delete dir;
+
+    lock->Release();
+
     return success;
 }
 
@@ -256,6 +263,8 @@ bool FileSystem::Create(const char *name, unsigned initialSize) {
 OpenFile *FileSystem::Open(const char *name) {
     ASSERT(name != nullptr);
 
+    lock->Acquire();
+
     DEBUG('f', "Opening file %s\n", name);
 
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
@@ -264,6 +273,8 @@ OpenFile *FileSystem::Open(const char *name) {
     int sector = dir->Find(name);
     if (sector == -1) {
         delete dir;
+
+        lock->Release();
 
         return nullptr;
     }
@@ -280,10 +291,16 @@ OpenFile *FileSystem::Open(const char *name) {
 
     openFileManager->IncrementReferenceCount(sector);
 
-    return new OpenFile(sector, openFileManager->GetRWLock(sector), openFileManager->GetFileHeader(sector));
+    OpenFile *file = new OpenFile(sector, openFileManager->GetRWLock(sector), openFileManager->GetFileHeader(sector));
+
+    lock->Release();
+
+    return file;
 }
 
 void FileSystem::Close(OpenFile *file) {
+    lock->Acquire();
+
     DEBUG('f', "Closing file %u\n", file->GetSector());
 
     unsigned referenceCount = openFileManager->DecrementReferenceCount(file->GetSector());
@@ -309,6 +326,8 @@ void FileSystem::Close(OpenFile *file) {
     }
 
     delete file;
+
+    lock->Release();
 }
 
 /// Delete a file from the file system.
@@ -326,6 +345,8 @@ void FileSystem::Close(OpenFile *file) {
 bool FileSystem::Remove(const char *name) {
     ASSERT(name != nullptr);
 
+    lock->Acquire();
+
     DEBUG('f', "Removing file %s\n", name);
 
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
@@ -334,6 +355,8 @@ bool FileSystem::Remove(const char *name) {
     int sector = dir->Find(name);
     if (sector == -1) {
         delete dir;
+
+        lock->Release();
 
         return false;
     }
@@ -346,6 +369,8 @@ bool FileSystem::Remove(const char *name) {
 
         delete dir;
 
+        lock->Release();
+
         return true;
     }
 
@@ -356,11 +381,15 @@ bool FileSystem::Remove(const char *name) {
 
     delete dir;
 
+    lock->Release();
+
     return true;
 }
 
 bool FileSystem::ExtendFile(unsigned sector, unsigned bytes) {
     ASSERT(openFileManager->IsManaged(sector));
+
+    lock->Acquire();
 
     FileHeader *fileHeader = openFileManager->GetFileHeader(sector);
 
@@ -376,10 +405,14 @@ bool FileSystem::ExtendFile(unsigned sector, unsigned bytes) {
 
     delete bitmap;
 
+    lock->Release();
+
     return success;
 }
 
 void FileSystem::FreeFile(unsigned sector) {
+    ASSERT(lock->IsHeldByCurrentThread());
+
     FileHeader *fileH = new FileHeader;
     fileH->FetchFrom(sector);
 
@@ -399,11 +432,16 @@ void FileSystem::FreeFile(unsigned sector) {
 
 /// List all the files in the file system directory.
 void FileSystem::List() {
+    lock->Acquire();
+
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
 
     dir->FetchFrom(directoryFile);
     dir->List();
+
     delete dir;
+
+    lock->Release();
 }
 
 static bool AddToShadowBitmap(unsigned sector, Bitmap *map) {
@@ -509,6 +547,8 @@ static bool CheckDirectory(const RawDirectory *rd, Bitmap *shadowMap) {
 }
 
 bool FileSystem::Check() {
+    lock->Acquire();
+
     DEBUG('f', "Performing filesystem check\n");
     bool error = false;
 
@@ -554,6 +594,8 @@ bool FileSystem::Check() {
 
     DEBUG('f', error ? "Filesystem check failed.\n" : "Filesystem check succeeded.\n");
 
+    lock->Release();
+
     return !error;
 }
 
@@ -564,6 +606,8 @@ bool FileSystem::Check() {
 ///   * the contents of the file header;
 ///   * the data in the file.
 void FileSystem::Print() {
+    lock->Acquire();
+
     FileHeader *bitH = new FileHeader;
     FileHeader *dirH = new FileHeader;
     Bitmap *freeMap = new Bitmap(NUM_SECTORS);
@@ -590,4 +634,6 @@ void FileSystem::Print() {
     delete dirH;
     delete freeMap;
     delete dir;
+
+    lock->Release();
 }

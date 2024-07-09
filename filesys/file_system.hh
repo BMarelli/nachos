@@ -136,6 +136,8 @@ class FileSystem {
     bool ExtendFile(unsigned sector, unsigned bytes);
 
    private:
+    Lock *lock;  ///< Lock to protect the file system structure.
+
     OpenFile *freeMapFile;    ///< Bit map of free disk blocks, represented as a
                               ///< file.
     OpenFile *directoryFile;  ///< “Root” directory -- list of file names,
