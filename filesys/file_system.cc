@@ -50,7 +50,6 @@
 #include "file_header.hh"
 #include "lib/bitmap.hh"
 #include "lib/debug.hh"
-#include "rwlock.hh"
 
 /// Sectors containing the file headers for the bitmap of free sectors, and
 /// the directory of files.  These file headers are placed in well-known
@@ -216,6 +215,12 @@ bool FileSystem::Create(const char *name, unsigned initialSize) {
 
     DEBUG('f', "Creating file %s, size %u\n", name, initialSize);
 
+    // TODO:
+    // - grab path (name[0 .. last location of /])
+    // - if length(path) > 0, cd path
+    // - create(name[last location of / + 1 .. end], initialSize) on cd'd directory
+    // req: should not actually change curr dir
+
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(directoryFile);
 
@@ -266,6 +271,12 @@ OpenFile *FileSystem::Open(const char *name) {
     lock->Acquire();
 
     DEBUG('f', "Opening file %s\n", name);
+
+    // TODO:
+    // - grab path (name[0 .. last location of /])
+    // - if length(path) > 0, cd path
+    // - open(name[last location of / + 1 .. end], initialSize) on cd'd directory
+    // req: should not actually change curr dir
 
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(directoryFile);
@@ -348,6 +359,12 @@ bool FileSystem::Remove(const char *name) {
     lock->Acquire();
 
     DEBUG('f', "Removing file %s\n", name);
+
+    // TODO:
+    // - grab path (name[0 .. last location of /])
+    // - if length(path) > 0, get directory (path)
+    // - remove(name[last location of / + 1 .. end], initialSize) on cd'd directory
+    // req: should not actually change curr dir
 
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(directoryFile);

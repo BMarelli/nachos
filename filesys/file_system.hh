@@ -132,6 +132,15 @@ class FileSystem {
     /// List all the files and their contents.
     void Print();
 
+    /// List all content in directory
+    // char* ListDirectory(const char *name);
+
+    // Change current directory.
+    // void ChangeDirectory(const char *name);
+
+    // Create a directory.
+    // bool CreateDirectory(const char *name);
+
     /// Extend a file by a number of bytes.
     bool ExtendFile(unsigned sector, unsigned bytes);
 

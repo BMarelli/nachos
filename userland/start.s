@@ -141,6 +141,30 @@ Ps:
         j       $31
         .end    Ps
 
+        .globl Mkdir
+        .ent   Mkdir
+Mkdir:
+        addiu   $2, $0, SC_MKDIR
+        syscall
+        j       $31
+        .end Mkdir
+
+        .globl  Cd
+        .ent    Cd
+Cd:
+        addiu   $2, $0, SC_CD
+        syscall
+        j       $31
+        .end    Cd
+
+        .globl  Ls
+        .ent    Ls
+Ls:
+        addiu   $2, $0, SC_LS
+        syscall
+        j       $31
+        .end    Ls
+
 /// Dummy function to keep gcc happy.
         .globl  __main
         .ent    __main

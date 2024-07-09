@@ -31,6 +31,10 @@
 #define SC_READ 14
 #define SC_WRITE 15
 #define SC_PS 16
+#define SC_CD 17
+#define SC_MKDIR 18
+#define SC_LS 19
+
 
 #ifndef IN_ASM
 
@@ -117,6 +121,15 @@ int Read(char *buffer, int size, OpenFileId id);
 
 /// Close the file, we are done reading and writing to it.
 int Close(OpenFileId id);
+
+/// Create a directory named `name`.
+int Mkdir(const char *name);
+
+/// Change working directory to the directory named `name`.
+int Cd(const char *name);
+
+/// List content of the directory named `name`.
+int Ls(const char *name);
 
 /// Print the current status of the scheduler.
 void Ps();

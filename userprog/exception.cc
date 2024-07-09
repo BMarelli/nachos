@@ -45,6 +45,23 @@ static void IncrementPC() {
     machine->WriteRegister(NEXT_PC_REG, pc);
 }
 
+// TODO: ensure callers to this function use consistent buffer naming + size
+static bool ReadStringFromFirstArgument(char *buffer) {
+    int filenameAddr = machine->ReadRegister(4);
+
+    if (filenameAddr == 0) {
+        DEBUG('e', "Error: address to user string is null.\n");
+        return false;
+    }
+
+    if (!ReadStringFromUser(filenameAddr, buffer, sizeof buffer)) {
+        DEBUG('e', "Error: string too long (maximum is %u bytes).\n", sizeof buffer);
+        return false;
+    }
+
+    return true;
+}
+
 /// Do some default behavior for an unexpected exception.
 ///
 /// NOTE: this function is meant specifically for unexpected exceptions.  If
@@ -113,23 +130,14 @@ static void HandleJoin() {
 }
 
 static void HandleExec() {
-    int filenameAddr = machine->ReadRegister(4);
-    int argsAddr = machine->ReadRegister(5);
-
-    if (filenameAddr == 0) {
-        DEBUG('e', "Error: address to filename string is null.\n");
-
-        machine->WriteRegister(2, -1);
-        return;
-    }
-
     char filename[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
-        DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n", FILE_NAME_MAX_LEN);
-
+    if (!ReadStringFromFirstArgument(filename)) {
         machine->WriteRegister(2, -1);
+
         return;
     }
+
+    int argsAddr = machine->ReadRegister(5);
 
     OpenFile *executable = fileSystem->Open(filename);
     if (executable == nullptr) {
@@ -169,50 +177,30 @@ static void HandleExit() {
 }
 
 static void HandleCreate() {
-    int filenameAddr = machine->ReadRegister(4);
+    char filepath[FILE_NAME_MAX_LEN + 1];
+    if (!ReadStringFromFirstArgument(filepath)) {
+        machine->WriteRegister(2, -1);
 
-    if (filenameAddr == 0) {
-        DEBUG('e', "Error: address to filename string is null.\n");
+        return;
+    }
+
+    DEBUG('e', "`Create` requested for file `%s`.\n", filepath);
+
+    if (!fileSystem->Create(filepath, 0)) {
+        DEBUG('e', "Error: file `%s` could not be created.\n", filepath);
 
         machine->WriteRegister(2, -1);
         return;
     }
 
-    char filename[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
-        DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n", FILE_NAME_MAX_LEN);
-
-        machine->WriteRegister(2, -1);
-        return;
-    }
-
-    DEBUG('e', "`Create` requested for file `%s`.\n", filename);
-
-    if (!fileSystem->Create(filename, 0)) {
-        DEBUG('e', "Error: file `%s` could not be created.\n", filename);
-
-        machine->WriteRegister(2, -1);
-        return;
-    }
-
-    DEBUG('e', "File `%s` created.\n", filename);
+    DEBUG('e', "File `%s` created.\n", filepath);
 
     machine->WriteRegister(2, 0);
 }
 
 static void HandleRemove() {
-    int filenameAddr = machine->ReadRegister(4);
-
-    if (filenameAddr == 0) {
-        DEBUG('e', "Error: address to filename string is null.\n");
-
-        machine->WriteRegister(2, -1);
-        return;
-    }
-
     char filename[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
-        DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n", FILE_NAME_MAX_LEN);
+    if (!ReadStringFromFirstArgument(filename)) {
         machine->WriteRegister(2, -1);
 
         return;
@@ -233,20 +221,10 @@ static void HandleRemove() {
 }
 
 static void HandleOpen() {
-    int filenameAddr = machine->ReadRegister(4);
-
-    if (filenameAddr == 0) {
-        DEBUG('e', "Error: address to filename string is null.\n");
-
-        machine->WriteRegister(2, -1);
-        return;
-    }
-
     char filename[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
-        DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n", FILE_NAME_MAX_LEN);
-
+    if (!ReadStringFromFirstArgument(filename)) {
         machine->WriteRegister(2, -1);
+
         return;
     }
 
@@ -465,6 +443,39 @@ static void HandlePS() {
     scheduler->Print();
 }
 
+static void HandleCD() {
+    char path[FILE_NAME_MAX_LEN + 1];
+    if (!ReadStringFromFirstArgument(path)) {
+        machine->WriteRegister(2, -1);
+        return;
+    }
+
+    DEBUG('e', "Cd requested.\n");
+
+    // TODO: implement
+}
+
+static void HandleMkdir() {
+    char filepath[FILE_NAME_MAX_LEN + 1];
+    ReadStringFromFirstArgument(filepath);
+
+    DEBUG('e', "Mkdir requested.\n");
+
+    // TODO: implement
+}
+
+static void HandleLs() {
+    char filepath[FILE_NAME_MAX_LEN + 1];
+    ReadStringFromFirstArgument(filepath);
+
+    DEBUG('e', "Ls requested.\n");
+
+    // TODO: implement
+    // char* contents = fileSystem->ListDirectory(filepath);
+    // synchConsole->Write(contents, sizeof contents);
+    // delete contents;
+}
+
 /// Handle a system call exception.
 ///
 /// * `et` is the kind of exception.  The list of possible exceptions is in
@@ -527,6 +538,18 @@ static void SyscallHandler(ExceptionType _et) {
 
         case SC_PS:
             HandlePS();
+            break;
+
+        case SC_CD:
+            HandleCD();
+            break;
+
+        case SC_MKDIR:
+            HandleMkdir();
+            break;
+
+        case SC_LS:
+            HandleLs();
             break;
 
         default:
