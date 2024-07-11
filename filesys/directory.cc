@@ -199,20 +199,20 @@ bool Directory::IsMarkedForDeletion(unsigned sector) {
 }
 
 // FIXME: wip
-char *Directory::ListContents() const {
+char *Directory::ListContents() {
     char *buffer = new char[raw.tableSize * (FILE_NAME_MAX_LEN + 1)];
     char *ptr = buffer;
 
     for (unsigned i = 0; i < raw.tableSize; i++) {
         if (raw.table[i].inUse) {
             strncpy(ptr, raw.table[i].name, strlen(raw.table[i].name) + 1);
-            ptr += strlen(raw.table[i].name) + 1;
+            ptr += strlen(raw.table[i].name);
             *ptr = ' ';
             ptr++;
         }
     }
-
-    *ptr = '\0';
+    if (buffer != ptr) ptr--;
+    strcpy(ptr, "\n\0");
 
     return buffer;
 }

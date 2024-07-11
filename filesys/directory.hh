@@ -61,6 +61,9 @@ class Directory {
     /// Determine if a file is marked for deletion.
     bool IsMarkedForDeletion(unsigned sector);
 
+    /// List the files of the directory
+    char *ListContents();
+
     /// Print the names of all the files in the directory.
     void List() const;
 

@@ -444,6 +444,7 @@ static void HandlePS() {
     scheduler->Print();
 }
 
+#ifdef FILESYS
 static void HandleCD() {
     // TODO: implement
 }
@@ -476,12 +477,18 @@ static void HandleLs() {
 
     DEBUG('e', "Ls requested.\n");
 
-    char *contents = fileSystem->List(filepath);
+    char *contents = fileSystem->ListDirectoryContents(filepath);
 
-    synchConsole->Write(contents, sizeof contents);
+    if (contents == nullptr) {
+        machine->WriteRegister(2, -1);
+        return;
+    }
+
+    synchConsole->Write(contents, strlen(contents) * (sizeof (char *)));
 
     delete contents;
 }
+#endif
 
 /// Handle a system call exception.
 ///
@@ -546,7 +553,7 @@ static void SyscallHandler(ExceptionType _et) {
         case SC_PS:
             HandlePS();
             break;
-
+#ifdef FILESYS
         case SC_CD:
             HandleCD();
             break;
@@ -558,7 +565,7 @@ static void SyscallHandler(ExceptionType _et) {
         case SC_LS:
             HandleLs();
             break;
-
+#endif
         default:
             fprintf(stderr, "Unexpected system call: id %d.\n", scid);
             ASSERT(false);

@@ -51,7 +51,7 @@
 #include "lib/bitmap.hh"
 #include "lib/debug.hh"
 #include "lib/utility.hh"
-#include "rwlock.hh"
+#include "threads/rwlock.hh"
 
 /// Sectors containing the file headers for the bitmap of free sectors, and
 /// the directory of files.  These file headers are placed in well-known
@@ -509,7 +509,7 @@ char *FileSystem::ListDirectoryContents(const char *path) {
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(directoryFile);
 
-    if (path != nullptr) {
+    if (strcmp(path, "")) {
         unsigned sector = dir->FindDirectory(path);
         if (sector == -1) {
             delete dir;
@@ -530,7 +530,7 @@ char *FileSystem::ListDirectoryContents(const char *path) {
         delete dummy;
     }
 
-    char *contents = nullptr;  // FIXME: list
+    char *contents = dir->ListContents();
 
     delete dir;
 

@@ -73,7 +73,7 @@ class FileSystem {
     }
 
     // FIXME: fixme
-    char *List(const char *path) {
+    char *ListDirectoryContents(const char *path) {
         ASSERT(path != nullptr);
 
         return nullptr;
