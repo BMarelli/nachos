@@ -105,6 +105,7 @@ FileSystem::FileSystem(bool format) {
         // The file system operations assume these two files are left open
         // while Nachos is running.
 
+        // FIXME: no one cleans up these RWLock and FileHeader objects.
         freeMapFile = new OpenFile(FREE_MAP_SECTOR, new RWLock(), mapH);
         directoryFile = new OpenFile(DIRECTORY_SECTOR, new RWLock(), dirH);
 
@@ -135,6 +136,7 @@ FileSystem::FileSystem(bool format) {
         FileHeader *dirH = new FileHeader;
         dirH->FetchFrom(DIRECTORY_SECTOR);
 
+        // FIXME: no one cleans up these RWLock and FileHeader objects.
         freeMapFile = new OpenFile(FREE_MAP_SECTOR, new RWLock(), mapH);
         directoryFile = new OpenFile(DIRECTORY_SECTOR, new RWLock(), dirH);
 

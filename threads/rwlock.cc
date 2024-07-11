@@ -3,6 +3,8 @@
 #include "lib/assert.hh"
 #include "threads/system.hh"
 
+// TODO: add a bit of documentation to this class
+
 RWLock::RWLock() {
     lock = new Lock();
     condition = new Condition(lock);
