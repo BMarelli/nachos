@@ -121,12 +121,10 @@ FileSystem::FileSystem(bool format) {
         if (debug.IsEnabled('f')) {
             freeMap->Print();
             dir->Print();
-
-            delete freeMap;
-            delete dir;
-            delete mapH;
-            delete dirH;
         }
+
+        delete freeMap;
+        delete dir;
     } else {
         // If we are not formatting the disk, just open the files
         // representing the bitmap and directory; these are left open while
