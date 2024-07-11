@@ -424,8 +424,6 @@ void FileSystem::FreeFile(unsigned sector) {
     freeMap->Clear(sector);           // Remove header block.
     freeMap->WriteBack(freeMapFile);  // Flush to disk.
 
-    openFileManager->Unmanage(sector);
-
     delete fileH;
     delete freeMap;
 }
