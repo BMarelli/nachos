@@ -444,21 +444,23 @@ static void HandlePS() {
     scheduler->Print();
 }
 
+// FIXME: should not be scoped to FILESYS. In order to do that, we need to implement the appropriate methods
+// in the FILESYS_STUB implementation of the FileSystem.
 #ifdef FILESYS
 static void HandleCD() {
     // TODO: implement
 }
 
 static void HandleMkdir() {
-    char filepath[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromFirstArgument(filepath)) {
+    char path[FILE_NAME_MAX_LEN + 1];
+    if (!ReadStringFromFirstArgument(path)) {
         machine->WriteRegister(2, -1);
         return;
     }
 
     DEBUG('e', "Mkdir requested.\n");
 
-    if (!fileSystem->CreateDirectory(filepath)) {
+    if (!fileSystem->CreateDirectory(path)) {
         machine->WriteRegister(2, -1);
         return;
     }
@@ -467,24 +469,22 @@ static void HandleMkdir() {
 }
 
 static void HandleLs() {
-    // FIXME: empty string for ls vs nullptr
-
-    char filepath[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromFirstArgument(filepath)) {
+    char path[FILE_NAME_MAX_LEN + 1];
+    if (!ReadStringFromFirstArgument(path)) {
         machine->WriteRegister(2, -1);
         return;
     }
 
     DEBUG('e', "Ls requested.\n");
 
-    char *contents = fileSystem->ListDirectoryContents(filepath);
-
+    char *contents = fileSystem->ListDirectoryContents(path);
     if (contents == nullptr) {
         machine->WriteRegister(2, -1);
+
         return;
     }
 
-    synchConsole->Write(contents, strlen(contents) * (sizeof (char *)));
+    synchConsole->Write(contents, strlen(contents));
 
     delete contents;
 }

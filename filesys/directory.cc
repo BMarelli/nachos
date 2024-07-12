@@ -208,21 +208,26 @@ bool Directory::IsMarkedForDeletion(unsigned sector) {
     return false;
 }
 
-// FIXME: wip
 char *Directory::ListContents() {
-    char *buffer = new char[raw.tableSize * (FILE_NAME_MAX_LEN + 1)];
+    char *buffer = new char[raw.tableSize * (FILE_NAME_MAX_LEN + 1) + 1];
     char *ptr = buffer;
 
     for (unsigned i = 0; i < raw.tableSize; i++) {
         if (raw.table[i].inUse) {
-            strncpy(ptr, raw.table[i].name, strlen(raw.table[i].name) + 1);
-            ptr += strlen(raw.table[i].name);
-            *ptr = ' ';
-            ptr++;
+            size_t len = strlen(raw.table[i].name);
+
+            strncpy(ptr, raw.table[i].name, len);
+            ptr[len] = ' ';  // Add a space between file names
+
+            ptr += len + 1;
         }
     }
-    if (buffer != ptr) ptr--;
-    strcpy(ptr, "\n\0");
+
+    // Remove the last space, and terminate the string with a newline.
+    if (ptr != buffer) ptr--;
+
+    ptr[0] = '\n';
+    ptr[1] = '\0';
 
     return buffer;
 }
