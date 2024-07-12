@@ -228,8 +228,8 @@ bool FileSystem::CreateFile(const char *name, unsigned initialSize) {
 
     bool success;
 
-    if (dir->Find(name) != -1) {
-        success = false;  // File is already in directory.
+    if (dir->HasEntry(name)) {
+        success = false;  // File or directory with the same name already exists.
     } else {
         Bitmap *freeMap = new Bitmap(NUM_SECTORS);
         freeMap->FetchFrom(freeMapFile);
@@ -270,8 +270,8 @@ bool FileSystem::CreateDirectory(const char *path) {
 
     bool success;
 
-    if (dir->Find(path) != -1) {  // FIXME: should check for either file or directory
-        success = false;
+    if (dir->HasEntry(path)) {
+        success = false;  // File or directory with the same name already exists.
     } else {
         Bitmap *freeMap = new Bitmap(NUM_SECTORS);
         freeMap->FetchFrom(freeMapFile);
@@ -336,7 +336,7 @@ OpenFile *FileSystem::Open(const char *name) {
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(directoryFile);
 
-    int sector = dir->Find(name);
+    int sector = dir->FindFile(name);
     if (sector == -1) {
         delete dir;
 
@@ -424,7 +424,7 @@ bool FileSystem::Remove(const char *name) {
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(directoryFile);
 
-    int sector = dir->Find(name);
+    int sector = dir->FindFile(name);
     if (sector == -1) {
         delete dir;
 

@@ -40,8 +40,11 @@ class Directory {
     /// Write modifications to directory contents back to disk.
     void WriteBack(OpenFile *file);
 
+    /// Returns true if there's an entry with the given name.
+    bool HasEntry(const char *name);
+
     /// Find the sector number of the `FileHeader` for file: `name`.
-    int Find(const char *name);
+    int FindFile(const char *name);
 
     /// Find the sector number of the `FileHeader` for directory: `name`.
     int FindDirectory(const char *name);

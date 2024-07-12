@@ -79,12 +79,22 @@ int Directory::FindIndex(const char *name, bool includeMarkedForDeletion) {
     return -1;  // name not in directory
 }
 
+/// Returns true if there's an entry with the given name.
+bool Directory::HasEntry(const char *name) {
+    ASSERT(name != nullptr);
+
+    int i = FindIndex(name);
+    if (i == -1) return false;
+
+    return true;
+}
+
 /// Look up file name in directory, and return the disk sector number where
-/// the file's header is stored.  Return -1 if the name is not in the
-/// directory, or if the entry is not a file (i.e. it is a subdirectory).
+/// the file's header is stored. Return -1 if the name is not in the directory,
+/// or if the entry is not a file.
 ///
 /// * `name` is the file name to look up.
-int Directory::Find(const char *name) {
+int Directory::FindFile(const char *name) {
     ASSERT(name != nullptr);
 
     int i = FindIndex(name);
@@ -96,7 +106,7 @@ int Directory::Find(const char *name) {
 }
 
 /// Look up directory name in directory, and return the disk sector number
-/// where the directory's file header is stored.  Return -1 if the name is not
+/// where the directory's file header is stored. Return -1 if the name is not
 /// in the directory, or if the entry is not a directory.
 ///
 /// * `name` is the directory name to look up.
