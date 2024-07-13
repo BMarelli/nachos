@@ -46,8 +46,7 @@ static void IncrementPC() {
     machine->WriteRegister(NEXT_PC_REG, pc);
 }
 
-// TODO: ensure callers to this function use consistent buffer naming + size
-static bool ReadStringFromFirstArgument(char *buffer) {
+static bool ReadStringFromFirstArgument(char *buffer, unsigned size) {
     int filenameAddr = machine->ReadRegister(4);
 
     if (filenameAddr == 0) {
@@ -55,7 +54,7 @@ static bool ReadStringFromFirstArgument(char *buffer) {
         return false;
     }
 
-    if (!ReadStringFromUser(filenameAddr, buffer, sizeof buffer)) {
+    if (!ReadStringFromUser(filenameAddr, buffer, size)) {
         DEBUG('e', "Error: string too long (maximum is %u bytes).\n", sizeof buffer);
         return false;
     }
@@ -132,7 +131,7 @@ static void HandleJoin() {
 
 static void HandleExec() {
     char filename[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromFirstArgument(filename)) {
+    if (!ReadStringFromFirstArgument(filename, sizeof filename)) {
         machine->WriteRegister(2, -1);
 
         return;
@@ -179,7 +178,7 @@ static void HandleExit() {
 
 static void HandleCreate() {
     char filepath[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromFirstArgument(filepath)) {
+    if (!ReadStringFromFirstArgument(filepath, sizeof filepath)) {
         machine->WriteRegister(2, -1);
 
         return;
@@ -201,7 +200,7 @@ static void HandleCreate() {
 
 static void HandleRemove() {
     char filename[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromFirstArgument(filename)) {
+    if (!ReadStringFromFirstArgument(filename, sizeof filename)) {
         machine->WriteRegister(2, -1);
 
         return;
@@ -223,7 +222,7 @@ static void HandleRemove() {
 
 static void HandleOpen() {
     char filename[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromFirstArgument(filename)) {
+    if (!ReadStringFromFirstArgument(filename, sizeof filename)) {
         machine->WriteRegister(2, -1);
 
         return;
@@ -444,16 +443,13 @@ static void HandlePS() {
     scheduler->Print();
 }
 
-// FIXME: should not be scoped to FILESYS. In order to do that, we need to implement the appropriate methods
-// in the FILESYS_STUB implementation of the FileSystem.
-#ifdef FILESYS
 static void HandleCD() {
     // TODO: implement
 }
 
 static void HandleMkdir() {
     char path[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromFirstArgument(path)) {
+    if (!ReadStringFromFirstArgument(path, sizeof path)) {
         machine->WriteRegister(2, -1);
         return;
     }
@@ -470,7 +466,7 @@ static void HandleMkdir() {
 
 static void HandleLs() {
     char path[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromFirstArgument(path)) {
+    if (!ReadStringFromFirstArgument(path, sizeof path)) {
         machine->WriteRegister(2, -1);
         return;
     }
@@ -488,7 +484,6 @@ static void HandleLs() {
 
     delete contents;
 }
-#endif
 
 /// Handle a system call exception.
 ///
@@ -553,7 +548,7 @@ static void SyscallHandler(ExceptionType _et) {
         case SC_PS:
             HandlePS();
             break;
-#ifdef FILESYS
+
         case SC_CD:
             HandleCD();
             break;
@@ -565,7 +560,7 @@ static void SyscallHandler(ExceptionType _et) {
         case SC_LS:
             HandleLs();
             break;
-#endif
+
         default:
             fprintf(stderr, "Unexpected system call: id %d.\n", scid);
             ASSERT(false);
