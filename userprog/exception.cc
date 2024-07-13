@@ -465,10 +465,15 @@ static void HandleMkdir() {
 }
 
 static void HandleLs() {
-    char path[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromFirstArgument(path, sizeof path)) {
-        machine->WriteRegister(2, -1);
-        return;
+    char *path = nullptr;
+    if (machine->ReadRegister(4) != 0) {  // If the path is not null, read it.
+        path = new char[FILE_NAME_MAX_LEN + 1];
+
+        if (!ReadStringFromUser(machine->ReadRegister(4), path, FILE_NAME_MAX_LEN + 1)) {
+            machine->WriteRegister(2, -1);
+
+            return;
+        }
     }
 
     DEBUG('e', "Ls requested.\n");

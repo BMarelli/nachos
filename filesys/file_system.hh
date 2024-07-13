@@ -35,6 +35,7 @@
 #ifndef NACHOS_FILESYS_FILESYSTEM__HH
 #define NACHOS_FILESYS_FILESYSTEM__HH
 
+#include "lib/assert.hh"
 #include "open_file.hh"
 
 #ifdef FILESYS_STUB  // Temporarily implement file system calls as calls to
@@ -65,18 +66,16 @@ class FileSystem {
         return true;
     }
 
-    // FIXME: fixme
     bool CreateDirectory(const char *path) {
         ASSERT(path != nullptr);
 
-        return false;
+        return SystemDep::CreateDirectory(path);
     }
 
-    // FIXME: fixme
     char *ListDirectoryContents(const char *path) {
-        ASSERT(path != nullptr);
+        if (path == nullptr) return SystemDep::ListDirectoryContents(".");
 
-        return nullptr;
+        return SystemDep::ListDirectoryContents(path);
     }
 
     OpenFile *Open(const char *name) {
