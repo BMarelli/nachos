@@ -147,7 +147,7 @@ Mkdir:
         addiu   $2, $0, SC_MKDIR
         syscall
         j       $31
-        .end Mkdir
+        .end    Mkdir
 
         .globl  Cd
         .ent    Cd
