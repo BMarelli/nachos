@@ -191,7 +191,7 @@ void AddressSpace::LoadPage(unsigned vpn) {
 
     uint32_t codeSize = exe.GetCodeSize();
     uint32_t codeAddr = exe.GetCodeAddr();
-    if (codeSize > 0 && (vpn + 1) * PAGE_SIZE >= codeAddr && vpn * PAGE_SIZE < codeAddr + codeSize) {
+    if (codeSize > 0 && (vpn + 1) * PAGE_SIZE > codeAddr && vpn * PAGE_SIZE < codeAddr + codeSize) {
         uint32_t virtualAddr = Max(vpn * PAGE_SIZE, codeAddr);
         uint32_t offset = virtualAddr - codeAddr;
         uint32_t size = Min(PAGE_SIZE - (virtualAddr % PAGE_SIZE), codeSize - offset);
@@ -202,12 +202,12 @@ void AddressSpace::LoadPage(unsigned vpn) {
             ASSERT(false);
         }
 
-        totalRead += size;
+        totalRead += read;
     }
 
     uint32_t initDataSize = exe.GetInitDataSize();
     uint32_t initDataAddr = exe.GetInitDataAddr();
-    if (initDataSize > 0 && (vpn + 1) * PAGE_SIZE >= initDataAddr && vpn * PAGE_SIZE < initDataAddr + initDataSize) {
+    if (initDataSize > 0 && (vpn + 1) * PAGE_SIZE > initDataAddr && vpn * PAGE_SIZE < initDataAddr + initDataSize) {
         uint32_t virtualAddr = Max(vpn * PAGE_SIZE, initDataAddr);
         uint32_t offset = virtualAddr - initDataAddr;
         uint32_t size = Min(PAGE_SIZE - (virtualAddr % PAGE_SIZE), initDataSize - offset);
@@ -218,7 +218,7 @@ void AddressSpace::LoadPage(unsigned vpn) {
             ASSERT(false);
         }
 
-        totalRead += size;
+        totalRead += read;
     }
 
     ASSERT(totalRead <= PAGE_SIZE);
