@@ -106,6 +106,15 @@ bool CreateDirectory(const char *name) {
     return mkdir(name, 0777) == 0;
 }
 
+/// Change the current directory.
+///
+/// Return true if successful, false otherwise.
+bool ChangeDirectory(const char *name) {
+    ASSERT(name != nullptr);
+
+    return chdir(name) == 0;
+}
+
 /// List all files in a directory.
 ///
 /// Return a space-separated list of file names, or nullptr if the directory

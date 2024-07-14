@@ -732,3 +732,5 @@ void FileSystem::Print() {
 
     lock->Release();
 }
+
+bool FileSystem::ChangeDirectory(const char *path) { return false; }

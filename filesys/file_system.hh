@@ -72,6 +72,12 @@ class FileSystem {
         return SystemDep::CreateDirectory(path);
     }
 
+    bool ChangeDirectory(const char *path) {
+        if (path == nullptr) return SystemDep::ChangeDirectory("");
+
+        return SystemDep::ChangeDirectory(path);
+    }
+
     char *ListDirectoryContents(const char *path) {
         if (path == nullptr) return SystemDep::ListDirectoryContents(".");
 
@@ -150,7 +156,7 @@ class FileSystem {
     void Print();
 
     // Change current directory.
-    // void ChangeDirectory(const char *name);
+    bool ChangeDirectory(const char *name);
 
     /// Extend a file by a number of bytes.
     bool ExtendFile(unsigned sector, unsigned bytes);
