@@ -509,7 +509,7 @@ char *FileSystem::ListDirectoryContents(const char *path) {
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(directoryFile);
 
-    if (path == nullptr) {
+    if (path != nullptr) {
         int sector = dir->FindDirectory(path);
         if (sector == -1) {
             delete dir;
