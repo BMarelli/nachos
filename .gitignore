@@ -21,6 +21,7 @@ userland/fs_test
 userland/mkdir
 userland/cd
 userland/ls
+userland/cd_test
 *.coff
 .cache
 compile_commands.json
