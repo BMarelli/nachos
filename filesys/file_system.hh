@@ -155,11 +155,14 @@ class FileSystem {
     /// List all the files and their contents.
     void Print();
 
-    // Change current directory.
+    /// Change current directory.
     bool ChangeDirectory(const char *name);
 
     /// Extend a file by a number of bytes.
     bool ExtendFile(unsigned sector, unsigned bytes);
+
+    /// Get the root directory.
+    unsigned GetRootDirectory();
 
    private:
     Lock *lock;  ///< Lock to protect the file system structure.
@@ -171,11 +174,12 @@ class FileSystem {
 
     OpenFileManager *openFileManager;
 
-    /// Load a directory from disk.
-    Directory *LoadDirectory(char *path);
-
     /// Free a file located at the given sector.
     void FreeFile(unsigned sector);
+
+    const char *LoadDirectory(Directory *directory, const char *path);
+
+    Directory *LoadDirectory(unsigned sector);
 };
 
 #endif

@@ -45,12 +45,14 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "file_header.hh"
 #include "filesys/directory.hh"
 #include "lib/bitmap.hh"
 #include "lib/debug.hh"
 #include "lib/utility.hh"
+#include "system.hh"
 #include "threads/rwlock.hh"
 
 /// Sectors containing the file headers for the bitmap of free sectors, and
@@ -209,22 +211,16 @@ FileSystem::~FileSystem() {
 ///
 /// * `name` is the name of file to be created.
 /// * `initialSize` is the size of file to be created.
-bool FileSystem::CreateFile(const char *name, unsigned initialSize) {
-    ASSERT(name != nullptr);
+bool FileSystem::CreateFile(const char *filepath, unsigned initialSize) {
+    ASSERT(filepath != nullptr);
     ASSERT(initialSize < MAX_FILE_SIZE);
 
     lock->Acquire();
 
-    DEBUG('f', "Creating file %s, size %u\n", name, initialSize);
+    DEBUG('f', "Creating file %s, size %u\n", filepath, initialSize);
 
-    // TODO:
-    // - grab path (name[0 .. last location of /])
-    // - if length(path) > 0, cd path
-    // - create(name[last location of / + 1 .. end], initialSize) on cd'd directory
-    // req: should not actually change curr dir
-
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
-    dir->FetchFrom(directoryFile);
+    Directory *dir = LoadDirectory(currentThread->GetCWD());
+    const char *name = LoadDirectory(dir, filepath);
 
     bool success;
 
@@ -253,6 +249,7 @@ bool FileSystem::CreateFile(const char *name, unsigned initialSize) {
         }
         delete freeMap;
     }
+    delete name;
     delete dir;
 
     lock->Release();
@@ -265,8 +262,7 @@ bool FileSystem::CreateDirectory(const char *path) {
 
     lock->Acquire();
 
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
-    dir->FetchFrom(directoryFile);
+    Directory *dir = LoadDirectory(currentThread->GetCWD());
 
     bool success;
 
@@ -327,14 +323,7 @@ OpenFile *FileSystem::Open(const char *name) {
 
     DEBUG('f', "Opening file %s\n", name);
 
-    // TODO:
-    // - grab path (name[0 .. last location of /])
-    // - if length(path) > 0, cd path
-    // - open(name[last location of / + 1 .. end], initialSize) on cd'd directory
-    // req: should not actually change curr dir
-
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
-    dir->FetchFrom(directoryFile);
+    Directory *dir = LoadDirectory(currentThread->GetCWD());
 
     int sector = dir->FindFile(name);
     if (sector == -1) {
@@ -376,8 +365,7 @@ void FileSystem::Close(OpenFile *file) {
 
         openFileManager->Unmanage(file->GetSector());
 
-        Directory *dir = new Directory(NUM_DIR_ENTRIES);  // TODO: seems like this will be a challenge
-        dir->FetchFrom(directoryFile);
+        Directory *dir = LoadDirectory(currentThread->GetCWD());
 
         if (dir->IsMarkedForDeletion(file->GetSector())) {
             DEBUG('f', "File at sector %u is marked for deletion.\n", file->GetSector());
@@ -415,14 +403,7 @@ bool FileSystem::Remove(const char *name) {
 
     DEBUG('f', "Removing file %s\n", name);
 
-    // TODO:
-    // - grab path (name[0 .. last location of /])
-    // - if length(path) > 0, get directory (path)
-    // - remove(name[last location of / + 1 .. end], initialSize) on cd'd directory
-    // req: should not actually change curr dir
-
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
-    dir->FetchFrom(directoryFile);
+    Directory *dir = LoadDirectory(currentThread->GetCWD());
 
     int sector = dir->FindFile(name);
     if (sector == -1) {
@@ -506,8 +487,7 @@ void FileSystem::FreeFile(unsigned sector) {
 char *FileSystem::ListDirectoryContents(const char *path) {
     lock->Acquire();
 
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
-    dir->FetchFrom(directoryFile);
+    Directory *dir = LoadDirectory(currentThread->GetCWD());
 
     if (path != nullptr) {
         int sector = dir->FindDirectory(path);
@@ -515,6 +495,72 @@ char *FileSystem::ListDirectoryContents(const char *path) {
             delete dir;
 
             lock->Release();
+
+            return nullptr;
+        }
+
+        delete dir;
+
+        dir = LoadDirectory(sector);
+    }
+
+    char *contents = dir->ListContents();
+
+    delete dir;
+
+    lock->Release();
+
+    return contents;
+}
+
+bool FileSystem::ChangeDirectory(const char *path) {
+    lock->Acquire();
+
+    if (path == nullptr) {
+        currentThread->SetCWD(GetRootDirectory());
+
+        return true;
+    }
+
+    Directory *dir = LoadDirectory(currentThread->GetCWD());
+
+    int sector = dir->FindDirectory(path);
+    if (sector == -1) {
+        delete dir;
+
+        lock->Release();
+
+        return false;
+    }
+
+    currentThread->SetCWD(sector);
+
+    delete dir;
+
+    lock->Release();
+
+    return true;
+}
+
+unsigned FileSystem::GetRootDirectory() { return DIRECTORY_SECTOR; }
+
+const char *FileSystem::LoadDirectory(Directory *dir, const char *path) {
+    if (path == nullptr) {
+        dir->FetchFrom(directoryFile);
+
+        return nullptr;
+    }
+
+    char *buffer = CopyString(path);
+
+    char *token = strtok_r(buffer, "/", &buffer);
+    while (token != nullptr) {
+        char *nextToken = strtok_r(nullptr, "/", &buffer);
+        if (nextToken == nullptr) break;
+
+        int sector = dir->FindDirectory(token);
+        if (sector == -1) {
+            // delete buffer;
 
             return nullptr;
         }
@@ -528,15 +574,35 @@ char *FileSystem::ListDirectoryContents(const char *path) {
         dir->FetchFrom(file);
 
         delete dummy;
+        delete fileHeader;
+        delete file;
+
+        token = nextToken;
     }
 
-    char *contents = dir->ListContents();
+    char *base = CopyString(token);
 
-    delete dir;
+    // delete buffer;
 
-    lock->Release();
+    return base;
+}
 
-    return contents;
+// TODO: remove
+Directory *FileSystem::LoadDirectory(unsigned sector) {
+    FileHeader *fileHeader = new FileHeader;
+    fileHeader->FetchFrom(sector);
+
+    RWLock *dummy = new RWLock();
+    OpenFile *file = new OpenFile(sector, dummy, fileHeader);
+
+    Directory *dir = new Directory(NUM_DIR_ENTRIES);
+    dir->FetchFrom(file);
+
+    delete dummy;
+    delete fileHeader;
+    delete file;
+
+    return dir;
 }
 
 static bool AddToShadowBitmap(unsigned sector, Bitmap *map) {
@@ -732,5 +798,3 @@ void FileSystem::Print() {
 
     lock->Release();
 }
-
-bool FileSystem::ChangeDirectory(const char *path) { return false; }

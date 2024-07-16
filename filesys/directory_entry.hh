@@ -27,6 +27,8 @@ class DirectoryEntry {
     char name[FILE_NAME_MAX_LEN + 1];
     /// Is this directory entry a directory?
     bool isDirectory;
+    /// Parent directory's sector
+    unsigned parentSector;
 };
 
 #endif
