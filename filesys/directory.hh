@@ -49,6 +49,15 @@ class Directory {
     /// Remove a file from the directory.
     bool Remove(const char *name);
 
+    /// Remove a file marked for deletion.
+    bool RemoveMarkedForDeletion(unsigned sector);
+
+    /// Mark a file for deletion.
+    bool MarkForDeletion(const char *name);
+
+    /// Determine if a file is marked for deletion.
+    bool IsMarkedForDeletion(unsigned sector);
+
     /// Print the names of all the files in the directory.
     void List() const;
 
@@ -64,7 +73,7 @@ class Directory {
 
    private:
     /// Find the index into the directory table corresponding to `name`.
-    int FindIndex(const char *name);
+    int FindIndex(const char *name, bool includeMarkedForDeletion = false);
 
     RawDirectory raw;
 };

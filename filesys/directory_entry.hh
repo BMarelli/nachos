@@ -19,6 +19,8 @@ class DirectoryEntry {
    public:
     /// Is this directory entry in use?
     bool inUse;
+    /// Is this directory entry marked for deletion?
+    bool markedForDeletion;
     /// Location on disk to find the `FileHeader` for this file.
     unsigned sector;
     /// Text name for file, with +1 for the trailing `'\0'`.

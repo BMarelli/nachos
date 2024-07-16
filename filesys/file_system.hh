@@ -75,6 +75,11 @@ class FileSystem {
         return new OpenFile(fileDescriptor);
     }
 
+    void Close(OpenFile *file) {
+        ASSERT(file != nullptr);
+        SystemDep::Close(file->GetFileDescriptor());
+    }
+
     bool Remove(const char *name) {
         ASSERT(name != nullptr);
         return SystemDep::Unlink(name) == 0;
@@ -86,6 +91,7 @@ class FileSystem {
 #include "directory_entry.hh"
 #include "lib/utility.hh"
 #include "machine/disk.hh"
+#include "open_file_manager.hh"
 
 /// Initial file sizes for the bitmap and directory; until the file system
 /// supports extensible files, the directory size sets the maximum number of
@@ -111,6 +117,9 @@ class FileSystem {
     /// Open a file (UNIX `open`).
     OpenFile *Open(const char *name);
 
+    /// Close a file (UNIX `close`).
+    void Close(OpenFile *file);
+
     /// Delete a file (UNIX `unlink`).
     bool Remove(const char *name);
 
@@ -123,11 +132,21 @@ class FileSystem {
     /// List all the files and their contents.
     void Print();
 
+    /// Extend a file by a number of bytes.
+    bool ExtendFile(unsigned sector, unsigned bytes);
+
    private:
+    Lock *lock;  ///< Lock to protect the file system structure.
+
     OpenFile *freeMapFile;    ///< Bit map of free disk blocks, represented as a
                               ///< file.
     OpenFile *directoryFile;  ///< “Root” directory -- list of file names,
                               ///< represented as a file.
+
+    OpenFileManager *openFileManager;
+
+    /// Free a file located at the given sector.
+    void FreeFile(unsigned sector);
 };
 
 #endif

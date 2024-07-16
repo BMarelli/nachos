@@ -15,6 +15,7 @@
 #include <string.h>
 
 #include "file_header.hh"
+#include "lib/assert.hh"
 #include "lib/debug.hh"
 #include "threads/system.hh"
 
@@ -22,14 +23,16 @@
 /// memory while the file is open.
 ///
 /// * `sector` is the location on disk of the file header for this file.
-OpenFile::OpenFile(int sector) {
-    hdr = new FileHeader;
-    hdr->FetchFrom(sector);
+OpenFile::OpenFile(int _sector, RWLock *_rwLock, FileHeader *_fileHeader) {
+    sector = _sector;
+    rwLock = _rwLock;
+    fileHeader = _fileHeader;
+
     seekPosition = 0;
 }
 
 /// Close a Nachos file, de-allocating any in-memory data structures.
-OpenFile::~OpenFile() { delete hdr; }
+OpenFile::~OpenFile() {}
 
 /// Change the current location within the open file -- the point at which
 /// the next `Read` or `Write` will start from.
@@ -96,16 +99,21 @@ int OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position) {
     ASSERT(into != nullptr);
     ASSERT(numBytes > 0);
 
-    unsigned fileLength = hdr->FileLength();
+    rwLock->AcquireRead();
+
+    unsigned fileLength = fileHeader->FileLength();
     unsigned firstSector, lastSector, numSectors;
     char *buf;
 
     if (position >= fileLength) {
+        rwLock->ReleaseRead();
+
         return 0;  // Check request.
     }
     if (position + numBytes > fileLength) {
         numBytes = fileLength - position;
     }
+
     DEBUG('f', "Reading %u bytes at %u, from file of length %u.\n", numBytes, position, fileLength);
 
     firstSector = DivRoundDown(position, SECTOR_SIZE);
@@ -115,12 +123,15 @@ int OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position) {
     // Read in all the full and partial sectors that we need.
     buf = new char[numSectors * SECTOR_SIZE];
     for (unsigned i = firstSector; i <= lastSector; i++) {
-        synchDisk->ReadSector(hdr->ByteToSector(i * SECTOR_SIZE), &buf[(i - firstSector) * SECTOR_SIZE]);
+        synchDisk->ReadSector(fileHeader->ByteToSector(i * SECTOR_SIZE), &buf[(i - firstSector) * SECTOR_SIZE]);
     }
 
     // Copy the part we want.
     memcpy(into, &buf[position - firstSector * SECTOR_SIZE], numBytes);
     delete[] buf;
+
+    rwLock->ReleaseRead();
+
     return numBytes;
 }
 
@@ -128,17 +139,23 @@ int OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position) {
     ASSERT(from != nullptr);
     ASSERT(numBytes > 0);
 
-    unsigned fileLength = hdr->FileLength();
+    rwLock->AcquireWrite();
+
+    unsigned fileLength = fileHeader->FileLength();
     unsigned firstSector, lastSector, numSectors;
     bool firstAligned, lastAligned;
     char *buf;
 
-    if (position >= fileLength) {
-        return 0;  // Check request.
-    }
     if (position + numBytes > fileLength) {
-        numBytes = fileLength - position;
+        if (!fileSystem->ExtendFile(sector, position + numBytes - fileLength)) {
+            rwLock->ReleaseWrite();
+
+            return 0;
+        }
+
+        ASSERT(fileHeader->FileLength() == position + numBytes);
     }
+
     DEBUG('f', "Writing %u bytes at %u, from file of length %u.\n", numBytes, position, fileLength);
 
     firstSector = DivRoundDown(position, SECTOR_SIZE);
@@ -163,11 +180,14 @@ int OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position) {
 
     // Write modified sectors back.
     for (unsigned i = firstSector; i <= lastSector; i++) {
-        synchDisk->WriteSector(hdr->ByteToSector(i * SECTOR_SIZE), &buf[(i - firstSector) * SECTOR_SIZE]);
+        synchDisk->WriteSector(fileHeader->ByteToSector(i * SECTOR_SIZE), &buf[(i - firstSector) * SECTOR_SIZE]);
     }
     delete[] buf;
+
+    rwLock->ReleaseWrite();
+
     return numBytes;
 }
 
 /// Return the number of bytes in the file.
-unsigned OpenFile::Length() const { return hdr->FileLength(); }
+unsigned OpenFile::Length() const { return fileHeader->FileLength(); }

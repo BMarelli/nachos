@@ -80,6 +80,13 @@ Thread::~Thread() {
 
 #ifdef USER_PROGRAM
     if (space != nullptr) delete space;
+
+    for (unsigned i = 0; i < openFiles->SIZE; i++) {
+        if (openFiles->HasKey(i)) {
+            fileSystem->Close(openFiles->Remove(i));
+        }
+    }
+
     delete openFiles;
 #endif
 }

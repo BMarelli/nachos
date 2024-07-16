@@ -26,6 +26,7 @@
 #include "address_space.hh"
 #include "args.hh"
 #include "filesys/directory_entry.hh"
+#include "filesys/file_system.hh"
 #include "lib/debug.hh"
 #include "lib/utility.hh"
 #include "machine.hh"
@@ -310,7 +311,7 @@ static void HandleClose() {
                 return;
             }
 
-            delete currentThread->openFiles->Remove(key);
+            fileSystem->Close(currentThread->openFiles->Remove(key));
 
             DEBUG('e', "File with id %d closed.\n", fid);
 

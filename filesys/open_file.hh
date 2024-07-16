@@ -19,11 +19,12 @@
 #ifndef NACHOS_FILESYS_OPENFILE__HH
 #define NACHOS_FILESYS_OPENFILE__HH
 
+#ifdef FILESYS_STUB  // Temporarily implement calls to Nachos file system as
+                     // calls to UNIX!  See definitions listed under `#else`.
+
 #include "lib/assert.hh"
 #include "machine/system_dep.hh"
 
-#ifdef FILESYS_STUB  // Temporarily implement calls to Nachos file system as
-                     // calls to UNIX!  See definitions listed under `#else`.
 class OpenFile {
    public:
     /// Open the file.
@@ -68,18 +69,23 @@ class OpenFile {
         return SystemDep::Tell(file);
     }
 
+    int GetFileDescriptor() const { return file; }
+
    private:
     int file;
     unsigned currentOffset;
 };
 
 #else  // FILESYS
+
+class RWLock;
+
 class FileHeader;
 
 class OpenFile {
    public:
     /// Open a file whose header is located at `sector` on the disk.
-    OpenFile(int sector);
+    OpenFile(int sector, RWLock *rwLock, FileHeader *fileHeader);
 
     /// Close the file.
     ~OpenFile();
@@ -102,9 +108,14 @@ class OpenFile {
     // the UNIX idiom -- `lseek` to end of file, `tell`, `lseek` back).
     unsigned Length() const;
 
+    /// Get the sector of the file header
+    unsigned GetSector() const { return sector; }
+
    private:
-    FileHeader *hdr;        ///< Header for this file.
-    unsigned seekPosition;  ///< Current position within the file.
+    unsigned sector;         ///< Sector on disk where the file header is located.
+    RWLock *rwLock;          ///< Lock for concurrent access to the file.
+    FileHeader *fileHeader;  ///< Header for this file.
+    unsigned seekPosition;   ///< Current position within the file.
 };
 
 #endif

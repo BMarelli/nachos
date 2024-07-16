@@ -17,7 +17,9 @@ userland/cp
 userland/rm
 userland/lib
 userland/cat
+userland/fs_test
 *.coff
 .cache
 compile_commands.json
 SWAP.*
+DISK

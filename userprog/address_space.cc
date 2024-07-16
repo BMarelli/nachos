@@ -77,7 +77,8 @@ AddressSpace::~AddressSpace() {
     }
 
     delete[] pageTable;
-    delete executable_file;
+
+    fileSystem->Close(executable_file);
 
 #ifdef SWAP
     if (!fileSystem->Remove(swapFileName)) {
