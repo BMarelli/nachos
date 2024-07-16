@@ -108,6 +108,7 @@ FileSystem::FileSystem(bool format) {
         // The file system operations assume these two files are left open
         // while Nachos is running.
 
+        // FIXME: no one cleans up these RWLock and FileHeader objects.
         freeMapFile = new OpenFile(FREE_MAP_SECTOR, new RWLock(), mapH);
         directoryFile = new OpenFile(DIRECTORY_SECTOR, new RWLock(), dirH);
 
@@ -124,12 +125,10 @@ FileSystem::FileSystem(bool format) {
         if (debug.IsEnabled('f')) {
             freeMap->Print();
             dir->Print();
-
-            delete freeMap;
-            delete dir;
-            delete mapH;
-            delete dirH;
         }
+
+        delete freeMap;
+        delete dir;
     } else {
         // If we are not formatting the disk, just open the files
         // representing the bitmap and directory; these are left open while
@@ -140,6 +139,7 @@ FileSystem::FileSystem(bool format) {
         FileHeader *dirH = new FileHeader;
         dirH->FetchFrom(DIRECTORY_SECTOR);
 
+        // FIXME: no one cleans up these RWLock and FileHeader objects.
         freeMapFile = new OpenFile(FREE_MAP_SECTOR, new RWLock(), mapH);
         directoryFile = new OpenFile(DIRECTORY_SECTOR, new RWLock(), dirH);
 
@@ -476,8 +476,6 @@ void FileSystem::FreeFile(unsigned sector) {
 
     freeMap->Clear(sector);           // Remove header block.
     freeMap->WriteBack(freeMapFile);  // Flush to disk.
-
-    openFileManager->Unmanage(sector);
 
     delete fileH;
     delete freeMap;
