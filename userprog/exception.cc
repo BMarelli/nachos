@@ -163,6 +163,10 @@ static void HandleExec() {
 
     char **args = (argsAddr == 0) ? nullptr : SaveArgs(argsAddr);
 
+#ifdef FILESYS
+    thread->SetCWD(currentThread->GetCWD());
+#endif
+
     thread->Fork(ExecProcess, args);
 
     machine->WriteRegister(2, pid);

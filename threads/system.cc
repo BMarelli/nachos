@@ -255,6 +255,10 @@ void Initialize(int argc, char **argv) {
 #ifdef NETWORK
     postOffice = new PostOffice(netname, rely, 10);
 #endif
+
+#ifdef FILESYS
+    currentThread->SetCWD(fileSystem->GetRootDirectory());
+#endif
 }
 
 /// Nachos is halting.  De-allocate global data structures.

@@ -148,6 +148,12 @@ class Thread {
     Table<OpenFile *> *openFiles;
 #endif
 
+#ifdef FILESYS
+    unsigned GetCWD() const;
+
+    void SetCWD(unsigned newCWD);
+#endif
+
    private:
     // Some of the private data for this class is listed above.
 
@@ -183,7 +189,8 @@ class Thread {
 #endif
 
 #ifdef FILESYS
-// current directory?
+    // Current working directory.
+    unsigned cwd;  // TODO: use an OpenFile
 #endif
 };
 
