@@ -10,7 +10,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    char *path = "";
+    char *path = NULL;
     if (argc == 2) path = argv[1];
 
     return Cd(path);
