@@ -223,6 +223,7 @@ bool FileSystem::CreateFile(const char *filepath, unsigned initialSize) {
 
     DEBUG('f', "Creating file %s, size %u\n", filepath, initialSize);
 
+    // TODO: check that directory is not marked for deletion.
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(currentThread->GetCWD());
 
@@ -268,6 +269,7 @@ bool FileSystem::CreateDirectory(const char *path) {
 
     lock->Acquire();
 
+    // TODO: check that directory is not marked for deletion.
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(currentThread->GetCWD());
 
@@ -334,6 +336,7 @@ OpenFile *FileSystem::Open(const char *name) {
 
     DEBUG('f', "Opening file %s\n", name);
 
+    // TODO: check that directory is not marked for deletion.
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(currentThread->GetCWD());
 
@@ -377,6 +380,7 @@ void FileSystem::Close(OpenFile *file) {
 
         openFileManager->Unmanage(file->GetSector());
 
+        // TODO: check that directory is not marked for deletion.
         Directory *dir = new Directory(NUM_DIR_ENTRIES);
         dir->FetchFrom(currentThread->GetCWD());
 
@@ -416,6 +420,7 @@ bool FileSystem::Remove(const char *name) {
 
     DEBUG('f', "Removing file %s\n", name);
 
+    // TODO: check that directory is not marked for deletion.
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(currentThread->GetCWD());
 
@@ -452,6 +457,9 @@ bool FileSystem::Remove(const char *name) {
 
     return true;
 }
+
+// TODO: implement RemoveDirectory
+// - can only delete empty directories
 
 bool FileSystem::ExtendFile(unsigned sector, unsigned bytes) {
     ASSERT(openFileManager->IsManaged(sector));
@@ -499,6 +507,7 @@ void FileSystem::FreeFile(unsigned sector) {
 char *FileSystem::ListDirectoryContents(const char *path) {
     lock->Acquire();
 
+    // TODO: check that directory is not marked for deletion.
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(currentThread->GetCWD());
 
@@ -537,6 +546,7 @@ bool FileSystem::ChangeDirectory(const char *path) {
         return true;
     }
 
+    // TODO: check that directory is not marked for deletion.
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(currentThread->GetCWD());
 
@@ -608,6 +618,7 @@ const char *FileSystem::LoadDirectory(Directory *dir, const char *path) {
 
         int sector = dir->FindDirectory(token);
         if (sector == -1) {
+            // FIXME: delete buffer properly.
             // delete buffer;
 
             return nullptr;
@@ -623,6 +634,7 @@ const char *FileSystem::LoadDirectory(Directory *dir, const char *path) {
 
     char *base = CopyString(token);
 
+    // FIXME: delete buffer properly.
     // delete buffer;
 
     return base;

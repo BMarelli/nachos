@@ -34,7 +34,7 @@
 #define SC_CD 17
 #define SC_MKDIR 18
 #define SC_LS 19
-
+// TODO: define SC_REMOVEDIR
 
 #ifndef IN_ASM
 
