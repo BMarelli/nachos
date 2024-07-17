@@ -1,25 +1,21 @@
 #include "lib.c"
 #include "syscall.h"
 
-    int main(int argc, char* argv[]) {
-        if (argc > 2) {
-            puts("Error: too many arguments.\n");
+int main() {
+    Mkdir("dir1");
+    Mkdir("dir2");
 
-            return 1;
-        }
+    Ls(NULL);
 
-        char* name = argv[1];
-        if (Mkdir(name) < 0) {
-            puts("Error: failed to create directory: ");
-            puts(name);
-            puts("\n");
+    Cd("dir1");
+    Mkdir("foo");
 
-            return 0;
-        }
+    Ls(NULL);
 
-        Cd(name);
-        Mkdir("testing");
-        Mkdir("hello");
+    Cd(NULL);
+    Mkdir("dir3");
 
-        return Ls(NULL);
-    }
+    Ls(NULL);
+
+    // TODO: rmdir and ls
+}
