@@ -47,6 +47,10 @@
 #include "userprog/address_space.hh"
 #endif
 
+#ifdef FILESYS
+#include "filesys/synch_open_file.hh"
+#endif
+
 // NOTE: class `Channel` is forward declared here to avoid circular dependencies.
 class Channel;
 
@@ -149,9 +153,9 @@ class Thread {
 #endif
 
 #ifdef FILESYS
-    unsigned GetCWD() const;
+    SynchOpenFile *GetCWD() const;
 
-    void SetCWD(unsigned newCWD);
+    void SetCWD(SynchOpenFile *newCWD);
 #endif
 
    private:
@@ -190,7 +194,7 @@ class Thread {
 
 #ifdef FILESYS
     // Current working directory.
-    unsigned cwd;  // TODO: use an OpenFile
+    SynchOpenFile *cwd;
 #endif
 };
 

@@ -112,6 +112,7 @@ class FileSystem {
 #include "lib/utility.hh"
 #include "machine/disk.hh"
 #include "open_file_manager.hh"
+#include "synch_open_file.hh"
 
 /// Initial file sizes for the bitmap and directory; until the file system
 /// supports extensible files, the directory size sets the maximum number of
@@ -162,15 +163,13 @@ class FileSystem {
     bool ExtendFile(unsigned sector, unsigned bytes);
 
     /// Get the root directory.
-    unsigned GetRootDirectory();
+    SynchOpenFile *GetRootDirectory();
 
    private:
     Lock *lock;  ///< Lock to protect the file system structure.
 
-    OpenFile *freeMapFile;    ///< Bit map of free disk blocks, represented as a
-                              ///< file.
-    OpenFile *directoryFile;  ///< “Root” directory -- list of file names,
-                              ///< represented as a file.
+    OpenFile *freeMapFile;  ///< Bit map of free disk blocks, represented as a
+                            ///< file.
 
     OpenFileManager *openFileManager;
 
@@ -179,7 +178,7 @@ class FileSystem {
 
     const char *LoadDirectory(Directory *directory, const char *path);
 
-    Directory *LoadDirectory(unsigned sector);
+    SynchOpenFile *GetSynchOpenFile(unsigned sector);
 };
 
 #endif

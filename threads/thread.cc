@@ -326,7 +326,7 @@ void Thread::RestoreUserState() {
 #endif
 
 #ifdef FILESYS
-unsigned Thread::GetCWD() const { return cwd; }
+SynchOpenFile *Thread::GetCWD() const { return cwd; }
 
-void Thread::SetCWD(unsigned newCWD) { cwd = newCWD; }
+void Thread::SetCWD(SynchOpenFile *newCWD) { cwd = newCWD; }
 #endif

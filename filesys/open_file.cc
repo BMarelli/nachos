@@ -23,9 +23,9 @@
 /// memory while the file is open.
 ///
 /// * `sector` is the location on disk of the file header for this file.
-OpenFile::OpenFile(int _sector, RWLock *_rwLock, FileHeader *_fileHeader) {
+/// * `fileHeader` is a pointer to the file header for this file.
+OpenFile::OpenFile(int _sector, FileHeader *_fileHeader) {
     sector = _sector;
-    rwLock = _rwLock;
     fileHeader = _fileHeader;
 
     seekPosition = 0;
@@ -99,20 +99,13 @@ int OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position) {
     ASSERT(into != nullptr);
     ASSERT(numBytes > 0);
 
-    rwLock->AcquireRead();
-
     unsigned fileLength = fileHeader->FileLength();
     unsigned firstSector, lastSector, numSectors;
     char *buf;
 
-    if (position >= fileLength) {
-        rwLock->ReleaseRead();
+    if (position >= fileLength) return 0;  // Check request.
 
-        return 0;  // Check request.
-    }
-    if (position + numBytes > fileLength) {
-        numBytes = fileLength - position;
-    }
+    if (position + numBytes > fileLength) numBytes = fileLength - position;
 
     DEBUG('f', "Reading %u bytes at %u, from file of length %u.\n", numBytes, position, fileLength);
 
@@ -130,16 +123,12 @@ int OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position) {
     memcpy(into, &buf[position - firstSector * SECTOR_SIZE], numBytes);
     delete[] buf;
 
-    rwLock->ReleaseRead();
-
     return numBytes;
 }
 
 int OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position) {
     ASSERT(from != nullptr);
     ASSERT(numBytes > 0);
-
-    rwLock->AcquireWrite();
 
     unsigned fileLength = fileHeader->FileLength();
     unsigned firstSector, lastSector, numSectors;
@@ -148,8 +137,6 @@ int OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position) {
 
     if (position + numBytes > fileLength) {
         if (!fileSystem->ExtendFile(sector, position + numBytes - fileLength)) {
-            rwLock->ReleaseWrite();
-
             return 0;
         }
 
@@ -182,9 +169,8 @@ int OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position) {
     for (unsigned i = firstSector; i <= lastSector; i++) {
         synchDisk->WriteSector(fileHeader->ByteToSector(i * SECTOR_SIZE), &buf[(i - firstSector) * SECTOR_SIZE]);
     }
-    delete[] buf;
 
-    rwLock->ReleaseWrite();
+    delete[] buf;
 
     return numBytes;
 }

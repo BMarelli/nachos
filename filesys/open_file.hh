@@ -78,17 +78,15 @@ class OpenFile {
 
 #else  // FILESYS
 
-class RWLock;
-
 class FileHeader;
 
 class OpenFile {
    public:
     /// Open a file whose header is located at `sector` on the disk.
-    OpenFile(int sector, RWLock *rwLock, FileHeader *fileHeader);
+    OpenFile(int sector, FileHeader *fileHeader);
 
     /// Close the file.
-    ~OpenFile();
+    virtual ~OpenFile();
 
     /// Set the position from which to start reading/writing -- UNIX `lseek`.
     void Seek(unsigned position);
@@ -101,21 +99,23 @@ class OpenFile {
 
     /// Read/write bytes from the file, bypassing the implicit position.
 
-    int ReadAt(char *into, unsigned numBytes, unsigned position);
-    int WriteAt(const char *from, unsigned numBytes, unsigned position);
+    virtual int ReadAt(char *into, unsigned numBytes, unsigned position);
+    virtual int WriteAt(const char *from, unsigned numBytes, unsigned position);
 
     // Return the number of bytes in the file (this interface is simpler than
     // the UNIX idiom -- `lseek` to end of file, `tell`, `lseek` back).
     unsigned Length() const;
 
+    /// TODO: remove, should be provided by FileHeader
     /// Get the sector of the file header
     unsigned GetSector() const { return sector; }
 
    private:
-    unsigned sector;         ///< Sector on disk where the file header is located.
-    RWLock *rwLock;          ///< Lock for concurrent access to the file.
+    unsigned sector;        ///< Sector on disk where the file header is located.
+    unsigned seekPosition;  ///< Current position within the file.
+
+   protected:
     FileHeader *fileHeader;  ///< Header for this file.
-    unsigned seekPosition;   ///< Current position within the file.
 };
 
 #endif
