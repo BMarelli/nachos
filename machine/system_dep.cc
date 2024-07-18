@@ -231,6 +231,11 @@ bool Unlink(const char *name) {
     return unlink(name);
 }
 
+bool RemoveDirectory(const char *name) {
+    ASSERT(name != nullptr);
+    return rmdir(name);
+}
+
 /// Open an interprocess communication (IPC) connection.
 ///
 /// For now, just open a datagram port where other Nachos (simulating

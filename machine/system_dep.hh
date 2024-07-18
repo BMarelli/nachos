@@ -29,6 +29,8 @@ bool PollFile(int fd);
 
 bool CreateDirectory(const char *name);
 
+bool RemoveDirectory(const char *name);
+
 bool ChangeDirectory(const char *name);
 
 char *ListDirectoryContents(const char *name);

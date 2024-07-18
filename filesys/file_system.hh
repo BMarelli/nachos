@@ -104,7 +104,11 @@ class FileSystem {
         return SystemDep::Unlink(name) == 0;
     }
 
-    bool RemoveDirectory(const char *name) { return false; }
+    bool RemoveDirectory(const char *name) {
+        ASSERT(name != nullptr);
+
+        return SystemDep::RemoveDirectory(name);
+    }
 };
 
 #else  // FILESYS
