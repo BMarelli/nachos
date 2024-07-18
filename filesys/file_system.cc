@@ -460,8 +460,6 @@ bool FileSystem::RemoveFile(const char *name) {
     return true;
 }
 
-// TODO: implement RemoveDirectory
-// - can only delete empty directories
 bool FileSystem::RemoveDirectory(const char *name) {
     ASSERT(name != nullptr);
 
