@@ -630,7 +630,14 @@ bool FileSystem::ChangeDirectory(const char *path) {
 
         openFileManager->Unmanage(file->GetSector());
 
-        // FIXME: handle the case where the directory is marked for deletion
+        if (dir->IsMarkedForDeletion(file->GetSector())) {
+            DEBUG('f', "File at sector %u is marked for deletion.\n", file->GetSector());
+
+            FreeFile(file->GetSector());
+
+            ASSERT(dir->RemoveMarkedForDeletion(file->GetSector()));
+            dir->WriteBack(currentThread->GetCWD());  // Flush to disk.
+        }
     }
 
     delete file;
