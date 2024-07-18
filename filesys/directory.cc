@@ -208,6 +208,15 @@ bool Directory::IsMarkedForDeletion(unsigned sector) {
     return false;
 }
 
+/// Determine if directory is empty.
+bool Directory::IsEmpty() {
+    for (unsigned i = 0; i < raw.tableSize; i++) {
+        if (raw.table[i].inUse) return false;
+    }
+
+    return true;
+}
+
 char *Directory::ListContents() {
     char *buffer = new char[raw.tableSize * (FILE_NAME_MAX_LEN + 1) + 1];
     char *ptr = buffer;

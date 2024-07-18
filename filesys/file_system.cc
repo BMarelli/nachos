@@ -294,8 +294,10 @@ bool FileSystem::CreateDirectory(const char *path) {
                 if (!dir->Add(path, sector, true)) {
                     success = false;
                 } else {
-                    OpenFile *newDirectoryFile = new UniqueOpenFile(sector);
+                    OpenFile *newDirectoryFile = new OpenFile(sector, fileHeader);
                     newDir->WriteBack(newDirectoryFile);
+
+                    fileHeader->WriteBack(sector);
 
                     delete newDirectoryFile;
 
@@ -413,7 +415,7 @@ void FileSystem::Close(OpenFile *file) {
 /// file system.
 ///
 /// * `name` is the text name of the file to be removed.
-bool FileSystem::Remove(const char *name) {
+bool FileSystem::RemoveFile(const char *name) {
     ASSERT(name != nullptr);
 
     lock->Acquire();
@@ -460,6 +462,46 @@ bool FileSystem::Remove(const char *name) {
 
 // TODO: implement RemoveDirectory
 // - can only delete empty directories
+bool FileSystem::RemoveDirectory(const char *name) {
+    ASSERT(name != nullptr);
+
+    lock->Acquire();
+
+    DEBUG('f', "Removing directory %s\n", name);
+
+    Directory *dir = new Directory(NUM_DIR_ENTRIES);
+    dir->FetchFrom(currentThread->GetCWD());
+
+    int sector = dir->FindDirectory(name);
+    if (sector == -1) {
+        delete dir;
+
+        lock->Release();
+
+        return false;
+    }
+
+    if (!dir->IsEmpty()) {
+        delete dir;
+
+        lock->Release();
+
+        return false;
+    }
+
+    /// TODO: remove directory
+    /// NOTE: Creo que tiene que ser igual al RemoveFile
+    /// FreeFile(sector);
+
+    /// ASSERT(dir->Remove(name));
+    /// dir->WriteBack(currentThread->GetCWD());  // Flush to disk.
+
+    delete dir;
+
+    lock->Release();
+
+    return true;
+}
 
 bool FileSystem::ExtendFile(unsigned sector, unsigned bytes) {
     ASSERT(openFileManager->IsManaged(sector));
@@ -542,6 +584,8 @@ bool FileSystem::ChangeDirectory(const char *path) {
 
     if (path == nullptr) {
         currentThread->SetCWD(GetRootDirectory());
+
+        lock->Release();
 
         return true;
     }

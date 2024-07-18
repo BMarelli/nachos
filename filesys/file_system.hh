@@ -99,13 +99,12 @@ class FileSystem {
         SystemDep::Close(file->GetFileDescriptor());
     }
 
-    // TODO: rename to RemoveFile
-    bool Remove(const char *name) {
+    bool RemoveFile(const char *name) {
         ASSERT(name != nullptr);
         return SystemDep::Unlink(name) == 0;
     }
 
-    /// TODO: add RemoveDirectory
+    bool RemoveDirectory(const char *name) { return false; }
 };
 
 #else  // FILESYS
@@ -148,9 +147,10 @@ class FileSystem {
     void Close(OpenFile *file);
 
     /// Delete a file (UNIX `unlink`).
-    bool Remove(const char *name);  // TODO: rename to RemoveFile
+    bool RemoveFile(const char *name);
 
-    /// TODO: add RemoveDirectory
+    /// Delete a directory (UNIX `rmdir`).
+    bool RemoveDirectory(const char *name);
 
     /// List all files in a directory (UNIX `ls`).
     char *ListDirectoryContents(const char *path);

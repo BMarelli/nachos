@@ -164,6 +164,11 @@ Ls:
         syscall
         j       $31
         .end    Ls
+RemoveDir:
+        addiu   $2, $0, SC_REMOVEDIR
+        syscall
+        j       $31
+        .end    RemoveDir
 
 /// Dummy function to keep gcc happy.
         .globl  __main

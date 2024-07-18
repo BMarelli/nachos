@@ -34,7 +34,7 @@
 #define SC_CD 17
 #define SC_MKDIR 18
 #define SC_LS 19
-// TODO: define SC_REMOVEDIR
+#define SC_REMOVEDIR 20
 
 #ifndef IN_ASM
 
@@ -103,6 +103,9 @@ int Create(const char *name);
 
 /// Remove the Nachos file named `name`.
 int Remove(const char *name);
+
+/// Remove the Nachos directory named `name`.
+int RemoveDir(const char *name);
 
 /// Open the Nachos file `name`, and return an `OpenFileId` that can be used
 /// to read and write to the file.

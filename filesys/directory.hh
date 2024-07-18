@@ -64,6 +64,9 @@ class Directory {
     /// Determine if a file is marked for deletion.
     bool IsMarkedForDeletion(unsigned sector);
 
+    /// Determine if directory is empty.
+    bool IsEmpty();
+
     /// List the files of the directory
     char *ListContents();
 

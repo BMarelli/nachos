@@ -212,7 +212,7 @@ static void HandleRemove() {
 
     DEBUG('e', "`Remove` requested for file `%s`.\n", filename);
 
-    if (!fileSystem->Remove(filename)) {
+    if (!fileSystem->RemoveFile(filename)) {
         DEBUG('e', "Error: file `%s` could not be removed.\n", filename);
         machine->WriteRegister(2, -1);
 
@@ -514,6 +514,28 @@ static void HandleLs() {
     delete path;
 }
 
+void static HandleRemoveDir() {
+    char dirname[FILE_NAME_MAX_LEN + 1];
+    if (!ReadStringFromFirstArgument(dirname, sizeof dirname)) {
+        machine->WriteRegister(2, -1);
+
+        return;
+    }
+
+    DEBUG('e', "`Remove` requested for directory `%s`.\n", dirname);
+
+    if (!fileSystem->RemoveDirectory(dirname)) {
+        DEBUG('e', "Error: directory `%s` could not be removed.\n", dirname);
+        machine->WriteRegister(2, -1);
+
+        return;
+    }
+
+    DEBUG('e', "Directory `%s` removed.\n", dirname);
+
+    machine->WriteRegister(2, 0);
+}
+
 /// Handle a system call exception.
 ///
 /// * `et` is the kind of exception.  The list of possible exceptions is in
@@ -588,6 +610,10 @@ static void SyscallHandler(ExceptionType _et) {
 
         case SC_LS:
             HandleLs();
+            break;
+
+        case SC_REMOVEDIR:
+            HandleRemoveDir();
             break;
 
         default:
