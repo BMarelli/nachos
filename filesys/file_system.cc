@@ -467,34 +467,54 @@ bool FileSystem::RemoveDirectory(const char *name) {
 
     DEBUG('f', "Removing directory %s\n", name);
 
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
-    dir->FetchFrom(currentThread->GetCWD());
+    Directory *cwd = new Directory(NUM_DIR_ENTRIES);
+    cwd->FetchFrom(currentThread->GetCWD());
 
-    int sector = dir->FindDirectory(name);
+    int sector = cwd->FindDirectory(name);
     if (sector == -1) {
-        delete dir;
+        delete cwd;
 
         lock->Release();
 
         return false;
     }
+
+    // FIXME: should be using a SynchOpenFile instead.
+    OpenFile *file = new UniqueOpenFile(sector);
+    Directory *dir = new Directory(NUM_DIR_ENTRIES);
+    dir->FetchFrom(file);
+    delete file;
 
     if (!dir->IsEmpty()) {
         delete dir;
+        delete cwd;
 
         lock->Release();
 
         return false;
     }
 
-    /// TODO: remove directory
-    /// NOTE: Creo que tiene que ser igual al RemoveFile
-    /// FreeFile(sector);
-
-    /// ASSERT(dir->Remove(name));
-    /// dir->WriteBack(currentThread->GetCWD());  // Flush to disk.
-
     delete dir;
+
+    if (openFileManager->GetReferenceCount(sector) > 0) {
+        DEBUG('f', "Directory %s is open, marking for deletion.\n", name);
+
+        cwd->MarkForDeletion(name);
+        cwd->WriteBack(currentThread->GetCWD());
+
+        delete cwd;
+
+        lock->Release();
+
+        return true;
+    }
+
+    FreeFile(sector);
+
+    ASSERT(cwd->Remove(name));
+    cwd->WriteBack(currentThread->GetCWD());  // Flush to disk.
+
+    delete cwd;
 
     lock->Release();
 
