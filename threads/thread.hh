@@ -153,6 +153,7 @@ class Thread {
 #endif
 
 #ifdef FILESYS
+    // TODO: consider renaming this method
     SynchOpenFile *GetCWD() const;
 
     void SetCWD(SynchOpenFile *newCWD);
