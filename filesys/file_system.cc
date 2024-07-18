@@ -608,13 +608,16 @@ bool FileSystem::ChangeDirectory(const char *path) {
         return true;
     }
 
-    // TODO: check that directory is not marked for deletion.
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
-    dir->FetchFrom(currentThread->GetCWD());
+    // FIXME: check that directory is not marked for deletion.
+    // in order to do this, we might need to check the parent directory.
+    // alternatively, we could duplicate the information about the directory
+    // being marked for deletion in the FileHeader.
+    Directory *cwd = new Directory(NUM_DIR_ENTRIES);
+    cwd->FetchFrom(currentThread->GetCWD());
 
-    int sector = dir->FindDirectory(path);
+    int sector = cwd->FindDirectory(path);
     if (sector == -1) {
-        delete dir;
+        delete cwd;
 
         lock->Release();
 
@@ -630,18 +633,18 @@ bool FileSystem::ChangeDirectory(const char *path) {
 
         openFileManager->Unmanage(file->GetSector());
 
-        if (dir->IsMarkedForDeletion(file->GetSector())) {
+        if (cwd->IsMarkedForDeletion(file->GetSector())) {
             DEBUG('f', "File at sector %u is marked for deletion.\n", file->GetSector());
 
             FreeFile(file->GetSector());
 
-            ASSERT(dir->RemoveMarkedForDeletion(file->GetSector()));
-            dir->WriteBack(currentThread->GetCWD());  // Flush to disk.
+            ASSERT(cwd->RemoveMarkedForDeletion(file->GetSector()));
+            cwd->WriteBack(currentThread->GetCWD());  // Flush to disk.
         }
     }
 
     delete file;
-    delete dir;
+    delete cwd;
 
     currentThread->SetCWD(GetSynchOpenFile(sector));
 
