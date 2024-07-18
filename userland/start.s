@@ -164,6 +164,9 @@ Ls:
         syscall
         j       $31
         .end    Ls
+
+        .globl  RemoveDir
+        .ent    RemoveDir
 RemoveDir:
         addiu   $2, $0, SC_REMOVEDIR
         syscall
