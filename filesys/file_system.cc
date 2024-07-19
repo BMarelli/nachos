@@ -643,6 +643,8 @@ bool FileSystem::ChangeDirectory(const char *path) {
         return false;
     }
 
+    // TODO: check if subdirectory is marked for deletion before changing.
+    // TODO: refactor, this is duplicated above and in some other methods
     OpenFile *file = currentThread->GetCWD();
 
     unsigned referenceCount = openFileManager->DecrementReferenceCount(file->GetSector());
