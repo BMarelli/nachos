@@ -222,7 +222,7 @@ char *Directory::ListContents() {
     char *ptr = buffer;
 
     for (unsigned i = 0; i < raw.tableSize; i++) {
-        if (raw.table[i].inUse) {
+        if (raw.table[i].inUse && !raw.table[i].markedForDeletion) {
             size_t len = strlen(raw.table[i].name);
 
             strncpy(ptr, raw.table[i].name, len);
