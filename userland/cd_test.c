@@ -109,6 +109,6 @@ int main() {
     puts("\n");
 
     puts("$ ls\n");
-    Ls(NULL);  // FIXME: does not return the expected output
+    Ls(NULL);
     puts("debug: expected output: [self] dir2 dir3\n");
 }
