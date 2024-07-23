@@ -63,6 +63,18 @@
 static const unsigned FREE_MAP_SECTOR = 0;
 static const unsigned DIRECTORY_SECTOR = 1;
 
+// TODO: move somewher else
+const char *GetFileName(const char *path) {
+    ASSERT(path != nullptr);
+
+    const char *name = strrchr(path, '/');
+    if (name == nullptr) {
+        return path;
+    }
+
+    return name + 1;
+}
+
 /// Initialize the file system.  If `format == true`, the disk has nothing on
 /// it, and we need to initialize the disk to contain an empty directory, and
 /// a bitmap of free sectors (with almost but not all of the sectors marked
@@ -224,13 +236,19 @@ bool FileSystem::CreateFile(const char *filepath, unsigned initialSize) {
     DEBUG('f', "Creating file %s, size %u\n", filepath, initialSize);
 
     // TODO: check that directory is not marked for deletion.
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
-    dir->FetchFrom(currentThread->GetCWD());
+    int directorySector = LoadDirectory(filepath);
+    if (directorySector == -1) {
+        lock->Release();
 
-    const char *name = LoadDirectory(dir, filepath);
+        return false;
+    }
+
+    Directory *dir = new Directory(NUM_DIR_ENTRIES);
+    dir->FetchFrom(GetSynchOpenFile(directorySector));  // FIXME: free and decrement reference count
+
+    const char *name = GetFileName(filepath);
 
     bool success;
-
     if (dir->HasEntry(name)) {
         success = false;  // File or directory with the same name already exists.
     } else {
@@ -249,14 +267,14 @@ bool FileSystem::CreateFile(const char *filepath, unsigned initialSize) {
             if (success) {
                 // Everything worked, flush all changes back to disk.
                 h->WriteBack(sector);
-                dir->WriteBack(currentThread->GetCWD());
+                dir->WriteBack(GetSynchOpenFile(directorySector));  // FIXME: unmanage and free synchopenfile
                 freeMap->WriteBack(freeMapFile);
             }
             delete h;
         }
         delete freeMap;
     }
-    delete name;
+
     delete dir;
 
     lock->Release();
@@ -270,6 +288,7 @@ bool FileSystem::CreateDirectory(const char *path) {
     lock->Acquire();
 
     // TODO: check that directory is not marked for deletion.
+    // TODO: allow creating nested directories.
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(currentThread->GetCWD());
 
@@ -339,6 +358,7 @@ OpenFile *FileSystem::Open(const char *name) {
     DEBUG('f', "Opening file %s\n", name);
 
     // TODO: check that directory is not marked for deletion.
+    // TODO: allow opening a file in a subdirectory.
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(currentThread->GetCWD());
 
@@ -423,6 +443,7 @@ bool FileSystem::RemoveFile(const char *name) {
     DEBUG('f', "Removing file %s\n", name);
 
     // TODO: check that directory is not marked for deletion.
+    // TODO: allow removing a file in a subdirectory.
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(currentThread->GetCWD());
 
@@ -467,6 +488,8 @@ bool FileSystem::RemoveDirectory(const char *name) {
 
     DEBUG('f', "Removing directory %s\n", name);
 
+    // TODO: check that directory is not marked for deletion.
+    // TODO: allow removing a directory in a subdirectory.
     Directory *cwd = new Directory(NUM_DIR_ENTRIES);
     cwd->FetchFrom(currentThread->GetCWD());
 
@@ -568,6 +591,7 @@ char *FileSystem::ListDirectoryContents(const char *path) {
     lock->Acquire();
 
     // TODO: check that directory is not marked for deletion.
+    // TODO: allow listing a directory in a subdirectory.
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(currentThread->GetCWD());
 
@@ -600,6 +624,8 @@ char *FileSystem::ListDirectoryContents(const char *path) {
 bool FileSystem::ChangeDirectory(const char *path) {
     lock->Acquire();
 
+    // TODO: check that directory is not marked for deletion.
+    // TODO: allow changing to a directory in a subdirectory.
     Directory *cwd = new Directory(NUM_DIR_ENTRIES);
     cwd->FetchFrom(currentThread->GetCWD());
 
@@ -692,29 +718,37 @@ SynchOpenFile *FileSystem::GetSynchOpenFile(unsigned sector) {
 
 SynchOpenFile *FileSystem::GetRootDirectory() { return GetSynchOpenFile(DIRECTORY_SECTOR); }
 
-const char *FileSystem::LoadDirectory(Directory *dir, const char *path) {
+// FIXME: do not use uniqueopenfile
+// TODO: remove unused arg
+int FileSystem::LoadDirectory(const char *path) {
+    Directory *dir = new Directory(NUM_DIR_ENTRIES);
     if (path == nullptr) {
         OpenFile *file = GetRootDirectory();
         dir->FetchFrom(file);
 
+        // TODO: make sure to decrement count too, has to happen every time a synch open file is freed
         delete file;
 
-        return nullptr;
+        return -1;
     }
 
+    dir->FetchFrom(currentThread->GetCWD());
+    int sector = currentThread->GetCWD()->GetSector();
+
     char *buffer = CopyString(path);
+    char *cp = buffer;
 
     char *token = strtok_r(buffer, "/", &buffer);
     while (token != nullptr) {
         char *nextToken = strtok_r(nullptr, "/", &buffer);
         if (nextToken == nullptr) break;
 
-        int sector = dir->FindDirectory(token);
+        sector = dir->FindDirectory(token);
         if (sector == -1) {
-            // FIXME: delete buffer properly.
-            // delete buffer;
+            delete cp;
+            delete dir;
 
-            return nullptr;
+            return -1;
         }
 
         OpenFile *file = new UniqueOpenFile(sector);
@@ -725,12 +759,10 @@ const char *FileSystem::LoadDirectory(Directory *dir, const char *path) {
         token = nextToken;
     }
 
-    char *base = CopyString(token);
+    delete cp;
+    delete dir;
 
-    // FIXME: delete buffer properly.
-    // delete buffer;
-
-    return base;
+    return sector;
 }
 
 static bool AddToShadowBitmap(unsigned sector, Bitmap *map) {
@@ -785,7 +817,7 @@ static bool CheckFileHeader(const RawFileHeader *rh, unsigned num, Bitmap *shado
 //     }
 //     return error;
 // }
-
+//
 // static bool CheckDirectory(const RawDirectory *rd, Bitmap *shadowMap) {
 //     ASSERT(rd != nullptr);
 //     ASSERT(shadowMap != nullptr);
@@ -859,8 +891,6 @@ bool FileSystem::Check() {
     error |= CheckFileHeader(bitRH, FREE_MAP_SECTOR, shadowMap);
     delete bitH;
 
-    // FIXME: this should load the root directory and we should make sure we check all the children
-    //
     // DEBUG('f', "Checking directory.\n");
     //
     // FileHeader *dirH = new FileHeader;
@@ -869,13 +899,14 @@ bool FileSystem::Check() {
     // error |= CheckFileHeader(dirRH, DIRECTORY_SECTOR, shadowMap);
     // delete dirH;
     //
-    // Bitmap *freeMap = new Bitmap(NUM_SECTORS);
-    // freeMap->FetchFrom(freeMapFile);
     // Directory *dir = new Directory(NUM_DIR_ENTRIES);
     // const RawDirectory *rdir = dir->GetRaw();
     // dir->FetchFrom(directoryFile);
     // error |= CheckDirectory(rdir, shadowMap);
     // delete dir;
+    //
+    // Bitmap *freeMap = new Bitmap(NUM_SECTORS);
+    // freeMap->FetchFrom(freeMapFile);
     //
     // // The two bitmaps should match.
     // DEBUG('f', "Checking bitmap consistency.\n");

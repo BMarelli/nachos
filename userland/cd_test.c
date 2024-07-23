@@ -111,4 +111,11 @@ int main() {
     puts("$ ls\n");
     Ls(NULL);
     puts("debug: expected output: [self] dir2 dir3\n");
+
+    puts("$ touch dir2/foo\n");
+    Create("dir2/foo");
+
+    puts("$ ls dir2\n");
+    Ls("dir2");  // FIXME: check all is good with Ls and unhappy paths
+    puts("debug: expected output: foo\n");
 }

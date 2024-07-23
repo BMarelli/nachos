@@ -185,7 +185,7 @@ class FileSystem {
     /// Free a file located at the given sector.
     void FreeFile(unsigned sector);
 
-    const char *LoadDirectory(Directory *directory, const char *path);
+    int LoadDirectory(const char *path);
 
     SynchOpenFile *GetSynchOpenFile(unsigned sector);
 };
