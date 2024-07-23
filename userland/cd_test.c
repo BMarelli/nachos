@@ -1,6 +1,8 @@
 #include "lib.c"
 #include "syscall.h"
 
+#define HELLO_WORLD "Hello, world!\n"
+
 int main() {
     int res;
 
@@ -118,4 +120,19 @@ int main() {
     puts("$ ls dir2\n");
     Ls("dir2");  // FIXME: check all is good with Ls and unhappy paths
     puts("debug: expected output: foo\n");
+
+    puts("$ mkdir dir2/test\n");
+    Mkdir("dir2/test");
+
+    puts("$ open dir2/foo\n");
+    OpenFileId fid = Open("dir2/foo");
+    Write(HELLO_WORLD, sizeof HELLO_WORLD, fid);
+    Close(fid);
+
+    puts("$ rm dir2/foo\n");
+    Remove("dir2/foo");
+
+    puts("$ ls dir2\n");
+    Ls("dir2");
+    puts("debug: expected output: test\n");
 }

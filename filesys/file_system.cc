@@ -288,13 +288,20 @@ bool FileSystem::CreateDirectory(const char *path) {
     lock->Acquire();
 
     // TODO: check that directory is not marked for deletion.
-    // TODO: allow creating nested directories.
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
-    dir->FetchFrom(currentThread->GetCWD());
+    int directorySector = LoadDirectory(path);
+    if (directorySector == -1) {
+        lock->Release();
 
+        return false;
+    }
+
+    Directory *dir = new Directory(NUM_DIR_ENTRIES);
+    dir->FetchFrom(GetSynchOpenFile(directorySector)); // FIXME:
+
+    const char *name = GetFileName(path);
     bool success;
 
-    if (dir->HasEntry(path)) {
+    if (dir->HasEntry(name)) {
         success = false;  // File or directory with the same name already exists.
     } else {
         Bitmap *freeMap = new Bitmap(NUM_SECTORS);
@@ -310,7 +317,7 @@ bool FileSystem::CreateDirectory(const char *path) {
             } else {
                 Directory *newDir = new Directory(NUM_DIR_ENTRIES);
 
-                if (!dir->Add(path, sector, true)) {
+                if (!dir->Add(name, sector, true)) {
                     success = false;
                 } else {
                     OpenFile *newDirectoryFile = new OpenFile(sector, fileHeader);
@@ -321,7 +328,7 @@ bool FileSystem::CreateDirectory(const char *path) {
                     delete newDirectoryFile;
 
                     fileHeader->WriteBack(sector);
-                    dir->WriteBack(currentThread->GetCWD());
+                    dir->WriteBack(GetSynchOpenFile(directorySector)); // FIXME:
                     freeMap->WriteBack(freeMapFile);
 
                     success = true;
@@ -350,18 +357,25 @@ bool FileSystem::CreateDirectory(const char *path) {
 /// 2. Bring the header into memory.
 ///
 /// * `name` is the text name of the file to be opened.
-OpenFile *FileSystem::Open(const char *name) {
-    ASSERT(name != nullptr);
+OpenFile *FileSystem::Open(const char *filepath) {
+    ASSERT(filepath != nullptr);
 
     lock->Acquire();
 
-    DEBUG('f', "Opening file %s\n", name);
+    DEBUG('f', "Opening file %s\n", filepath);
 
     // TODO: check that directory is not marked for deletion.
-    // TODO: allow opening a file in a subdirectory.
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
-    dir->FetchFrom(currentThread->GetCWD());
+    int directorySector = LoadDirectory(filepath);
+    if (directorySector == -1) {
+        lock->Release();
 
+        return nullptr;
+    }
+
+    Directory *dir = new Directory(NUM_DIR_ENTRIES);
+    dir->FetchFrom(GetSynchOpenFile(directorySector));
+
+    const char *name = GetFileName(filepath);
     int sector = dir->FindFile(name);
     if (sector == -1) {
         delete dir;
@@ -435,18 +449,25 @@ void FileSystem::Close(OpenFile *file) {
 /// file system.
 ///
 /// * `name` is the text name of the file to be removed.
-bool FileSystem::RemoveFile(const char *name) {
-    ASSERT(name != nullptr);
+bool FileSystem::RemoveFile(const char *filepath) {
+    ASSERT(filepath != nullptr);
 
     lock->Acquire();
 
-    DEBUG('f', "Removing file %s\n", name);
+    DEBUG('f', "Removing file %s\n", filepath);
 
     // TODO: check that directory is not marked for deletion.
-    // TODO: allow removing a file in a subdirectory.
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
-    dir->FetchFrom(currentThread->GetCWD());
+    int directorySector = LoadDirectory(filepath);
+    if (directorySector == -1) {
+        lock->Release();
 
+        return false;
+    }
+
+    Directory *dir = new Directory(NUM_DIR_ENTRIES);
+    dir->FetchFrom(GetSynchOpenFile(directorySector)); // FIXME:
+
+    const char *name = GetFileName(filepath);
     int sector = dir->FindFile(name);
     if (sector == -1) {
         delete dir;
@@ -460,7 +481,7 @@ bool FileSystem::RemoveFile(const char *name) {
         DEBUG('f', "File %s is open, marking for deletion.\n", name);
 
         dir->MarkForDeletion(name);
-        dir->WriteBack(currentThread->GetCWD());
+        dir->WriteBack(GetSynchOpenFile(directorySector)); // FIXME:
 
         delete dir;
 
@@ -472,7 +493,7 @@ bool FileSystem::RemoveFile(const char *name) {
     FreeFile(sector);
 
     ASSERT(dir->Remove(name));
-    dir->WriteBack(currentThread->GetCWD());  // Flush to disk.
+    dir->WriteBack(GetSynchOpenFile(directorySector));  // Flush to disk. FIXME:
 
     delete dir;
 

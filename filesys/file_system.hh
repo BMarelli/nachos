@@ -145,13 +145,13 @@ class FileSystem {
     bool CreateDirectory(const char *path);
 
     /// Open a file (UNIX `open`).
-    OpenFile *Open(const char *name);
+    OpenFile *Open(const char *filepath);
 
     /// Close a file (UNIX `close`).
     void Close(OpenFile *file);
 
     /// Delete a file (UNIX `unlink`).
-    bool RemoveFile(const char *name);
+    bool RemoveFile(const char *filepath);
 
     /// Delete a directory (UNIX `rmdir`).
     bool RemoveDirectory(const char *name);
