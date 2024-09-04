@@ -32,47 +32,50 @@ static unsigned ReadLine(char *buffer, unsigned size) {
     return i;
 }
 
-static bool PrepareArguments(char *line, char **argv, unsigned argvSize) {
+static int PrepareArguments(char *line, char **argv, unsigned argvSize) {
     if (line == NULL || argv == NULL || argvSize == 0) {
-        return false;
+        return -1;
     }
+
+    int i = 0;
 
     // Skip leading spaces.
-    int i = 0;
-    while (line[i] == ARG_SEPARATOR && line[i] != '\0') {
-        i++;
-    }
+    while (line[i] == ARG_SEPARATOR && line[i] != '\0') i++;
 
-    unsigned argc = 1;
+    if (line[i] == '\0') return 0;
+
     argv[0] = &line[0];
+    unsigned argc = 1;
 
     // Traverse the whole line and replace spaces between arguments by null
     // characters, so as to be able to treat each argument as a standalone
     // string.
     // TODO: support arguments with spaces by using quotes / escaping.
-    for (i = 0; line[i] != '\0'; i++) {
+    for (; line[i] != '\0'; i++) {
         if (line[i] == ARG_SEPARATOR) {
-            if (argc == argvSize - 1) {
+            argc++;
+
+            if (argc == argvSize) {
                 // The maximum of allowed arguments is exceeded, and
-                // therefore the size of `argv` is too.  Note that 1 is
-                // decreased in order to leave space for the NULL at the end.
-                return false;
+                // therefore the size of `argv` is too. Note that we need
+                // to leave 1 slot for the NULL terminator.
+                return -1;
             }
 
             line[i] = '\0';
-            argv[argc] = &line[i + 1];
-            argc++;
+            argv[argc - 1] = &line[i + 1];
 
             // Skip following spaces.
-            while (line[i + 1] == ARG_SEPARATOR) {
-                i++;
-            }
+            while (line[i + 1] == ARG_SEPARATOR) i++;
+
+            // If only spaces followed, then there were no more arguments.
+            if (line[i + 1] == '\0') argc--;
         }
     }
 
     argv[argc] = (char *)NULL;
 
-    return true;
+    return argc;
 }
 
 int main(void) {
@@ -87,27 +90,35 @@ int main(void) {
             continue;
         }
 
-        if (!PrepareArguments(line, argv, MAX_ARG_COUNT)) {
-            WriteError("too many arguments.");
-
-            continue;
+        int res = PrepareArguments(line, argv, MAX_ARG_COUNT);
+        switch (res) {
+            case 0:
+                // Empty line.
+                continue;
+            case -1:
+                WriteError("too many arguments.");
+                continue;
         }
 
-        bool parallel = argv[0][0] == '&';
+        if (strcmp(argv[0], "cd") == 0 && res == 2) {
+            Cd(argv[1]);
+        } else {
+            bool parallel = argv[0][0] == '&';
 
-        char *name = argv[0] + (parallel ? 1 : 0);  // Skip '&' if present.
+            char *name = argv[0] + (parallel ? 1 : 0);  // Skip '&' if present.
 
-        const SpaceId newProc = Exec(name, argv);
-        if (newProc < 0) {
-            WriteError("failed to execute command.");
+            const SpaceId newProc = Exec(name, argv);
+            if (newProc < 0) {
+                WriteError("failed to execute command.");
 
-            continue;
-        }
+                continue;
+            }
 
-        if (!parallel) {
-            const int status = Join(newProc);
-            if (status < 0) {
-                WriteError("failed to join process.");
+            if (!parallel) {
+                const int status = Join(newProc);
+                if (status < 0) {
+                    WriteError("failed to join process.");
+                }
             }
         }
     }
