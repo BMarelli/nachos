@@ -31,12 +31,19 @@
 /// reading it from disk.
 class FileHeader {
    public:
+    FileHeader();
+    ~FileHeader();
+
     /// Initialize a file header, including allocating space on disk for the
     /// file data.
-    bool Allocate(Bitmap *bitMap, unsigned fileSize);
+    bool Allocate(Bitmap *bitmap, unsigned fileSize);
+
+    /// Extend a file header by a number of bytes, allocating more space on disk
+    /// for the file data.
+    bool Extend(Bitmap *bitmap, unsigned bytes);
 
     /// De-allocate this file's data blocks.
-    void Deallocate(Bitmap *bitMap);
+    void Deallocate(Bitmap *bitmap);
 
     /// Initialize file header from disk.
     void FetchFrom(unsigned sectorNumber);
@@ -65,6 +72,11 @@ class FileHeader {
 
    private:
     RawFileHeader raw;
+    unsigned *indirectDataSectors;
+    unsigned *doubleIndirectSectors;
+    unsigned **doubleIndirectDataSectors;
+
+    unsigned CalculateRequiredSectors(unsigned fileSize);
 };
 
 #endif
