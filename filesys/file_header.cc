@@ -27,54 +27,227 @@
 #include <ctype.h>
 #include <stdio.h>
 
+#include "disk.hh"
+#include "filesys/raw_file_header.hh"
+#include "lib/assert.hh"
+#include "lib/utility.hh"
 #include "threads/system.hh"
+
+FileHeader::FileHeader() {
+    raw.numBytes = 0;
+    raw.numSectors = 0;
+
+    indirectDataSectors = nullptr;
+    doubleIndirectSectors = nullptr;
+    doubleIndirectDataSectors = nullptr;
+}
+
+FileHeader::~FileHeader() {
+    if (raw.numSectors <= NUM_DIRECT) return;
+
+    delete[] indirectDataSectors;
+
+    if (raw.numSectors <= NUM_DIRECT + NUM_INDIRECT) return;
+
+    delete[] doubleIndirectSectors;
+
+    for (unsigned i = 0; i < DivRoundUp(raw.numSectors - NUM_DIRECT - NUM_INDIRECT, NUM_INDIRECT); i++) {
+        delete[] doubleIndirectDataSectors[i];
+    }
+
+    delete[] doubleIndirectDataSectors;
+}
 
 /// Initialize a fresh file header for a newly created file.  Allocate data
 /// blocks for the file out of the map of free disk blocks.  Return false if
 /// there are not enough free blocks to accomodate the new file.
 ///
-/// * `freeMap` is the bit map of free disk sectors.
+/// * `bitmap` is the bit map of free disk sectors.
 /// * `fileSize` is the bit map of free disk sectors.
-bool FileHeader::Allocate(Bitmap *freeMap, unsigned fileSize) {
-    ASSERT(freeMap != nullptr);
+bool FileHeader::Allocate(Bitmap *bitmap, unsigned fileSize) {
+    ASSERT(raw.numBytes == 0);
+    ASSERT(raw.numSectors == 0);
 
-    if (fileSize > MAX_FILE_SIZE) {
-        return false;
+    return Extend(bitmap, fileSize);
+}
+
+// Calculate the number of sectors required to store the given number of bytes
+unsigned FileHeader::CalculateRequiredSectors(unsigned bytes) {
+    unsigned sectors = DivRoundUp(bytes, SECTOR_SIZE);
+
+    // Direct sectors
+    unsigned requiredSectors = Min(sectors, NUM_DIRECT);
+
+    // Indirect sectors and their containing sector
+    if (sectors > NUM_DIRECT) {
+        requiredSectors += 1;
+        requiredSectors += Min(sectors - NUM_DIRECT, NUM_INDIRECT);
     }
 
-    raw.numBytes = fileSize;
-    raw.numSectors = DivRoundUp(fileSize, SECTOR_SIZE);
-    if (freeMap->CountClear() < raw.numSectors) {
-        return false;  // Not enough space.
+    // Double indirect sectors, their containing sectors and the sector containing their containing sectors
+    if (sectors > NUM_DIRECT + NUM_INDIRECT) {
+        requiredSectors += 1;
+        requiredSectors += DivRoundUp(sectors - NUM_DIRECT - NUM_INDIRECT, NUM_INDIRECT);
+        requiredSectors += sectors - NUM_DIRECT - NUM_INDIRECT;
     }
 
-    for (unsigned i = 0; i < raw.numSectors; i++) {
-        raw.dataSectors[i] = freeMap->Find();
+    return requiredSectors;
+}
+
+bool FileHeader::Extend(Bitmap *bitmap, unsigned bytes) {
+    ASSERT(bitmap != nullptr);
+
+    if (raw.numBytes + bytes > MAX_FILE_SIZE) return false;
+
+    // Calculate the number of additional sectors required
+    unsigned requiredSectors = CalculateRequiredSectors(raw.numBytes + bytes) - CalculateRequiredSectors(raw.numBytes);
+
+    if (bitmap->CountClear() < requiredSectors) return false;
+
+    unsigned currentNumSectors = raw.numSectors;
+
+    raw.numBytes += bytes;
+    raw.numSectors = DivRoundUp(raw.numBytes, SECTOR_SIZE);
+
+    // Allocate direct sectors
+    if (currentNumSectors < NUM_DIRECT) {
+        for (unsigned i = currentNumSectors; i < Min(raw.numSectors, NUM_DIRECT); i++) {
+            raw.dataSectors[i] = bitmap->Find();
+        }
+
+        currentNumSectors = Min(raw.numSectors, NUM_DIRECT);
     }
+
+    if (currentNumSectors == raw.numSectors) return true;
+
+    ASSERT(currentNumSectors >= NUM_DIRECT);
+
+    // Allocate indirect sectors
+    if (currentNumSectors < NUM_DIRECT + NUM_INDIRECT) {
+        if (currentNumSectors == NUM_DIRECT) {
+            raw.indirectionSector = bitmap->Find();
+            indirectDataSectors = new unsigned[NUM_INDIRECT];
+        }
+
+        for (unsigned i = currentNumSectors - NUM_DIRECT; i < Min(raw.numSectors - NUM_DIRECT, NUM_INDIRECT); i++) {
+            indirectDataSectors[i] = bitmap->Find();
+        }
+
+        currentNumSectors = Min(raw.numSectors, NUM_DIRECT + NUM_INDIRECT);
+    }
+
+    if (currentNumSectors == raw.numSectors) return true;
+
+    ASSERT(currentNumSectors >= NUM_DIRECT + NUM_INDIRECT);
+
+    // Allocate double indirect sectors
+    if (currentNumSectors < NUM_DIRECT + NUM_INDIRECT + NUM_INDIRECT * NUM_INDIRECT) {
+        if (currentNumSectors == NUM_DIRECT + NUM_INDIRECT) {
+            raw.doubleIndirectionSector = bitmap->Find();
+            doubleIndirectSectors = new unsigned[NUM_INDIRECT];
+            doubleIndirectDataSectors = new unsigned *[NUM_INDIRECT];
+        }
+
+        for (unsigned i = DivRoundUp(currentNumSectors - NUM_DIRECT - NUM_INDIRECT, NUM_INDIRECT);
+             i < DivRoundUp(raw.numSectors - NUM_DIRECT - NUM_INDIRECT, NUM_INDIRECT); i++) {
+            doubleIndirectSectors[i] = bitmap->Find();
+            doubleIndirectDataSectors[i] = new unsigned[NUM_INDIRECT];
+        }
+
+        for (unsigned i = currentNumSectors - NUM_DIRECT - NUM_INDIRECT;
+             i < Min(raw.numSectors - NUM_DIRECT - NUM_INDIRECT, NUM_INDIRECT * NUM_INDIRECT); i++) {
+            doubleIndirectDataSectors[i / NUM_INDIRECT][i % NUM_INDIRECT] = bitmap->Find();
+        }
+
+        currentNumSectors = Min(raw.numSectors, NUM_DIRECT + NUM_INDIRECT + NUM_INDIRECT * NUM_INDIRECT);
+    }
+
+    ASSERT(currentNumSectors == raw.numSectors);
+
     return true;
 }
 
 /// De-allocate all the space allocated for data blocks for this file.
 ///
-/// * `freeMap` is the bit map of free disk sectors.
-void FileHeader::Deallocate(Bitmap *freeMap) {
-    ASSERT(freeMap != nullptr);
+/// * `bitmap` is the bit map of free disk sectors.
+void FileHeader::Deallocate(Bitmap *bitmap) {
+    ASSERT(bitmap != nullptr);
 
-    for (unsigned i = 0; i < raw.numSectors; i++) {
-        ASSERT(freeMap->Test(raw.dataSectors[i]));  // ought to be marked!
-        freeMap->Clear(raw.dataSectors[i]);
+    // Deallocate direct sectors
+    for (unsigned i = 0; i < Min(raw.numSectors, NUM_DIRECT); i++) {
+        ASSERT(bitmap->Test(raw.dataSectors[i]));  // ought to be marked!
+        bitmap->Clear(raw.dataSectors[i]);
+    }
+
+    if (raw.numSectors <= NUM_DIRECT) return;
+
+    ASSERT(bitmap->Test(raw.indirectionSector));  // ought to be marked!
+    bitmap->Clear(raw.indirectionSector);
+
+    // Deallocate indirect sectors
+    for (unsigned i = 0; i < Min(raw.numSectors - NUM_DIRECT, NUM_INDIRECT); i++) {
+        ASSERT(bitmap->Test(indirectDataSectors[i]));  // ought to be marked!
+        bitmap->Clear(indirectDataSectors[i]);
+    }
+
+    if (raw.numSectors <= NUM_DIRECT + NUM_INDIRECT) return;
+
+    ASSERT(bitmap->Test(raw.doubleIndirectionSector));  // ought to be marked!
+    bitmap->Clear(raw.doubleIndirectionSector);
+
+    // Deallocate double indirect sectors
+    for (unsigned i = 0; i < DivRoundUp(raw.numSectors - NUM_DIRECT - NUM_INDIRECT, NUM_INDIRECT); i++) {
+        ASSERT(bitmap->Test(doubleIndirectSectors[i]));  // ought to be marked!
+        bitmap->Clear(doubleIndirectSectors[i]);
+    }
+
+    for (unsigned i = 0; i < Min(raw.numSectors - NUM_DIRECT - NUM_INDIRECT, NUM_INDIRECT * NUM_INDIRECT); i++) {
+        ASSERT(bitmap->Test(doubleIndirectDataSectors[i / NUM_INDIRECT][i % NUM_INDIRECT]));  // ought to be marked!
+        bitmap->Clear(doubleIndirectDataSectors[i / NUM_INDIRECT][i % NUM_INDIRECT]);
     }
 }
 
 /// Fetch contents of file header from disk.
 ///
 /// * `sector` is the disk sector containing the file header.
-void FileHeader::FetchFrom(unsigned sector) { synchDisk->ReadSector(sector, (char *)&raw); }
+void FileHeader::FetchFrom(unsigned sector) {
+    synchDisk->ReadSector(sector, (char *)&raw);
+
+    if (raw.numSectors <= NUM_DIRECT) return;
+
+    indirectDataSectors = new unsigned[NUM_INDIRECT];
+    synchDisk->ReadSector(raw.indirectionSector, (char *)indirectDataSectors);
+
+    if (raw.numSectors <= NUM_DIRECT + NUM_INDIRECT) return;
+
+    doubleIndirectSectors = new unsigned[NUM_INDIRECT];
+    synchDisk->ReadSector(raw.doubleIndirectionSector, (char *)doubleIndirectSectors);
+
+    doubleIndirectDataSectors = new unsigned *[NUM_INDIRECT];
+    for (unsigned i = 0; i < DivRoundUp(raw.numSectors - NUM_DIRECT - NUM_INDIRECT, NUM_INDIRECT); i++) {
+        doubleIndirectDataSectors[i] = new unsigned[NUM_INDIRECT];
+        synchDisk->ReadSector(doubleIndirectSectors[i], (char *)doubleIndirectDataSectors[i]);
+    }
+}
 
 /// Write the modified contents of the file header back to disk.
 ///
 /// * `sector` is the disk sector to contain the file header.
-void FileHeader::WriteBack(unsigned sector) { synchDisk->WriteSector(sector, (char *)&raw); }
+void FileHeader::WriteBack(unsigned sector) {
+    synchDisk->WriteSector(sector, (char *)&raw);
+
+    if (raw.numSectors <= NUM_DIRECT) return;
+
+    synchDisk->WriteSector(raw.indirectionSector, (char *)indirectDataSectors);
+
+    if (raw.numSectors <= NUM_DIRECT + NUM_INDIRECT) return;
+
+    synchDisk->WriteSector(raw.doubleIndirectionSector, (char *)doubleIndirectSectors);
+
+    for (unsigned i = 0; i < DivRoundUp(raw.numSectors - NUM_DIRECT - NUM_INDIRECT, NUM_INDIRECT); i++) {
+        synchDisk->WriteSector(doubleIndirectSectors[i], (char *)doubleIndirectDataSectors[i]);
+    }
+}
 
 /// Return which disk sector is storing a particular byte within the file.
 /// This is essentially a translation from a virtual address (the offset in
@@ -82,7 +255,11 @@ void FileHeader::WriteBack(unsigned sector) { synchDisk->WriteSector(sector, (ch
 /// is stored).
 ///
 /// * `offset` is the location within the file of the byte in question.
-unsigned FileHeader::ByteToSector(unsigned offset) { return raw.dataSectors[offset / SECTOR_SIZE]; }
+unsigned FileHeader::ByteToSector(unsigned offset) {
+    ASSERT(offset < raw.numBytes);
+
+    return GetSector(offset / SECTOR_SIZE);
+}
 
 /// Return the number of bytes in the file.
 unsigned FileHeader::FileLength() const { return raw.numBytes; }
@@ -90,7 +267,7 @@ unsigned FileHeader::FileLength() const { return raw.numBytes; }
 /// Print the contents of the file header, and the contents of all the data
 /// blocks pointed to by the file header.
 void FileHeader::Print(const char *title) {
-    char *data = new char[SECTOR_SIZE];
+    char data[SECTOR_SIZE];
 
     if (title == nullptr) {
         printf("File header:\n");
@@ -103,14 +280,16 @@ void FileHeader::Print(const char *title) {
         "    block indexes: ",
         raw.numBytes);
 
-    for (unsigned i = 0; i < raw.numSectors; i++) {
-        printf("%u ", raw.dataSectors[i]);
-    }
+    for (unsigned i = 0; i < raw.numSectors; i++) printf("%u ", GetSector(i));
     printf("\n");
 
     for (unsigned i = 0, k = 0; i < raw.numSectors; i++) {
-        printf("    contents of block %u:\n", raw.dataSectors[i]);
-        synchDisk->ReadSector(raw.dataSectors[i], data);
+        unsigned sector = GetSector(i);
+
+        printf("    contents of block %u:\n", sector);
+
+        synchDisk->ReadSector(sector, data);
+
         for (unsigned j = 0; j < SECTOR_SIZE && k < raw.numBytes; j++, k++) {
             if (isprint(data[j])) {
                 printf("%c", data[j]);
@@ -120,7 +299,6 @@ void FileHeader::Print(const char *title) {
         }
         printf("\n");
     }
-    delete[] data;
 }
 
 const RawFileHeader *FileHeader::GetRaw() const { return &raw; }
@@ -128,5 +306,9 @@ const RawFileHeader *FileHeader::GetRaw() const { return &raw; }
 unsigned FileHeader::GetSector(unsigned i) const {
     ASSERT(i < raw.numSectors);
 
-    return raw.dataSectors[i];
+    if (i < NUM_DIRECT) return raw.dataSectors[i];
+
+    if (i < NUM_DIRECT + NUM_INDIRECT) return indirectDataSectors[i - NUM_DIRECT];
+
+    return doubleIndirectDataSectors[(i - NUM_DIRECT - NUM_INDIRECT) / NUM_INDIRECT][(i - NUM_DIRECT - NUM_INDIRECT) % NUM_INDIRECT];
 }
