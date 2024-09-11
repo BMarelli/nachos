@@ -21,6 +21,7 @@
 #include "thread_test_garden_sem.hh"
 #include "thread_test_join.hh"
 #include "thread_test_prod_cons.hh"
+#include "thread_test_rwlock.hh"
 #include "thread_test_simple.hh"
 
 typedef struct {
@@ -34,7 +35,9 @@ static const Test TESTS[] = {{&ThreadTestSimple, "simple", "Simple thread interl
                              {&ThreadTestGardenSem, "garden_sem", "Ornamental garden with semaphores"},
                              {&ThreadTestChannel, "channel", "Channel"},
                              {&ThreadTestProdCons, "prodcons", "Producer/Consumer"},
-                             {&ThreadTestJoin, "join", "Join"}};
+                             {&ThreadTestJoin, "join", "Join"},
+                             {&RWLockTest, "rwlock", "RWLock"}};
+
 static const unsigned NUM_TESTS = sizeof TESTS / sizeof TESTS[0];
 
 static const unsigned NAME_MAX_LEN = 32;
