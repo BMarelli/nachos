@@ -126,11 +126,23 @@ int main() {
 
     puts("$ open dir2/foo\n");
     OpenFileId fid = Open("dir2/foo");
-    Write(HELLO_WORLD, sizeof HELLO_WORLD, fid);
-    Close(fid);
+
+    puts("$ echo 'Hello, world!\\n' >> dir2/foo\n");
+    res = Write(HELLO_WORLD, sizeof(HELLO_WORLD), fid);
+    puts("debug: expected output: ");
+    puti(sizeof(HELLO_WORLD));
+    puts(", actual output: ");
+    puti(res);
+    puts("\n");
+
+    puts("$ close dir2/foo\n");
+    res = Close(fid);
 
     puts("$ rm dir2/foo\n");
-    Remove("dir2/foo");
+    res = Remove("dir2/foo");
+    puts("debug: expected output: 0, actual output: ");
+    puti(res);
+    puts("\n");
 
     puts("$ ls dir2\n");
     Ls("dir2");

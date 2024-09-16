@@ -154,7 +154,7 @@ class FileSystem {
     bool RemoveFile(const char *filepath);
 
     /// Delete a directory (UNIX `rmdir`).
-    bool RemoveDirectory(const char *name);
+    bool RemoveDirectory(const char *path);
 
     /// List all files in a directory (UNIX `ls`).
     char *ListDirectoryContents(const char *path);

@@ -19,7 +19,7 @@
 /// “open” continuously while Nachos is running.
 ///
 /// For those operations (such as `Create`, `Remove`) that modify the
-/// directory and/or bitmap, if the operation succeeds, the changes are
+/// directory and/or bitmap, if the operation succeeds, the Fs are
 /// written immediately back to disk (the two files are kept open during all
 /// this time).  If the operation fails, and we have modified part of the
 /// directory and/or bitmap, we simply discard the changed version, without
@@ -463,7 +463,7 @@ bool FileSystem::RemoveFile(const char *filepath) {
 
         return false;
     }
-
+    
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(GetSynchOpenFile(directorySector)); // FIXME:
 
@@ -502,18 +502,27 @@ bool FileSystem::RemoveFile(const char *filepath) {
     return true;
 }
 
-bool FileSystem::RemoveDirectory(const char *name) {
-    ASSERT(name != nullptr);
+bool FileSystem::RemoveDirectory(const char *path) {
+    ASSERT(path != nullptr);
 
     lock->Acquire();
 
-    DEBUG('f', "Removing directory %s\n", name);
+    DEBUG('f', "Removing directory %s\n", path);
 
     // TODO: check that directory is not marked for deletion.
     // TODO: allow removing a directory in a subdirectory.
-    Directory *cwd = new Directory(NUM_DIR_ENTRIES);
-    cwd->FetchFrom(currentThread->GetCWD());
 
+    int directorySector = LoadDirectory(path);
+    if (directorySector == -1) {
+        lock->Release();
+
+        return false;
+    }
+
+    Directory *cwd = new Directory(NUM_DIR_ENTRIES);
+    cwd->FetchFrom(GetSynchOpenFile(directorySector)); // FIXME: ?
+
+    const char* name = GetFileName(path);
     int sector = cwd->FindDirectory(name);
     if (sector == -1) {
         delete cwd;
@@ -541,10 +550,10 @@ bool FileSystem::RemoveDirectory(const char *name) {
     delete dir;
 
     if (openFileManager->GetReferenceCount(sector) > 0) {
-        DEBUG('f', "Directory %s is open, marking for deletion.\n", name);
+        DEBUG('f', "Directory %s is open, marking for deletion.\n", path);
 
         cwd->MarkForDeletion(name);
-        cwd->WriteBack(currentThread->GetCWD());
+        cwd->WriteBack(GetSynchOpenFile(directorySector));
 
         delete cwd;
 
@@ -556,7 +565,7 @@ bool FileSystem::RemoveDirectory(const char *name) {
     FreeFile(sector);
 
     ASSERT(cwd->Remove(name));
-    cwd->WriteBack(currentThread->GetCWD());  // Flush to disk.
+    cwd->WriteBack(GetSynchOpenFile(directorySector));  // Flush to disk.
 
     delete cwd;
 
@@ -617,7 +626,11 @@ char *FileSystem::ListDirectoryContents(const char *path) {
     dir->FetchFrom(currentThread->GetCWD());
 
     if (path != nullptr) {
-        int sector = dir->FindDirectory(path);
+        int directorySector = LoadDirectory(path);
+        dir->FetchFrom(GetSynchOpenFile(directorySector));
+        const char* name = GetFileName(path);
+
+        int sector = dir->FindDirectory(name);
         if (sector == -1) {
             delete dir;
 
@@ -681,7 +694,19 @@ bool FileSystem::ChangeDirectory(const char *path) {
         return true;
     }
 
-    int sector = cwd->FindDirectory(path);
+    int directorySector = LoadDirectory(path);
+    if (directorySector == -1)
+    {
+        delete cwd;
+
+        lock->Release();
+        
+        return false;
+    }
+    cwd->FetchFrom(GetSynchOpenFile(directorySector));
+
+    const char* name = GetFileName(path);
+    int sector = cwd->FindDirectory(name);
     if (sector == -1) {
         delete cwd;
 
@@ -690,9 +715,11 @@ bool FileSystem::ChangeDirectory(const char *path) {
         return false;
     }
 
+    // cd dir1/dir2
+
     // TODO: check if subdirectory is marked for deletion before changing.
     // TODO: refactor, this is duplicated above and in some other methods
-    OpenFile *file = currentThread->GetCWD();
+    OpenFile *file = GetSynchOpenFile(sector);
 
     unsigned referenceCount = openFileManager->DecrementReferenceCount(file->GetSector());
 
@@ -707,7 +734,7 @@ bool FileSystem::ChangeDirectory(const char *path) {
             FreeFile(file->GetSector());
 
             ASSERT(cwd->RemoveMarkedForDeletion(file->GetSector()));
-            cwd->WriteBack(currentThread->GetCWD());  // Flush to disk.
+            cwd->WriteBack(GetSynchOpenFile(directorySector));  // Flush to disk.
         }
     }
 
@@ -750,7 +777,7 @@ int FileSystem::LoadDirectory(const char *path) {
         // TODO: make sure to decrement count too, has to happen every time a synch open file is freed
         delete file;
 
-        return -1;
+        return -1; // TODO: figure out what the proper return value is here
     }
 
     dir->FetchFrom(currentThread->GetCWD());
