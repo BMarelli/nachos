@@ -26,7 +26,7 @@
 OpenFile::OpenFile(int _sector, FileHeader *_hdr) : sector(_sector), hdr(_hdr) { seekPosition = 0; }
 
 /// Close a Nachos file, de-allocating any in-memory data structures.
-OpenFile::~OpenFile() { delete hdr; }
+OpenFile::~OpenFile() {}
 
 /// Change the current location within the open file -- the point at which
 /// the next `Read` or `Write` will start from.

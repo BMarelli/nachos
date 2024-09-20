@@ -92,6 +92,7 @@ class FileSystem {
 #else  // FILESYS
 
 #include "directory_entry.hh"
+#include "file_manager.hh"
 #include "lib/utility.hh"
 #include "machine/disk.hh"
 
@@ -135,10 +136,15 @@ class FileSystem {
     void Print();
 
    private:
-    OpenFile *freeMapFile;    ///< Bit map of free disk blocks, represented as a
-                              ///< file.
-    OpenFile *directoryFile;  ///< “Root” directory -- list of file names,
-                              ///< represented as a file.
+    Bitmap *freeMap;
+    OpenFile *freeMapFile;        ///< Bit map of free disk blocks, represented as a
+                                  ///< file.
+    OpenFile *rootDirectoryFile;  ///< “Root” directory -- list of file names,
+                                  ///< represented as a file.
+
+    Lock *lock;
+
+    FileManager *fileManager;
 };
 
 #endif
