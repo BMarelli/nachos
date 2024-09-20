@@ -54,6 +54,9 @@ class FileHeader {
     /// Print the contents of the file.
     void Print(const char *title);
 
+    /// GetSector returns the ith sector.
+    unsigned GetSector(unsigned i) const;
+
     /// Get the raw file header structure.
     ///
     /// NOTE: this should only be used by routines that operate on the file

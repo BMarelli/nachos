@@ -124,3 +124,9 @@ void FileHeader::Print(const char *title) {
 }
 
 const RawFileHeader *FileHeader::GetRaw() const { return &raw; }
+
+unsigned FileHeader::GetSector(unsigned i) const {
+    ASSERT(i < raw.numSectors);
+
+    return raw.dataSectors[i];
+}
