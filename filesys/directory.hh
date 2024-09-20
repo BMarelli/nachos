@@ -62,9 +62,21 @@ class Directory {
     /// system at a low level.
     const RawDirectory *GetRaw() const;
 
+    /// Mark a directory entry for deletion by sector.
+    void MarkForDeletion(unsigned sector);
+
+    /// Returns whether the directory entry at a given sector is marked for deletion.
+    bool IsMarkedForDeletion(unsigned sector);
+
+    /// Remove a directory entry which is marked for deletion from the directory by sector.
+    void RemoveMarkedForDeletion(unsigned sector);
+
    private:
     /// Find the index into the directory table corresponding to `name`.
-    int FindIndex(const char *name);
+    int FindIndex(const char *name, bool includeMarkedForDeletion);
+
+    /// Find the index into the directory table corresponding to `sector`.
+    int FindIndexBySector(unsigned sector, bool includeMarkedForDeletion);
 
     RawDirectory raw;
 };
