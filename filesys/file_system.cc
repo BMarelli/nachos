@@ -226,6 +226,15 @@ OpenFile *FileSystem::Open(const char *name) {
     return new OpenFile(sector, hdr);
 }
 
+/// Close a file.
+///
+/// * `file` is the file to be closed.
+void FileSystem::Close(OpenFile *file) {
+    ASSERT(file != nullptr);
+
+    delete file;
+}
+
 /// Delete a file from the file system.
 ///
 /// This requires:

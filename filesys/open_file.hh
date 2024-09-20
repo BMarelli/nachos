@@ -34,7 +34,7 @@ class OpenFile {
     }
 
     /// Close the file.
-    ~OpenFile() { SystemDep::Close(file); }
+    ~OpenFile() {}
 
     int ReadAt(char *into, unsigned numBytes, unsigned position) {
         ASSERT(into != nullptr);
@@ -68,6 +68,8 @@ class OpenFile {
         SystemDep::Lseek(file, 0, 2);
         return SystemDep::Tell(file);
     }
+
+    int GetFileDescriptor() const { return file; }
 
    private:
     int file;
