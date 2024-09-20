@@ -85,7 +85,7 @@ class OpenFile {
     OpenFile(int sector, FileHeader *fileHeader);
 
     /// Close the file.
-    ~OpenFile();
+    virtual ~OpenFile();
 
     /// Set the position from which to start reading/writing -- UNIX `lseek`.
     void Seek(unsigned position);
@@ -98,8 +98,8 @@ class OpenFile {
 
     /// Read/write bytes from the file, bypassing the implicit position.
 
-    int ReadAt(char *into, unsigned numBytes, unsigned position);
-    int WriteAt(const char *from, unsigned numBytes, unsigned position);
+    virtual int ReadAt(char *into, unsigned numBytes, unsigned position);
+    virtual int WriteAt(const char *from, unsigned numBytes, unsigned position);
 
     // Return the number of bytes in the file (this interface is simpler than
     // the UNIX idiom -- `lseek` to end of file, `tell`, `lseek` back).
