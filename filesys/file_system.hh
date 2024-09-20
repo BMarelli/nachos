@@ -75,6 +75,14 @@ class FileSystem {
         return new OpenFile(fileDescriptor);
     }
 
+    void Close(OpenFile *file) {
+        ASSERT(file != nullptr);
+
+        SystemDep::Close(file->GetFileDescriptor());
+
+        delete file;
+    }
+
     bool Remove(const char *name) {
         ASSERT(name != nullptr);
         return SystemDep::Unlink(name) == 0;
@@ -110,6 +118,9 @@ class FileSystem {
 
     /// Open a file (UNIX `open`).
     OpenFile *Open(const char *name);
+
+    /// Close a file (UNIX `close`).
+    void Close(OpenFile *file);
 
     /// Delete a file (UNIX `unlink`).
     bool Remove(const char *name);

@@ -310,7 +310,7 @@ static void HandleClose() {
                 return;
             }
 
-            delete currentThread->openFiles->Remove(key);
+            fileSystem->Close(currentThread->openFiles->Remove(key));
 
             DEBUG('e', "File with id %d closed.\n", fid);
 
