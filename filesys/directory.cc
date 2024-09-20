@@ -26,6 +26,7 @@
 
 #include "directory_entry.hh"
 #include "file_header.hh"
+#include "lib/assert.hh"
 
 /// Initialize a directory; initially, the directory is completely empty.  If
 /// the disk is being formatted, an empty directory is all we need, but
@@ -64,14 +65,18 @@ void Directory::WriteBack(OpenFile *file) {
 /// directory entries.  Return -1 if the name is not in the directory.
 ///
 /// * `name` is the file name to look up.
-int Directory::FindIndex(const char *name) {
+/// * `includeMarkedForDeletion` is whether to include files marked for deletion in the search.
+int Directory::FindIndex(const char *name, bool includeMarkedForDeletion) {
     ASSERT(name != nullptr);
 
     for (unsigned i = 0; i < raw.tableSize; i++) {
-        if (raw.table[i].inUse && !strncmp(raw.table[i].name, name, FILE_NAME_MAX_LEN)) {
+        bool valid = raw.table[i].inUse && (includeMarkedForDeletion || !raw.table[i].markedForDeletion);
+
+        if (valid && !strncmp(raw.table[i].name, name, FILE_NAME_MAX_LEN)) {
             return i;
         }
     }
+
     return -1;  // name not in directory
 }
 
@@ -83,7 +88,7 @@ int Directory::FindIndex(const char *name) {
 int Directory::Find(const char *name) {
     ASSERT(name != nullptr);
 
-    int i = FindIndex(name);
+    int i = FindIndex(name, false);
     if (i != -1) {
         return raw.table[i].sector;
     }
@@ -99,7 +104,7 @@ int Directory::Find(const char *name) {
 bool Directory::Add(const char *name, int newSector) {
     ASSERT(name != nullptr);
 
-    if (FindIndex(name) != -1) {
+    if (FindIndex(name, false) != -1) {
         return false;
     }
 
@@ -121,7 +126,7 @@ bool Directory::Add(const char *name, int newSector) {
 bool Directory::Remove(const char *name) {
     ASSERT(name != nullptr);
 
-    int i = FindIndex(name);
+    int i = FindIndex(name, false);
     if (i == -1) {
         return false;  // name not in directory
     }
@@ -160,3 +165,37 @@ void Directory::Print() const {
 }
 
 const RawDirectory *Directory::GetRaw() const { return &raw; }
+
+int Directory::FindIndexBySector(unsigned sector, bool includeMarkedForDeletion) {
+    for (unsigned i = 0; i < raw.tableSize; i++) {
+        bool valid = raw.table[i].inUse && (includeMarkedForDeletion || !raw.table[i].markedForDeletion);
+
+        if (valid && raw.table[i].sector == sector) return i;
+    }
+
+    return -1;  // sector not in directory
+}
+
+// Mark a directory entry for deletion by sector.
+void Directory::MarkForDeletion(unsigned sector) {
+    int i = FindIndexBySector(sector, false);
+    ASSERT(i != -1);  // sector must be in the directory
+
+    raw.table[i].markedForDeletion = true;
+}
+
+// Returns whether the directory entry at a given sector is marked for deletion.
+bool Directory::IsMarkedForDeletion(unsigned sector) {
+    int i = FindIndexBySector(sector, true);
+    ASSERT(i != -1);  // sector must be in the directory
+
+    return raw.table[i].markedForDeletion;
+}
+
+// Remove a directory entry marked for deletion by sector.
+void Directory::RemoveMarkedForDeletion(unsigned sector) {
+    int i = FindIndexBySector(sector, true);
+    ASSERT(i != -1 && raw.table[i].markedForDeletion);  // sector must be in the directory and marked for deletion
+
+    raw.table[i].inUse = false;
+}
