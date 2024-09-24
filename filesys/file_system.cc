@@ -290,6 +290,26 @@ bool FileSystem::Remove(const char *name) {
     return success;
 }
 
+/// Extend a file by a number of bytes.
+///
+/// * `file` is the file to be extended.
+/// * `bytes` is the number of bytes to extend the file by.
+bool FileSystem::ExtendFile(OpenFile *file, unsigned bytes) {
+    bool hadLock = lock->IsHeldByCurrentThread();
+    if (!hadLock) lock->Acquire();
+
+    bool success = file->GetFileHeader()->Extend(freeMap, bytes);
+
+    if (success) {
+        file->GetFileHeader()->WriteBack(file->GetSector());
+        freeMap->WriteBack(freeMapFile);
+    }
+
+    if (!hadLock) lock->Release();
+
+    return success;
+}
+
 /// List all the files in the file system directory.
 void FileSystem::List() {
     Directory *dir = new Directory(NUM_DIR_ENTRIES);

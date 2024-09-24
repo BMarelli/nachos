@@ -135,6 +135,9 @@ class FileSystem {
     /// List all the files and their contents.
     void Print();
 
+    /// Extend a file by a number of bytes.
+    bool ExtendFile(OpenFile *file, unsigned bytes);
+
    private:
     Bitmap *freeMap;
     OpenFile *freeMapFile;        ///< Bit map of free disk blocks, represented as a
