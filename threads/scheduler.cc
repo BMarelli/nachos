@@ -111,17 +111,6 @@ void Scheduler::Run(Thread *nextThread) {
 
     DEBUG('t', "Now in thread \"%s\"\n", currentThread->GetName());
 
-    // If the old thread gave up the processor because it was finishing, we
-    // need to delete its carcass.  Note we cannot delete the thread before
-    // now (for example, in `Thread::Finish`), because up to this point, we
-    // were still running on the old thread's stack!
-    if (threadToBeDestroyed != nullptr) {
-        readyList[threadToBeDestroyed->GetPriority()]->Remove(threadToBeDestroyed);
-
-        delete threadToBeDestroyed;
-        threadToBeDestroyed = nullptr;
-    }
-
 #ifdef USER_PROGRAM
     if (currentThread->space != nullptr) {
         // If there is an address space to restore, do it.
@@ -129,6 +118,20 @@ void Scheduler::Run(Thread *nextThread) {
         currentThread->space->RestoreState();
     }
 #endif
+
+    // If the old thread gave up the processor because it was finishing, we
+    // need to delete its carcass.  Note we cannot delete the thread before
+    // now (for example, in `Thread::Finish`), because up to this point, we
+    // were still running on the old thread's stack!
+    if (threadToBeDestroyed != nullptr) {
+        ASSERT(threadToBeDestroyed != currentThread);
+
+        Thread *thread = threadToBeDestroyed;
+        threadToBeDestroyed = nullptr;
+
+        readyList[thread->GetPriority()]->Remove(thread);
+        delete thread;
+    }
 }
 
 /// Print the scheduler state -- in other words, the contents of the ready
