@@ -28,8 +28,7 @@
 /// from/to disk.
 class Directory {
    public:
-    /// Initialize an empty directory with space for `size` files.
-    Directory(unsigned size);
+    Directory();
 
     /// De-allocate the directory.
     ~Directory();

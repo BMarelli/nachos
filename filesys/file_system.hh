@@ -41,12 +41,10 @@
                      // UNIX, until the real file system implementation is
                      // available.
 
-/// Constant definitions with dummy values.  For the stub filesystem they
-/// are not required, but system information tools expects them to be
-/// defined.
+/// Dummy value for the size of the free map file. For the stub filesystem
+/// it is not required, but system information tools expects it to be defined
+/// as a constant.
 static const unsigned FREE_MAP_FILE_SIZE = 0;
-static const unsigned NUM_DIR_ENTRIES = 0;
-static const unsigned DIRECTORY_FILE_SIZE = 0;
 
 class FileSystem {
    public:
@@ -91,17 +89,11 @@ class FileSystem {
 
 #else  // FILESYS
 
-#include "directory_entry.hh"
 #include "file_manager.hh"
 #include "lib/utility.hh"
 #include "machine/disk.hh"
 
-/// Initial file sizes for the bitmap and directory; until the file system
-/// supports extensible files, the directory size sets the maximum number of
-/// files that can be loaded onto the disk.
 static const unsigned FREE_MAP_FILE_SIZE = NUM_SECTORS / BITS_IN_BYTE;
-static const unsigned NUM_DIR_ENTRIES = 10;
-static const unsigned DIRECTORY_FILE_SIZE = sizeof(DirectoryEntry) * NUM_DIR_ENTRIES;
 
 class FileSystem {
    public:
