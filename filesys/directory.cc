@@ -28,29 +28,40 @@
 #include "file_header.hh"
 #include "lib/assert.hh"
 
+static const unsigned DIRECTORY_ENTRIES_TABLE_GROWTH_INCREMENT = 10;
+
 /// Initialize a directory; initially, the directory is completely empty.  If
 /// the disk is being formatted, an empty directory is all we need, but
 /// otherwise, we need to call FetchFrom in order to initialize it from disk.
 ///
 /// * `size` is the number of entries in the directory.
-Directory::Directory(unsigned size) {
-    ASSERT(size > 0);
-    raw.table = new DirectoryEntry[size];
-    raw.tableSize = size;
-    for (unsigned i = 0; i < raw.tableSize; i++) {
-        raw.table[i].inUse = false;
-    }
+Directory::Directory() {
+    raw.table = nullptr;
+    raw.tableSize = 0;
 }
 
 /// De-allocate directory data structure.
-Directory::~Directory() { delete[] raw.table; }
+Directory::~Directory() {
+    if (raw.table != nullptr) delete[] raw.table;
+}
 
 /// Read the contents of the directory from disk.
 ///
 /// * `file` is file containing the directory contents.
 void Directory::FetchFrom(OpenFile *file) {
+    ASSERT(raw.tableSize == 0);
+    ASSERT(raw.table == nullptr);
     ASSERT(file != nullptr);
-    file->ReadAt((char *)raw.table, raw.tableSize * sizeof(DirectoryEntry), 0);
+    ASSERT(file->Length() % sizeof(DirectoryEntry) == 0);
+
+    if (file->Length() == 0) return;
+
+    raw.tableSize = file->Length() / sizeof(DirectoryEntry);
+    raw.table = new DirectoryEntry[raw.tableSize];
+
+    int bytesRead = file->ReadAt((char *)raw.table, raw.tableSize * sizeof(DirectoryEntry), 0);
+
+    ASSERT(bytesRead == raw.tableSize * sizeof(DirectoryEntry));
 }
 
 /// Write any modifications to the directory back to disk.
@@ -58,7 +69,12 @@ void Directory::FetchFrom(OpenFile *file) {
 /// * `file` is a file to contain the new directory contents.
 void Directory::WriteBack(OpenFile *file) {
     ASSERT(file != nullptr);
-    file->WriteAt((char *)raw.table, raw.tableSize * sizeof(DirectoryEntry), 0);
+
+    if (raw.tableSize == 0) return;
+
+    int bytesWritten = file->WriteAt((char *)raw.table, raw.tableSize * sizeof(DirectoryEntry), 0);
+
+    ASSERT(bytesWritten == raw.tableSize * sizeof(DirectoryEntry));
 }
 
 /// Look up file name in directory, and return its location in the table of
@@ -96,8 +112,7 @@ int Directory::Find(const char *name) {
 }
 
 /// Add a file into the directory.  Return true if successful; return false
-/// if the file name is already in the directory, or if the directory is
-/// completely full, and has no more space for additional file names.
+/// if the file name is already in the directory.
 ///
 /// * `name` is the name of the file being added.
 /// * `newSector` is the disk sector containing the added file's header.
@@ -116,7 +131,20 @@ bool Directory::Add(const char *name, int newSector) {
             return true;
         }
     }
-    return false;  // no space.  Fix when we have extensible files.
+
+    DirectoryEntry *newTable = new DirectoryEntry[raw.tableSize + DIRECTORY_ENTRIES_TABLE_GROWTH_INCREMENT];
+    memcpy(newTable, raw.table, raw.tableSize * sizeof(DirectoryEntry));
+    delete[] raw.table;
+
+    raw.table = newTable;
+    raw.tableSize += DIRECTORY_ENTRIES_TABLE_GROWTH_INCREMENT;
+    for (unsigned i = raw.tableSize - DIRECTORY_ENTRIES_TABLE_GROWTH_INCREMENT; i < raw.tableSize; i++) raw.table[i].inUse = false;
+
+    raw.table[raw.tableSize - DIRECTORY_ENTRIES_TABLE_GROWTH_INCREMENT].inUse = true;
+    strncpy(raw.table[raw.tableSize - DIRECTORY_ENTRIES_TABLE_GROWTH_INCREMENT].name, name, FILE_NAME_MAX_LEN);
+    raw.table[raw.tableSize - DIRECTORY_ENTRIES_TABLE_GROWTH_INCREMENT].sector = newSector;
+
+    return true;
 }
 
 /// Remove a file name from the directory.   Return true if successful;

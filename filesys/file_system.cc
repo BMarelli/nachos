@@ -47,6 +47,7 @@
 
 #include "directory.hh"
 #include "file_header.hh"
+#include "filesys/directory_entry.hh"
 #include "lib/assert.hh"
 #include "lib/bitmap.hh"
 #include "lib/debug.hh"
@@ -92,7 +93,7 @@ FileSystem::FileSystem(bool format) {
     if (format) {
         DEBUG('f', "Formatting the file system.\n");
 
-        Directory *dir = new Directory(NUM_DIR_ENTRIES);
+        Directory *dir = new Directory();
 
         // First, allocate space for FileHeaders for the directory and bitmap
         // (make sure no one else grabs these!)
@@ -103,7 +104,6 @@ FileSystem::FileSystem(bool format) {
         // of the directory and bitmap files.  There better be enough space!
 
         ASSERT(freeMapFile->GetFileHeader()->Allocate(freeMap, FREE_MAP_FILE_SIZE));
-        ASSERT(rootDirectoryFile->GetFileHeader()->Allocate(freeMap, DIRECTORY_FILE_SIZE));
 
         freeMapFile->GetFileHeader()->WriteBack(FREE_MAP_SECTOR);
         rootDirectoryFile->GetFileHeader()->WriteBack(DIRECTORY_SECTOR);
@@ -123,11 +123,11 @@ FileSystem::FileSystem(bool format) {
 
         freeMap->FetchFrom(freeMapFile);
 
-        Directory *dir = new Directory(NUM_DIR_ENTRIES);
+        Directory *dir = new Directory();
         dir->FetchFrom(rootDirectoryFile);
 
         bool dirty = false;
-        for (unsigned i = 0; i < NUM_DIR_ENTRIES; i++) {
+        for (unsigned i = 0; i < dir->GetRaw()->tableSize; i++) {
             if (!dir->GetRaw()->table[i].inUse) continue;
 
             unsigned sector = dir->GetRaw()->table[i].sector;
@@ -206,7 +206,7 @@ bool FileSystem::Create(const char *name, unsigned initialSize) {
 
     DEBUG('f', "Creating file %s, size %u\n", name, initialSize);
 
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
+    Directory *dir = new Directory();
     dir->FetchFrom(rootDirectoryFile);
 
     bool success;
@@ -312,7 +312,7 @@ bool FileSystem::ExtendFile(OpenFile *file, unsigned bytes) {
 
 /// List all the files in the file system directory.
 void FileSystem::List() {
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
+    Directory *dir = new Directory();
 
     dir->FetchFrom(rootDirectoryFile);
     dir->List();
@@ -347,7 +347,7 @@ static bool CheckDirectory(OpenFile *rootDirectoryFile, Bitmap *shadowMap) {
 
     error |= CheckFileSectors(rootDirectoryFile->GetSector(), rootDirectoryFile->GetFileHeader(), shadowMap);
 
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
+    Directory *dir = new Directory();
     dir->FetchFrom(rootDirectoryFile);
 
     const char *names[dir->GetRaw()->tableSize];
@@ -437,7 +437,7 @@ void FileSystem::Print() {
 
     printf("--------------------------------\n");
 
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
+    Directory *dir = new Directory();
 
     dir->FetchFrom(rootDirectoryFile);
     dir->Print();

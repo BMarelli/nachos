@@ -1,7 +1,6 @@
 #include "file_manager.hh"
 
 #include "filesys/directory.hh"
-#include "filesys/file_system.hh"
 #include "filesys/synch_open_file.hh"
 #include "lib/assert.hh"
 #include "lib/debug.hh"
@@ -29,7 +28,7 @@ OpenFile *FileManager::Open(const char *name, OpenFile *directoryFile) {
 
     DEBUG('f', "[FileManager] opening file %s\n", name);
 
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
+    Directory *dir = new Directory();
     dir->FetchFrom(directoryFile);
 
     int sector = dir->Find(name);
@@ -85,7 +84,7 @@ void FileManager::Close(OpenFile *file) {
 
         OpenFile *directoryFile = new OpenFile(openFiles[sector].directorySector, directoryFileHeader);
 
-        Directory *dir = new Directory(NUM_DIR_ENTRIES);
+        Directory *dir = new Directory();
         dir->FetchFrom(directoryFile);
 
         if (dir->IsMarkedForDeletion(sector)) {
@@ -125,7 +124,7 @@ bool FileManager::Remove(const char *name, OpenFile *directoryFile) {
 
     DEBUG('f', "[FileManager] removing file %s\n", name);
 
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
+    Directory *dir = new Directory();
     dir->FetchFrom(directoryFile);
 
     int sector = dir->Find(name);
