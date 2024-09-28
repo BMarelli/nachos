@@ -85,6 +85,30 @@ class FileSystem {
         ASSERT(name != nullptr);
         return SystemDep::Unlink(name) == 0;
     }
+
+    bool CreateDirectory(const char *path) {
+        ASSERT(path != nullptr);
+
+        return SystemDep::CreateDirectory(path);
+    }
+
+    bool ChangeDirectory(const char *path) {
+        if (path == nullptr) return SystemDep::ChangeDirectory("");
+
+        return SystemDep::ChangeDirectory(path);
+    }
+
+    char *ListDirectoryContents(const char *path) {
+        if (path == nullptr) return SystemDep::ListDirectoryContents(".");
+
+        return SystemDep::ListDirectoryContents(path);
+    }
+
+    bool RemoveDirectory(const char *name) {
+        ASSERT(name != nullptr);
+
+        return SystemDep::RemoveDirectory(name);
+    }
 };
 
 #else  // FILESYS
@@ -130,6 +154,18 @@ class FileSystem {
     /// Extend a file by a number of bytes.
     bool ExtendFile(OpenFile *file, unsigned bytes);
 
+    /// Create a directory.
+    bool CreateDirectory(const char *path);
+
+    /// Change the current directory.
+    bool ChangeDirectory(const char *path);
+
+    /// List the contents of a directory.
+    char *ListDirectoryContents(const char *path);
+
+    /// Remove a directory.
+    bool RemoveDirectory(const char *name);
+
    private:
     Bitmap *freeMap;
     OpenFile *freeMapFile;        ///< Bit map of free disk blocks, represented as a
@@ -140,6 +176,11 @@ class FileSystem {
     Lock *lock;
 
     FileManager *fileManager;
+
+    bool RemoveMarkedForDeletion(OpenFile *directoryFile);
+
+    OpenFile *LoadDirectory(const char *path, bool includeLastToken);
+    OpenFile *GetCurrentWorkingDirectory();
 };
 
 #endif

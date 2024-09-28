@@ -23,6 +23,8 @@
 
 #include <stdio.h>
 
+const unsigned USER_STRING_MAX_LEN = 128;
+
 #include "address_space.hh"
 #include "args.hh"
 #include "filesys/directory_entry.hh"
@@ -45,14 +47,14 @@ static void IncrementPC() {
 }
 
 static bool ReadStringFromUserAtRegister(unsigned num, char *buffer, unsigned size) {
-    int filenameAddr = machine->ReadRegister(num);
+    int addr = machine->ReadRegister(num);
 
-    if (filenameAddr == 0) {
+    if (addr == 0) {
         DEBUG('e', "Error: address to user string is null.\n");
         return false;
     }
 
-    if (!ReadStringFromUser(filenameAddr, buffer, size)) {
+    if (!ReadStringFromUser(addr, buffer, size)) {
         DEBUG('e', "Error: string too long (maximum is %u bytes).\n", sizeof buffer);
         return false;
     }
@@ -128,21 +130,21 @@ static void HandleJoin() {
 }
 
 static void HandleExec() {
-    char filename[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromUserAtRegister(4, filename, sizeof filename)) {
+    char filepath[USER_STRING_MAX_LEN + 1];
+    if (!ReadStringFromUserAtRegister(4, filepath, sizeof filepath)) {
         machine->WriteRegister(2, -1);
         return;
     }
 
-    OpenFile *executable = fileSystem->Open(filename);
+    OpenFile *executable = fileSystem->Open(filepath);
     if (executable == nullptr) {
-        DEBUG('e', "Error: file `%s` not found.\n", filename);
+        DEBUG('e', "Error: file `%s` not found.\n", filepath);
 
         machine->WriteRegister(2, -1);
         return;
     }
 
-    Thread *thread = new Thread(filename, true, currentThread->GetPriority());
+    Thread *thread = new Thread(filepath, true, currentThread->GetPriority());
 
     SpaceId pid = processTable->Add(thread);
     if (pid == -1) {
@@ -159,6 +161,17 @@ static void HandleExec() {
     int argsAddr = machine->ReadRegister(5);
     char **args = (argsAddr == 0) ? nullptr : SaveArgs(argsAddr);
 
+#ifdef FILESYS
+    if (currentThread->GetCurrentWorkingDirectory() != nullptr) {
+        unsigned directorySector = currentThread->GetCurrentWorkingDirectory()->GetSector();
+
+        OpenFile *directoryFile = new OpenFile(directorySector, new FileHeader);
+        directoryFile->GetFileHeader()->FetchFrom(directorySector);
+
+        thread->SetCurrentWorkingDirectory(directoryFile);
+    }
+#endif
+
     thread->Fork(ExecProcess, args);
 
     machine->WriteRegister(2, pid);
@@ -173,60 +186,60 @@ static void HandleExit() {
 }
 
 static void HandleCreate() {
-    char filename[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromUserAtRegister(4, filename, sizeof filename)) {
+    char filepath[USER_STRING_MAX_LEN + 1];
+    if (!ReadStringFromUserAtRegister(4, filepath, sizeof filepath)) {
         machine->WriteRegister(2, -1);
         return;
     }
 
-    DEBUG('e', "`Create` requested for file `%s`.\n", filename);
+    DEBUG('e', "`Create` requested for file `%s`.\n", filepath);
 
-    if (!fileSystem->CreateFile(filename, 0)) {
-        DEBUG('e', "Error: file `%s` could not be created.\n", filename);
+    if (!fileSystem->CreateFile(filepath, 0)) {
+        DEBUG('e', "Error: file `%s` could not be created.\n", filepath);
 
         machine->WriteRegister(2, -1);
         return;
     }
 
-    DEBUG('e', "File `%s` created.\n", filename);
+    DEBUG('e', "File `%s` created.\n", filepath);
 
     machine->WriteRegister(2, 0);
 }
 
 static void HandleRemove() {
-    char filename[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromUserAtRegister(4, filename, sizeof filename)) {
+    char filepath[USER_STRING_MAX_LEN + 1];
+    if (!ReadStringFromUserAtRegister(4, filepath, sizeof filepath)) {
         machine->WriteRegister(2, -1);
 
         return;
     }
 
-    DEBUG('e', "`Remove` requested for file `%s`.\n", filename);
+    DEBUG('e', "`Remove` requested for file `%s`.\n", filepath);
 
-    if (!fileSystem->RemoveFile(filename)) {
-        DEBUG('e', "Error: file `%s` could not be removed.\n", filename);
+    if (!fileSystem->RemoveFile(filepath)) {
+        DEBUG('e', "Error: file `%s` could not be removed.\n", filepath);
         machine->WriteRegister(2, -1);
 
         return;
     }
 
-    DEBUG('e', "File `%s` removed.\n", filename);
+    DEBUG('e', "File `%s` removed.\n", filepath);
 
     machine->WriteRegister(2, 0);
 }
 
 static void HandleOpen() {
-    char filename[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromUserAtRegister(4, filename, sizeof filename)) {
+    char filepath[USER_STRING_MAX_LEN + 1];
+    if (!ReadStringFromUserAtRegister(4, filepath, sizeof filepath)) {
         machine->WriteRegister(2, -1);
         return;
     }
 
-    DEBUG('e', "`Open` requested for file `%s`.\n", filename);
+    DEBUG('e', "`Open` requested for file `%s`.\n", filepath);
 
-    OpenFile *file = fileSystem->Open(filename);
+    OpenFile *file = fileSystem->Open(filepath);
     if (file == nullptr) {
-        DEBUG('e', "Error: file `%s` not found.\n", filename);
+        DEBUG('e', "Error: file `%s` not found.\n", filepath);
 
         machine->WriteRegister(2, -1);
         return;
@@ -242,7 +255,7 @@ static void HandleOpen() {
 
     OpenFileId fid = key + 2;
 
-    DEBUG('e', "File `%s` opened with id %d.\n", filename, fid);
+    DEBUG('e', "File `%s` opened with id %d.\n", filepath, fid);
 
     machine->WriteRegister(2, fid);
 }
@@ -437,6 +450,85 @@ static void HandlePS() {
     scheduler->Print();
 }
 
+static void HandleChangeDirectory() {
+    bool hasArgument = machine->ReadRegister(4) != 0;
+    char path[USER_STRING_MAX_LEN + 1];
+
+    if (hasArgument) {
+        if (!ReadStringFromUserAtRegister(4, path, sizeof path)) {
+            machine->WriteRegister(2, -1);
+
+            return;
+        }
+    }
+
+    if (!fileSystem->ChangeDirectory(hasArgument ? path : nullptr)) {
+        machine->WriteRegister(2, -1);
+
+        return;
+    }
+
+    machine->WriteRegister(2, 0);
+}
+
+static void HandleCreateDirectory() {
+    char path[USER_STRING_MAX_LEN + 1];
+    if (!ReadStringFromUserAtRegister(4, path, sizeof path)) {
+        machine->WriteRegister(2, -1);
+        return;
+    }
+
+    if (!fileSystem->CreateDirectory(path)) {
+        machine->WriteRegister(2, -1);
+        return;
+    }
+
+    machine->WriteRegister(2, 0);
+}
+
+static void HandleListDirectoryContents() {
+    bool hasArgument = machine->ReadRegister(4) != 0;
+    char path[USER_STRING_MAX_LEN + 1];
+
+    if (hasArgument) {
+        if (!ReadStringFromUserAtRegister(4, path, sizeof path)) {
+            machine->WriteRegister(2, -1);
+
+            return;
+        }
+    }
+
+    char *contents = fileSystem->ListDirectoryContents(hasArgument ? path : nullptr);
+    if (contents == nullptr) {
+        machine->WriteRegister(2, -1);
+
+        return;
+    }
+
+    synchConsole->Write(contents, strlen(contents));
+
+    delete contents;
+
+    machine->WriteRegister(2, 0);
+}
+
+void static HandleRemoveDirectory() {
+    char path[USER_STRING_MAX_LEN + 1];
+    if (!ReadStringFromUserAtRegister(4, path, sizeof path)) {
+        machine->WriteRegister(2, -1);
+
+        return;
+    }
+
+    if (!fileSystem->RemoveDirectory(path)) {
+        machine->WriteRegister(2, -1);
+
+        return;
+    }
+
+    machine->WriteRegister(2, 0);
+}
+
 /// Handle a system call exception.
 ///
 /// * `et` is the kind of exception.  The list of possible exceptions is in
@@ -499,6 +591,22 @@ static void SyscallHandler(ExceptionType _et) {
 
         case SC_PS:
             HandlePS();
+            break;
+
+        case SC_CHANGEDIRECTORY:
+            HandleChangeDirectory();
+            break;
+
+        case SC_CREATEDIRECTORY:
+            HandleCreateDirectory();
+            break;
+
+        case SC_LISTDIRECTORYCONTENTS:
+            HandleListDirectoryContents();
+            break;
+
+        case SC_REMOVEDIRECTORY:
+            HandleRemoveDirectory();
             break;
 
         default:

@@ -17,6 +17,9 @@ userland/cp
 userland/rm
 userland/lib
 userland/cat
+userland/mkdir
+userland/rmdir
+userland/ls
 *.coff
 .cache
 compile_commands.json

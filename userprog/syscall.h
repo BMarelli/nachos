@@ -31,6 +31,10 @@
 #define SC_READ 14
 #define SC_WRITE 15
 #define SC_PS 16
+#define SC_CHANGEDIRECTORY 17
+#define SC_CREATEDIRECTORY 18
+#define SC_LISTDIRECTORYCONTENTS 19
+#define SC_REMOVEDIRECTORY 20
 
 #ifndef IN_ASM
 
@@ -97,8 +101,14 @@ typedef int OpenFileId;
 /// Create a Nachos file, with `name`.
 int Create(const char *name);
 
+/// Create a directory named `name`.
+int CreateDirectory(const char *name);
+
 /// Remove the Nachos file named `name`.
 int Remove(const char *name);
+
+/// Remove the Nachos directory named `name`.
+int RemoveDirectory(const char *name);
 
 /// Open the Nachos file `name`, and return an `OpenFileId` that can be used
 /// to read and write to the file.
@@ -117,6 +127,12 @@ int Read(char *buffer, int size, OpenFileId id);
 
 /// Close the file, we are done reading and writing to it.
 int Close(OpenFileId id);
+
+/// Change working directory to the directory named `name`.
+int ChangeDirectory(const char *name);
+
+/// List content of the directory named `name`.
+int ListDirectoryContents(const char *name);
 
 /// Print the current status of the scheduler.
 void Ps();

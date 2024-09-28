@@ -27,6 +27,14 @@ bool PollFile(int fd);
 ///
 /// For simulating the disk and the console devices.
 
+bool CreateDirectory(const char *name);
+
+bool RemoveDirectory(const char *name);
+
+bool ChangeDirectory(const char *name);
+
+char *ListDirectoryContents(const char *name);
+
 int OpenForWrite(const char *name);
 
 int OpenForReadWrite(const char *name, bool crashOnError);

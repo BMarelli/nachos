@@ -51,6 +51,7 @@
 #include "lib/assert.hh"
 #include "lib/bitmap.hh"
 #include "lib/debug.hh"
+#include "system.hh"
 
 /// Sectors containing the file headers for the bitmap of free sectors, and
 /// the directory of files.  These file headers are placed in well-known
@@ -123,42 +124,9 @@ FileSystem::FileSystem(bool format) {
 
         freeMap->FetchFrom(freeMapFile);
 
-        Directory *dir = new Directory();
-        dir->FetchFrom(rootDirectoryFile);
-
-        bool dirty = false;
-        for (unsigned i = 0; i < dir->GetRaw()->tableSize; i++) {
-            if (!dir->GetRaw()->table[i].inUse) continue;
-
-            unsigned sector = dir->GetRaw()->table[i].sector;
-
-            if (dir->IsMarkedForDeletion(sector)) {
-                DEBUG('f', "Removing file marked for deletion at sector %u\n", sector);
-
-                FileHeader *fileHeader = new FileHeader;
-                fileHeader->FetchFrom(sector);
-
-                // remove data blocks
-                fileHeader->Deallocate(freeMap);
-
-                // remove header block
-                freeMap->Clear(sector);
-
-                // remove from directory
-                dir->RemoveMarkedForDeletion(sector);
-
-                delete fileHeader;
-
-                dirty = true;
-            }
-        }
-
-        if (dirty) {
+        if (FileSystem::RemoveMarkedForDeletion(rootDirectoryFile)) {
             freeMap->WriteBack(freeMapFile);
-            dir->WriteBack(rootDirectoryFile);
         }
-
-        delete dir;
     }
 }
 
@@ -196,29 +164,38 @@ FileSystem::~FileSystem() {
 /// * no free entry for file in directory;
 /// * no free space for data blocks for the file.
 ///
-/// * `name` is the name of file to be created.
+/// * `filepath` is the name of file to be created.
 /// * `initialSize` is the size of file to be created.
-bool FileSystem::CreateFile(const char *name, unsigned initialSize) {
-    ASSERT(name != nullptr);
+bool FileSystem::CreateFile(const char *filepath, unsigned initialSize) {
+    ASSERT(filepath != nullptr);
     ASSERT(initialSize < MAX_FILE_SIZE);
 
     lock->Acquire();
 
-    DEBUG('f', "Creating file %s, size %u\n", name, initialSize);
+    DEBUG('f', "Creating file %s, size %u\n", filepath, initialSize);
+
+    OpenFile *directoryFile = LoadDirectory(filepath, false);
+    if (directoryFile == nullptr) {
+        lock->Release();
+
+        return false;
+    }
+
+    filepath += FindLast(filepath, '/') + 1;
 
     Directory *dir = new Directory();
-    dir->FetchFrom(rootDirectoryFile);
+    dir->FetchFrom(directoryFile);
 
     bool success;
 
-    if (dir->Find(name) != -1) {
-        success = false;  // File is already in directory.
+    if (dir->HasEntry(filepath)) {
+        success = false;  // Entry with given name is already in directory.
     } else {
         int sector = freeMap->Find();
         // Find a sector to hold the file header.
         if (sector == -1) {
             success = false;  // No free block for file header.
-        } else if (!dir->Add(name, sector)) {
+        } else if (!dir->Add(filepath, sector, false)) {
             success = false;  // No space in directory.
         } else {
             FileHeader *h = new FileHeader;
@@ -227,7 +204,7 @@ bool FileSystem::CreateFile(const char *name, unsigned initialSize) {
             if (success) {
                 // Everything worked, flush all changes back to disk.
                 h->WriteBack(sector);
-                dir->WriteBack(rootDirectoryFile);
+                dir->WriteBack(directoryFile);
                 freeMap->WriteBack(freeMapFile);
             }
             delete h;
@@ -246,14 +223,26 @@ bool FileSystem::CreateFile(const char *name, unsigned initialSize) {
 /// Open a file for reading and writing.
 ///
 /// * `name` is the text name of the file to be opened.
-OpenFile *FileSystem::Open(const char *name) {
-    ASSERT(name != nullptr);
+OpenFile *FileSystem::Open(const char *filepath) {
+    ASSERT(filepath != nullptr);
 
     lock->Acquire();
 
-    DEBUG('f', "Opening file %s\n", name);
+    DEBUG('f', "Opening file %s\n", filepath);
 
-    OpenFile *file = fileManager->Open(name, rootDirectoryFile);
+    OpenFile *directoryFile = LoadDirectory(filepath, false);
+    if (directoryFile == nullptr) {
+        lock->Release();
+
+        return nullptr;
+    }
+
+    filepath += FindLast(filepath, '/') + 1;
+
+    OpenFile *file = fileManager->Open(filepath, directoryFile);
+    if (file == nullptr) {
+        file = fileManager->Open(filepath, rootDirectoryFile);
+    }
 
     lock->Release();
 
@@ -278,12 +267,21 @@ void FileSystem::Close(OpenFile *file) {
 /// file system.
 ///
 /// * `name` is the text name of the file to be removed.
-bool FileSystem::RemoveFile(const char *name) {
-    ASSERT(name != nullptr);
+bool FileSystem::RemoveFile(const char *filepath) {
+    ASSERT(filepath != nullptr);
 
     lock->Acquire();
 
-    bool success = fileManager->Remove(name, rootDirectoryFile);
+    OpenFile *directoryFile = LoadDirectory(filepath, false);
+    if (directoryFile == nullptr) {
+        lock->Release();
+
+        return false;
+    }
+
+    filepath += FindLast(filepath, '/') + 1;
+
+    bool success = fileManager->Remove(filepath, directoryFile);
 
     lock->Release();
 
@@ -316,6 +314,7 @@ void FileSystem::List() {
 
     dir->FetchFrom(rootDirectoryFile);
     dir->List();
+
     delete dir;
 }
 
@@ -342,13 +341,13 @@ static bool CheckFileSectors(unsigned sector, const FileHeader *fileHeader, Bitm
     return error;
 }
 
-static bool CheckDirectory(OpenFile *rootDirectoryFile, Bitmap *shadowMap) {
+static bool CheckDirectory(const char *path, OpenFile *directoryFile, Bitmap *shadowMap) {
     bool error = false;
 
-    error |= CheckFileSectors(rootDirectoryFile->GetSector(), rootDirectoryFile->GetFileHeader(), shadowMap);
+    error |= CheckFileSectors(directoryFile->GetSector(), directoryFile->GetFileHeader(), shadowMap);
 
     Directory *dir = new Directory();
-    dir->FetchFrom(rootDirectoryFile);
+    dir->FetchFrom(directoryFile);
 
     const char *names[dir->GetRaw()->tableSize];
 
@@ -361,20 +360,43 @@ static bool CheckDirectory(OpenFile *rootDirectoryFile, Bitmap *shadowMap) {
         FileHeader *fileHeader = new FileHeader;
         fileHeader->FetchFrom(directoryEntry->sector);
 
-        error |= CheckFileSectors(directoryEntry->sector, fileHeader, shadowMap);
+        if (!directoryEntry->markedForDeletion) {
+            for (unsigned j = 0; j < i; j++) {
+                if (strcmp(names[j], directoryEntry->name) != 0) continue;
 
-        delete fileHeader;
+                DEBUG('f', "Found repeated names in directory %s: existing %s, new %s\n", path, names[j], directoryEntry->name);
+                repeated = true;
+            }
 
-        if (directoryEntry->markedForDeletion) continue;
-
-        for (unsigned j = 0; j < i; j++) {
-            if (strcmp(names[j], directoryEntry->name) != 0) continue;
-
-            DEBUG('f', "Found repeated names in directory: existing %s, new %s\n", names[j], directoryEntry->name);
-            repeated = true;
+            names[i] = directoryEntry->name;
         }
 
-        names[i] = directoryEntry->name;
+        if (directoryEntry->isDirectory) {
+            OpenFile *subDirFile = new OpenFile(directoryEntry->sector, fileHeader);
+
+            Directory *subDir = new Directory();
+            subDir->FetchFrom(subDirFile);
+
+            if (directoryEntry->markedForDeletion && !subDir->IsEmpty()) {
+                DEBUG('f', "Found directory entry marked for deletion but not empty at %s/%s\n", path, directoryEntry->name);
+                error = true;
+            }
+
+            char *subPath = new char[strlen(path) + strlen(directoryEntry->name) + 2];
+            strcpy(subPath, path);
+            strcat(subPath, "/");
+            strcat(subPath, directoryEntry->name);
+
+            error |= CheckDirectory(subPath, subDirFile, shadowMap);
+
+            delete[] subPath;
+            delete subDir;
+            delete subDirFile;
+        } else {
+            error |= CheckFileSectors(directoryEntry->sector, fileHeader, shadowMap);
+        }
+
+        delete fileHeader;
     }
 
     error |= CheckForError(!repeated, "found duplicate names in directory");
@@ -405,7 +427,7 @@ bool FileSystem::Check() {
     Bitmap *shadowMap = new Bitmap(NUM_SECTORS);
 
     error |= CheckFileSectors(freeMapFile->GetSector(), freeMapFile->GetFileHeader(), shadowMap);
-    error |= CheckDirectory(rootDirectoryFile, shadowMap);
+    error |= CheckDirectory("/", rootDirectoryFile, shadowMap);
 
     error |= CheckForError(!CheckBitmaps(freeMap, shadowMap), "inconsistent freemap");
 
@@ -445,4 +467,329 @@ void FileSystem::Print() {
     delete dir;
 
     printf("--------------------------------\n");
+}
+
+/// Create a directory.
+///
+/// * `path` is the path of the directory to be created.
+bool FileSystem::CreateDirectory(const char *path) {
+    ASSERT(path != nullptr);
+
+    lock->Acquire();
+
+    OpenFile *directoryFile = LoadDirectory(path, false);
+    if (directoryFile == nullptr) {
+        lock->Release();
+
+        return false;
+    }
+
+    path += FindLast(path, '/') + 1;
+
+    Directory *dir = new Directory();
+    dir->FetchFrom(directoryFile);
+
+    bool success;
+
+    if (dir->HasEntry(path)) {
+        success = false;  // Entry with given name is already in directory.
+    } else {
+        int sector = freeMap->Find();
+        // Find a sector to hold the file header.
+        if (sector == -1) {
+            success = false;  // No free block for file header.
+        } else {
+            success = dir->Add(path, sector, true);
+            if (success) {
+                FileHeader *subDirectoryFileHeader = new FileHeader;
+                OpenFile *subDirectoryFile = new OpenFile(sector, subDirectoryFileHeader);
+                Directory *subDirectory = new Directory();
+
+                // Everything worked, flush all changes back to disk.
+                subDirectoryFileHeader->WriteBack(sector);
+                subDirectory->WriteBack(subDirectoryFile);
+                dir->WriteBack(directoryFile);
+                freeMap->WriteBack(freeMapFile);
+
+                delete subDirectoryFileHeader;
+                delete subDirectoryFile;
+                delete subDirectory;
+            }
+        }
+    }
+
+    if (!success) freeMap->FetchFrom(freeMapFile);
+
+    lock->Release();
+
+    return success;
+}
+
+/// Change the current directory.
+///
+/// * `path` is the path of the directory to be changed to.
+bool FileSystem::ChangeDirectory(const char *path) {
+    lock->Acquire();
+
+    OpenFile *targetDirectoryFile;
+    if (path == nullptr) {
+        targetDirectoryFile = rootDirectoryFile;
+    } else {
+        targetDirectoryFile = LoadDirectory(path, true);
+        if (targetDirectoryFile == nullptr) {
+            lock->Release();
+
+            return false;
+        }
+    }
+
+    OpenFile *directoryFile = GetCurrentWorkingDirectory();
+    if (directoryFile != rootDirectoryFile) {
+        delete directoryFile->GetFileHeader();
+        delete directoryFile;
+    }
+
+    if (targetDirectoryFile == rootDirectoryFile) {
+        currentThread->SetCurrentWorkingDirectory(nullptr);
+    } else {
+        currentThread->SetCurrentWorkingDirectory(targetDirectoryFile);
+    }
+
+    lock->Release();
+
+    return true;
+}
+
+/// List the contents of a directory.
+///
+/// * `path` is the path of the directory to be listed.
+char *FileSystem::ListDirectoryContents(const char *path) {
+    lock->Acquire();
+
+    OpenFile *directoryFile;
+    if (path == nullptr) {
+        directoryFile = GetCurrentWorkingDirectory();
+    } else {
+        directoryFile = LoadDirectory(path, true);
+        if (directoryFile == nullptr) {
+            lock->Release();
+
+            return nullptr;
+        }
+    }
+
+    Directory *dir = new Directory();
+    dir->FetchFrom(directoryFile);
+
+    char *contents = dir->ListContents();
+
+    delete dir;
+
+    lock->Release();
+
+    return contents;
+}
+
+/// Remove a directory.
+///
+/// * `path` is the name of the directory to be removed.
+bool FileSystem::RemoveDirectory(const char *path) {
+    ASSERT(path != nullptr);
+
+    lock->Acquire();
+
+    OpenFile *directoryFile = LoadDirectory(path, false);
+    if (directoryFile == nullptr) {
+        lock->Release();
+
+        return false;
+    }
+
+    path += FindLast(path, '/') + 1;
+
+    Directory *dir = new Directory();
+    dir->FetchFrom(directoryFile);
+
+    int sector = dir->FindDirectory(path);
+    if (sector == -1) {
+        delete dir;
+
+        lock->Release();
+
+        return false;  // directory not found
+    }
+
+    FileHeader *dirToRemoveFileHeader = new FileHeader;
+    dirToRemoveFileHeader->FetchFrom(sector);
+
+    OpenFile *dirToRemoveFile = new OpenFile(sector, dirToRemoveFileHeader);
+
+    Directory *dirToRemove = new Directory();
+    dirToRemove->FetchFrom(dirToRemoveFile);
+
+    if (!dirToRemove->IsEmpty()) {
+        delete dir;
+        delete dirToRemove;
+        delete dirToRemoveFile;
+        delete dirToRemoveFileHeader;
+
+        lock->Release();
+
+        return false;  // directory not empty
+    }
+
+    // remove data blocks
+    dirToRemoveFile->GetFileHeader()->Deallocate(freeMap);
+
+    // remove header block
+    freeMap->Clear(sector);
+    freeMap->WriteBack(freeMapFile);
+
+    // remove from directory
+    dir->Remove(path);
+    dir->WriteBack(directoryFile);
+
+    delete dir;
+    delete dirToRemove;
+    delete dirToRemoveFile;
+    delete dirToRemoveFileHeader;
+
+    lock->Release();
+
+    return true;
+}
+
+bool FileSystem::RemoveMarkedForDeletion(OpenFile *directoryFile) {
+    Directory *dir = new Directory();
+    dir->FetchFrom(directoryFile);
+
+    bool dirty = false;
+
+    for (unsigned i = 0; i < dir->GetRaw()->tableSize; i++) {
+        if (!dir->GetRaw()->table[i].inUse) continue;
+
+        unsigned sector = dir->GetRaw()->table[i].sector;
+
+        if (dir->GetRaw()->table[i].isDirectory) {
+            FileHeader *subDirFileHeader = new FileHeader;
+            subDirFileHeader->FetchFrom(sector);
+
+            OpenFile *subDirFile = new OpenFile(sector, subDirFileHeader);
+
+            dirty |= RemoveMarkedForDeletion(subDirFile);
+
+            delete subDirFile;
+            delete subDirFileHeader;
+        }
+
+        if (dir->IsMarkedForDeletion(sector)) {
+            DEBUG('f', "Removing file marked for deletion at sector %u\n", sector);
+
+            FileHeader *fileHeader = new FileHeader;
+            fileHeader->FetchFrom(sector);
+
+            // remove data blocks
+            fileHeader->Deallocate(freeMap);
+
+            // remove header block
+            freeMap->Clear(sector);
+
+            // remove from directory
+            dir->RemoveMarkedForDeletion(sector);
+
+            delete fileHeader;
+
+            dirty = true;
+        }
+    }
+
+    if (dirty) dir->WriteBack(directoryFile);
+
+    delete dir;
+
+    return dirty;
+}
+
+OpenFile *FileSystem::LoadDirectory(const char *path, bool includeLastToken) {
+    ASSERT(lock->IsHeldByCurrentThread());
+    ASSERT(path != nullptr);
+
+    OpenFile *directoryFile = GetCurrentWorkingDirectory();
+
+    Directory *dir = new Directory();
+    dir->FetchFrom(directoryFile);
+
+    char *buffer = CopyString(path);
+    char *originalBuffer = buffer;
+
+    if (!includeLastToken) {
+        int lastSlash = FindLast(buffer, '/');
+        if (lastSlash == -1) return directoryFile;
+
+        buffer[lastSlash] = '\0';
+    }
+
+    char *token = strtok_r(buffer, "/", &buffer);
+
+    if (token == nullptr) {
+        delete dir;
+        delete[] originalBuffer;
+
+        return directoryFile;
+    }
+
+    int sector = dir->FindDirectory(token);
+    if (sector == -1) {
+        delete dir;
+        delete[] originalBuffer;
+
+        return nullptr;
+    }
+
+    directoryFile = new OpenFile(sector, new FileHeader);
+    directoryFile->GetFileHeader()->FetchFrom(sector);
+    dir->FetchFrom(directoryFile);
+
+    token = strtok_r(nullptr, "/", &buffer);
+
+    while (token != nullptr) {
+        sector = dir->FindDirectory(token);
+        if (sector == -1) {
+            delete directoryFile->GetFileHeader();
+            delete directoryFile;
+
+            delete dir;
+            delete[] originalBuffer;
+
+            return nullptr;
+        }
+
+        OpenFile *subDirectoryFile = new OpenFile(sector, new FileHeader);
+        subDirectoryFile->GetFileHeader()->FetchFrom(sector);
+        dir->FetchFrom(subDirectoryFile);
+
+        delete directoryFile->GetFileHeader();
+        delete directoryFile;
+
+        directoryFile = subDirectoryFile;
+
+        token = strtok_r(nullptr, "/", &buffer);
+    }
+
+    delete dir;
+
+    delete[] originalBuffer;
+
+    return directoryFile;
+}
+
+OpenFile *FileSystem::GetCurrentWorkingDirectory() {
+    OpenFile *cwd = currentThread->GetCurrentWorkingDirectory();
+    if (cwd == nullptr) {
+        return rootDirectoryFile;
+    }
+
+    cwd->GetFileHeader()->FetchFrom(cwd->GetSector());
+
+    return cwd;
 }

@@ -40,10 +40,13 @@ class Directory {
     void WriteBack(OpenFile *file);
 
     /// Find the sector number of the `FileHeader` for file: `name`.
-    int Find(const char *name);
+    int FindFile(const char *name);
 
-    /// Add a file name into the directory.
-    bool Add(const char *name, int newSector);
+    /// Find the sector number of the `FileHeader` for directory: `name`.
+    int FindDirectory(const char *name);
+
+    /// Add a file or directory name into the directory.
+    bool Add(const char *name, int newSector, bool isDirectory);
 
     /// Remove a file from the directory.
     bool Remove(const char *name);
@@ -70,9 +73,18 @@ class Directory {
     /// Remove a directory entry which is marked for deletion from the directory by sector.
     void RemoveMarkedForDeletion(unsigned sector);
 
+    /// List the contents of a directory.
+    char *ListContents() const;
+
+    /// Determine if directory is empty.
+    bool IsEmpty() const;
+
+    /// Determine if a a directory entry exists with the given name.
+    bool HasEntry(const char *name) const;
+
    private:
     /// Find the index into the directory table corresponding to `name`.
-    int FindIndex(const char *name, bool includeMarkedForDeletion);
+    int FindIndex(const char *name, bool includeMarkedForDeletion) const;
 
     /// Find the index into the directory table corresponding to `sector`.
     int FindIndexBySector(unsigned sector, bool includeMarkedForDeletion);

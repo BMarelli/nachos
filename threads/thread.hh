@@ -148,6 +148,14 @@ class Thread {
     Table<OpenFile *> *openFiles;
 #endif
 
+#ifdef FILESYS
+    /// Set the current working directory of the thread.
+    void SetCurrentWorkingDirectory(OpenFile *cwd) { currentWorkingDirectory = cwd; }
+
+    /// Get the current working directory of the thread.
+    OpenFile *GetCurrentWorkingDirectory() const { return currentWorkingDirectory; }
+#endif
+
    private:
     // Some of the private data for this class is listed above.
 
@@ -180,6 +188,10 @@ class Thread {
     /// registers -- one for its state while executing user code, one for its
     /// state while executing kernel code.
     int userRegisters[NUM_TOTAL_REGS];
+#endif
+
+#ifdef FILESYS
+    OpenFile *currentWorkingDirectory;
 #endif
 };
 

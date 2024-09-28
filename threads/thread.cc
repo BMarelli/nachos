@@ -57,6 +57,9 @@ Thread::Thread(const char *_name, bool _isJoinable, Priority _priority) {
     space = nullptr;
     openFiles = new Table<OpenFile *>();
 #endif
+#ifdef FILESYS
+    currentWorkingDirectory = nullptr;
+#endif
 }
 
 /// De-allocate a thread.
@@ -88,6 +91,12 @@ Thread::~Thread() {
     }
 
     delete openFiles;
+#endif
+
+#ifdef FILESYS
+    if (currentWorkingDirectory != nullptr) {
+        delete currentWorkingDirectory;
+    }
 #endif
 }
 
