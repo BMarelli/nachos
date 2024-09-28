@@ -219,7 +219,7 @@ static void HandleRemove() {
 
     DEBUG('e', "`Remove` requested for file `%s`.\n", filename);
 
-    if (!fileSystem->Remove(filename)) {
+    if (!fileSystem->RemoveFile(filename)) {
         DEBUG('e', "Error: file `%s` could not be removed.\n", filename);
         machine->WriteRegister(2, -1);
 

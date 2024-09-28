@@ -170,7 +170,7 @@ int main(int argc, char **argv) {
             argCount = 2;
         } else if (!strcmp(*argv, "-rm")) {  // Remove Nachos file.
             ASSERT(argc > 1);
-            fileSystem->Remove(*(argv + 1));
+            fileSystem->RemoveFile(*(argv + 1));
             argCount = 2;
         } else if (!strcmp(*argv, "-ls")) {  // List Nachos directory.
             fileSystem->List();
