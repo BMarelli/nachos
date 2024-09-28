@@ -156,7 +156,7 @@ void PerformanceTest() {
     stats->Print();
     FileWrite();
     FileRead();
-    if (!fileSystem->Remove(FILE_NAME)) {
+    if (!fileSystem->RemoveFile(FILE_NAME)) {
         printf("Perf test: unable to remove %s\n", FILE_NAME);
         return;
     }

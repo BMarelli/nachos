@@ -81,7 +81,7 @@ class FileSystem {
         delete file;
     }
 
-    bool Remove(const char *name) {
+    bool RemoveFile(const char *name) {
         ASSERT(name != nullptr);
         return SystemDep::Unlink(name) == 0;
     }
@@ -116,7 +116,7 @@ class FileSystem {
     void Close(OpenFile *file);
 
     /// Delete a file (UNIX `unlink`).
-    bool Remove(const char *name);
+    bool RemoveFile(const char *name);
 
     /// List all the files in the file system.
     void List();

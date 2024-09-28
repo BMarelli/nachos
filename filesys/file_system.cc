@@ -278,7 +278,7 @@ void FileSystem::Close(OpenFile *file) {
 /// file system.
 ///
 /// * `name` is the text name of the file to be removed.
-bool FileSystem::Remove(const char *name) {
+bool FileSystem::RemoveFile(const char *name) {
     ASSERT(name != nullptr);
 
     lock->Acquire();
