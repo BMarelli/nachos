@@ -44,7 +44,7 @@ AddressSpace::AddressSpace(OpenFile *_executable_file, int _pid) {
 #ifdef SWAP
     sprintf(swapFileName, "SWAP.%d", pid);
 
-    ASSERT(fileSystem->Create(swapFileName, 0));
+    ASSERT(fileSystem->CreateFile(swapFileName, 0));
     ASSERT((swapFile = fileSystem->Open(swapFileName)) != nullptr);
 
     swapBitmap = new Bitmap(numPages);
