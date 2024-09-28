@@ -44,6 +44,22 @@ static void IncrementPC() {
     machine->WriteRegister(NEXT_PC_REG, pc);
 }
 
+static bool ReadStringFromUserAtRegister(unsigned num, char *buffer, unsigned size) {
+    int filenameAddr = machine->ReadRegister(num);
+
+    if (filenameAddr == 0) {
+        DEBUG('e', "Error: address to user string is null.\n");
+        return false;
+    }
+
+    if (!ReadStringFromUser(filenameAddr, buffer, size)) {
+        DEBUG('e', "Error: string too long (maximum is %u bytes).\n", sizeof buffer);
+        return false;
+    }
+
+    return true;
+}
+
 /// Do some default behavior for an unexpected exception.
 ///
 /// NOTE: this function is meant specifically for unexpected exceptions.  If
@@ -112,20 +128,8 @@ static void HandleJoin() {
 }
 
 static void HandleExec() {
-    int filenameAddr = machine->ReadRegister(4);
-    int argsAddr = machine->ReadRegister(5);
-
-    if (filenameAddr == 0) {
-        DEBUG('e', "Error: address to filename string is null.\n");
-
-        machine->WriteRegister(2, -1);
-        return;
-    }
-
     char filename[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
-        DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n", FILE_NAME_MAX_LEN);
-
+    if (!ReadStringFromUserAtRegister(4, filename, sizeof filename)) {
         machine->WriteRegister(2, -1);
         return;
     }
@@ -152,6 +156,7 @@ static void HandleExec() {
 
     thread->space = new AddressSpace(executable, pid);
 
+    int argsAddr = machine->ReadRegister(5);
     char **args = (argsAddr == 0) ? nullptr : SaveArgs(argsAddr);
 
     thread->Fork(ExecProcess, args);
@@ -168,19 +173,8 @@ static void HandleExit() {
 }
 
 static void HandleCreate() {
-    int filenameAddr = machine->ReadRegister(4);
-
-    if (filenameAddr == 0) {
-        DEBUG('e', "Error: address to filename string is null.\n");
-
-        machine->WriteRegister(2, -1);
-        return;
-    }
-
     char filename[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
-        DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n", FILE_NAME_MAX_LEN);
-
+    if (!ReadStringFromUserAtRegister(4, filename, sizeof filename)) {
         machine->WriteRegister(2, -1);
         return;
     }
@@ -200,18 +194,8 @@ static void HandleCreate() {
 }
 
 static void HandleRemove() {
-    int filenameAddr = machine->ReadRegister(4);
-
-    if (filenameAddr == 0) {
-        DEBUG('e', "Error: address to filename string is null.\n");
-
-        machine->WriteRegister(2, -1);
-        return;
-    }
-
     char filename[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
-        DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n", FILE_NAME_MAX_LEN);
+    if (!ReadStringFromUserAtRegister(4, filename, sizeof filename)) {
         machine->WriteRegister(2, -1);
 
         return;
@@ -232,19 +216,8 @@ static void HandleRemove() {
 }
 
 static void HandleOpen() {
-    int filenameAddr = machine->ReadRegister(4);
-
-    if (filenameAddr == 0) {
-        DEBUG('e', "Error: address to filename string is null.\n");
-
-        machine->WriteRegister(2, -1);
-        return;
-    }
-
     char filename[FILE_NAME_MAX_LEN + 1];
-    if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
-        DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n", FILE_NAME_MAX_LEN);
-
+    if (!ReadStringFromUserAtRegister(4, filename, sizeof filename)) {
         machine->WriteRegister(2, -1);
         return;
     }
