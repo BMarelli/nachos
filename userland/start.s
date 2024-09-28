@@ -141,6 +141,38 @@ Ps:
         j       $31
         .end    Ps
 
+        .globl  ChangeDirectory
+        .ent    ChangeDirectory
+ChangeDirectory:
+        addiu   $2, $0, SC_CHANGEDIRECTORY
+        syscall
+        j       $31
+        .end    ChangeDirectory
+
+        .globl CreateDirectory
+        .ent   CreateDirectory
+CreateDirectory:
+        addiu   $2, $0, SC_CREATEDIRECTORY
+        syscall
+        j       $31
+        .end    CreateDirectory
+
+        .globl  ListDirectoryContents
+        .ent    ListDirectoryContents
+ListDirectoryContents:
+        addiu   $2, $0, SC_LISTDIRECTORYCONTENTS
+        syscall
+        j       $31
+        .end    ListDirectoryContents
+
+        .globl  RemoveDirectory
+        .ent    RemoveDirectory
+RemoveDirectory:
+        addiu   $2, $0, SC_REMOVEDIRECTORY
+        syscall
+        j       $31
+        .end    RemoveDirectory
+
 /// Dummy function to keep gcc happy.
         .globl  __main
         .ent    __main

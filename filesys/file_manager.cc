@@ -31,7 +31,7 @@ OpenFile *FileManager::Open(const char *name, OpenFile *directoryFile) {
     Directory *dir = new Directory();
     dir->FetchFrom(directoryFile);
 
-    int sector = dir->Find(name);
+    int sector = dir->FindFile(name);
     if (sector == -1) {
         delete dir;
 
@@ -127,7 +127,7 @@ bool FileManager::Remove(const char *name, OpenFile *directoryFile) {
     Directory *dir = new Directory();
     dir->FetchFrom(directoryFile);
 
-    int sector = dir->Find(name);
+    int sector = dir->FindFile(name);
     if (sector == -1) {
         delete dir;
 

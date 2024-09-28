@@ -50,4 +50,16 @@ inline T Max(T a, T b) {
     return a > b ? a : b;
 }
 
+// Find the last occurrence of a character in a string.
+// Returns the index of the character in the string, or -1 if not found.
+//
+// * `source` is the string to search.
+// * `c` is the character to search for.
+inline int FindLast(const char* source, char c) {
+    unsigned i = strlen(source);
+    while (i > 0 && source[i - 1] != c) --i;
+
+    return i - 1;
+}
+
 #endif

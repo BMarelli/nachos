@@ -49,8 +49,12 @@ Directory::~Directory() {
 ///
 /// * `file` is file containing the directory contents.
 void Directory::FetchFrom(OpenFile *file) {
-    ASSERT(raw.tableSize == 0);
-    ASSERT(raw.table == nullptr);
+    if (raw.table != nullptr) {
+        delete[] raw.table;
+
+        raw.table = nullptr;
+    }
+
     ASSERT(file != nullptr);
     ASSERT(file->Length() % sizeof(DirectoryEntry) == 0);
 
@@ -61,7 +65,7 @@ void Directory::FetchFrom(OpenFile *file) {
 
     int bytesRead = file->ReadAt((char *)raw.table, raw.tableSize * sizeof(DirectoryEntry), 0);
 
-    ASSERT(bytesRead == raw.tableSize * sizeof(DirectoryEntry));
+    ASSERT((unsigned)bytesRead == raw.tableSize * sizeof(DirectoryEntry));
 }
 
 /// Write any modifications to the directory back to disk.
@@ -74,7 +78,7 @@ void Directory::WriteBack(OpenFile *file) {
 
     int bytesWritten = file->WriteAt((char *)raw.table, raw.tableSize * sizeof(DirectoryEntry), 0);
 
-    ASSERT(bytesWritten == raw.tableSize * sizeof(DirectoryEntry));
+    ASSERT((unsigned)bytesWritten == raw.tableSize * sizeof(DirectoryEntry));
 }
 
 /// Look up file name in directory, and return its location in the table of
@@ -82,7 +86,7 @@ void Directory::WriteBack(OpenFile *file) {
 ///
 /// * `name` is the file name to look up.
 /// * `includeMarkedForDeletion` is whether to include files marked for deletion in the search.
-int Directory::FindIndex(const char *name, bool includeMarkedForDeletion) {
+int Directory::FindIndex(const char *name, bool includeMarkedForDeletion) const {
     ASSERT(name != nullptr);
 
     for (unsigned i = 0; i < raw.tableSize; i++) {
@@ -98,26 +102,47 @@ int Directory::FindIndex(const char *name, bool includeMarkedForDeletion) {
 
 /// Look up file name in directory, and return the disk sector number where
 /// the file's header is stored.  Return -1 if the name is not in the
-/// directory.
+/// directory, or if the entry is not a file.
 ///
 /// * `name` is the file name to look up.
-int Directory::Find(const char *name) {
+int Directory::FindFile(const char *name) {
     ASSERT(name != nullptr);
 
     int i = FindIndex(name, false);
-    if (i != -1) {
+    if (i != -1 && !raw.table[i].isDirectory) {
         return raw.table[i].sector;
     }
     return -1;
 }
 
-/// Add a file into the directory.  Return true if successful; return false
+/// Look up directory name in directory, and return the disk sector number
+/// where the directory's header is stored.  Return -1 if the name is not in
+/// the directory, or if the entry is not a directory.
+///
+/// * `name` is the directory name to look up.
+int Directory::FindDirectory(const char *name) {
+    ASSERT(name != nullptr);
+
+    int i = FindIndex(name, false);
+    if (i != -1 && raw.table[i].isDirectory) {
+        return raw.table[i].sector;
+    }
+
+    return -1;
+}
+
+/// Add a file or directory into the directory.  Return true if successful; return false
 /// if the file name is already in the directory.
 ///
 /// * `name` is the name of the file being added.
 /// * `newSector` is the disk sector containing the added file's header.
-bool Directory::Add(const char *name, int newSector) {
+/// * `isDirectory` is whether the added file is a directory.
+bool Directory::Add(const char *name, int newSector, bool isDirectory) {
     ASSERT(name != nullptr);
+
+    if (strlen(name) > FILE_NAME_MAX_LEN) {
+        return false;
+    }
 
     if (FindIndex(name, false) != -1) {
         return false;
@@ -128,6 +153,9 @@ bool Directory::Add(const char *name, int newSector) {
             raw.table[i].inUse = true;
             strncpy(raw.table[i].name, name, FILE_NAME_MAX_LEN);
             raw.table[i].sector = newSector;
+            raw.table[i].isDirectory = isDirectory;
+            raw.table[i].markedForDeletion = false;
+
             return true;
         }
     }
@@ -143,6 +171,8 @@ bool Directory::Add(const char *name, int newSector) {
     raw.table[raw.tableSize - DIRECTORY_ENTRIES_TABLE_GROWTH_INCREMENT].inUse = true;
     strncpy(raw.table[raw.tableSize - DIRECTORY_ENTRIES_TABLE_GROWTH_INCREMENT].name, name, FILE_NAME_MAX_LEN);
     raw.table[raw.tableSize - DIRECTORY_ENTRIES_TABLE_GROWTH_INCREMENT].sector = newSector;
+    raw.table[raw.tableSize - DIRECTORY_ENTRIES_TABLE_GROWTH_INCREMENT].isDirectory = isDirectory;
+    raw.table[raw.tableSize - DIRECTORY_ENTRIES_TABLE_GROWTH_INCREMENT].markedForDeletion = false;
 
     return true;
 }
@@ -226,4 +256,48 @@ void Directory::RemoveMarkedForDeletion(unsigned sector) {
     ASSERT(i != -1 && raw.table[i].markedForDeletion);  // sector must be in the directory and marked for deletion
 
     raw.table[i].inUse = false;
+    raw.table[i].markedForDeletion = false;
+}
+
+// List the contents of a directory.
+char *Directory::ListContents() const {
+    char *buffer = new char[raw.tableSize * (FILE_NAME_MAX_LEN + 1) + 1];
+    char *ptr = buffer;
+
+    for (unsigned i = 0; i < raw.tableSize; i++) {
+        if (raw.table[i].inUse && !raw.table[i].markedForDeletion) {
+            size_t len = strlen(raw.table[i].name);
+
+            strncpy(ptr, raw.table[i].name, len);
+            ptr[len] = ' ';  // Add a space between file names
+
+            ptr += len + 1;
+        }
+    }
+
+    // Remove the last space, and terminate the string with a newline.
+    if (ptr != buffer) ptr--;
+
+    ptr[0] = '\n';
+    ptr[1] = '\0';
+
+    return buffer;
+}
+
+/// Determine if directory is empty.
+bool Directory::IsEmpty() const {
+    for (unsigned i = 0; i < raw.tableSize; i++) {
+        if (raw.table[i].inUse) return false;
+    }
+
+    return true;
+}
+
+/// Determine if a directory entry exists with the given name.
+///
+/// * `name` is the name of the file or directory to look up.
+bool Directory::HasEntry(const char *name) const {
+    ASSERT(name != nullptr);
+
+    return FindIndex(name, false) != -1;
 }

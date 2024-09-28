@@ -1,4 +1,4 @@
-/// Delete a file.
+/// Delete a directory.
 
 #include "lib.c"
 #include "syscall.h"
@@ -12,8 +12,8 @@ int main(int argc, char *argv[]) {
 
     int deleted = 0;
     for (unsigned i = 1; i < argc; i++) {
-        if (Remove(argv[i]) < 0) {
-            puts("Error: failed to remove file from directory: ");
+        if (RemoveDirectory(argv[i]) < 0) {
+            puts("Error: failed to remove directory: ");
             puts(argv[i]);
             puts("\n");
 

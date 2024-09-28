@@ -23,11 +23,17 @@
 /// All rights reserved.  See `copyright.h` for copyright notice and
 /// limitation of liability and disclaimer of warranty provisions.
 
+#include <sys/stat.h>
+
+#include <string>
+
 #include "interrupt.hh"
 #include "lib/debug.hh"
+#include "lib/utility.hh"
 #include "threads/system.hh"
 
 extern "C" {
+#include <dirent.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
@@ -89,6 +95,65 @@ bool PollFile(int fd) {
 
     ASSERT(retVal == 0 || retVal == 1);
     return retVal;  // If 0, no char waiting to be read.
+}
+
+/// Create a directory.
+///
+/// Return true if successful, false otherwise.
+bool CreateDirectory(const char *name) {
+    ASSERT(name != nullptr);
+
+    return mkdir(name, 0777) == 0;
+}
+
+/// Change the current directory.
+///
+/// Return true if successful, false otherwise.
+bool ChangeDirectory(const char *name) {
+    ASSERT(name != nullptr);
+
+    return chdir(name) == 0;
+}
+
+/// List all files in a directory.
+///
+/// Return a space-separated list of file names, or nullptr if the directory
+/// does not exist.
+char *ListDirectoryContents(const char *name) {
+    ASSERT(name != nullptr);
+
+    DIR *dir = opendir(name);
+    if (dir == nullptr) return nullptr;
+
+    std::string file_list;
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != nullptr) {
+        // Skip the "." and ".." entries
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+
+        file_list += entry->d_name;
+        file_list += " ";
+    }
+
+    closedir(dir);
+
+    if (!file_list.empty())
+        file_list.back() = '\n';
+    else
+        file_list = "\n";
+
+    return CopyString(file_list.c_str());
+}
+
+/// Remove a directory.
+///
+/// Return true if successful, false otherwise.
+bool RemoveDirectory(const char *name) {
+    ASSERT(name != nullptr);
+
+    return rmdir(name) == 0;
 }
 
 /// Open a file for writing.
