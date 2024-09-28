@@ -52,7 +52,7 @@ class FileSystem {
 
     ~FileSystem() {}
 
-    bool Create(const char *name, unsigned initialSize) {
+    bool CreateFile(const char *name, unsigned initialSize) {
         ASSERT(name != nullptr);
 
         int fileDescriptor = SystemDep::OpenForWrite(name);
@@ -107,7 +107,7 @@ class FileSystem {
     ~FileSystem();
 
     /// Create a file (UNIX `creat`).
-    bool Create(const char *name, unsigned initialSize);
+    bool CreateFile(const char *name, unsigned initialSize);
 
     /// Open a file (UNIX `open`).
     OpenFile *Open(const char *name);

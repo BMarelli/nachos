@@ -198,7 +198,7 @@ FileSystem::~FileSystem() {
 ///
 /// * `name` is the name of file to be created.
 /// * `initialSize` is the size of file to be created.
-bool FileSystem::Create(const char *name, unsigned initialSize) {
+bool FileSystem::CreateFile(const char *name, unsigned initialSize) {
     ASSERT(name != nullptr);
     ASSERT(initialSize < MAX_FILE_SIZE);
 
