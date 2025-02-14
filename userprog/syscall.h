@@ -13,6 +13,8 @@
 #ifndef NACHOS_USERPROG_SYSCALL__H
 #define NACHOS_USERPROG_SYSCALL__H
 
+#include <stdbool.h>
+
 /// System call codes.
 ///
 /// Used by the stubs to tell the kernel which system call is being asked
@@ -60,7 +62,7 @@ typedef int SpaceId;
 
 /// Run the executable, stored in the Nachos file `name`, and return the
 /// address space identifier.
-SpaceId Exec(char *name, char **args);
+SpaceId Exec(char *name, char **args, bool parallel);
 
 /// Only return once the the user program `id` has finished.
 ///
