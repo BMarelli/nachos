@@ -44,6 +44,9 @@ Scheduler::~Scheduler() {
 void Scheduler::ReadyToRun(Thread *thread) {
     ASSERT(thread != nullptr);
 
+    // NOTE: if the thread is `FINISHED`, we don't want to add it to the ready list.
+    if (thread->GetStatus() == FINISHED) return;
+
     DEBUG('t', "Putting thread %s on ready list with priority level %s\n", thread->GetName(), PriorityToString(thread->GetPriority()));
 
     thread->SetStatus(READY);

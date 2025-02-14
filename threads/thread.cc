@@ -79,8 +79,6 @@ Thread::~Thread() {
 
     if (stack != nullptr) SystemDep::DeallocBoundedArray((char *)stack, STACK_SIZE * sizeof *stack);
 
-    if (isJoinable) delete joinChannel;
-
 #ifdef USER_PROGRAM
     if (space != nullptr) delete space;
 
@@ -146,6 +144,8 @@ void Thread::CheckOverflow() const {
     }
 }
 
+ThreadStatus Thread::GetStatus() const { return status; }
+
 void Thread::SetStatus(ThreadStatus st) {
     ASSERT(IsThreadStatus(st));
     status = st;
@@ -173,13 +173,20 @@ void Thread::Finish(int exitStatus) {
 
     DEBUG('t', "Finishing thread \"%s\"\n", GetName());
 
-    if (isJoinable) joinChannel->Send(exitStatus);
+    // NOTE: by setting the status to `FINISHED`, we can guarantee that the
+    // thread will never be scheduled to run again. This is because we avoid
+    // putting the thread back on the ready queue if `Scheduler::ReadyToRun`
+    // is called if the thread is `FINISHED`.
+    SetStatus(FINISHED);
 
     threadToBeDestroyed = currentThread;
 
-    Sleep();  // Invokes `SWITCH`.
+    if (isJoinable)
+        joinChannel->Send(exitStatus);
+    else
+        Sleep();
 
-    // Not reached.
+    ASSERT(false && "not reached");
 }
 
 /// Relinquish the CPU if any other thread is ready to run.
@@ -232,10 +239,14 @@ void Thread::Sleep() {
     ASSERT(this == currentThread);
     ASSERT(interrupt->GetLevel() == INT_OFF);
 
+    // NOTE: if the thread is already `FINISHED`, we don't want to mark it
+    // as `BLOCKED`. This is because we don't want to put the thread back on
+    // the ready queue if `Scheduler::ReadyToRun` is called.
+    if (GetStatus() != FINISHED) SetStatus(BLOCKED);
+
     DEBUG('t', "Sleeping thread \"%s\"\n", GetName());
 
     Thread *nextThread;
-    status = BLOCKED;
     while ((nextThread = scheduler->FindNextToRun()) == nullptr) {
         interrupt->Idle();  // No one to run, wait for an interrupt.
     }
@@ -295,6 +306,8 @@ int Thread::Join() {
 
     int result;
     joinChannel->Receive(&result);
+
+    delete joinChannel;
 
     interrupt->SetLevel(oldLevel);
 

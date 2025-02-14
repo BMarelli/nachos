@@ -66,7 +66,7 @@ const unsigned MACHINE_STATE_SIZE = 17;
 const unsigned STACK_SIZE = 20 * 1024;
 
 /// Thread state.
-enum ThreadStatus { JUST_CREATED, RUNNING, READY, BLOCKED, NUM_THREAD_STATUS };
+enum ThreadStatus { JUST_CREATED, RUNNING, READY, BLOCKED, FINISHED, NUM_THREAD_STATUS };
 
 /// The following class defines a “thread control block” -- which represents
 /// a single thread of execution.
@@ -74,7 +74,7 @@ enum ThreadStatus { JUST_CREATED, RUNNING, READY, BLOCKED, NUM_THREAD_STATUS };
 /// Every thread has:
 /// * an execution stack for activation records (`stackTop` and `stack`);
 /// * space to save CPU registers while not running (`machineState`);
-/// * a `status` (running/ready/blocked).
+/// * a `status` (running/ready/blocked/finished).
 ///
 ///  Some threads also belong to a user address space; threads that only run
 ///  in the kernel have a null address space.
@@ -118,6 +118,8 @@ class Thread {
 
     /// Check if thread has overflowed its stack.
     void CheckOverflow() const;
+
+    ThreadStatus GetStatus() const;
 
     void SetStatus(ThreadStatus st);
 
