@@ -116,7 +116,7 @@ int main(void) {
 
             char *name = argv[0] + (parallel ? 1 : 0);  // Skip '&' if present.
 
-            const SpaceId newProc = Exec(name, argv);
+            const SpaceId newProc = Exec(name, argv, parallel);
             if (newProc < 0) {
                 WriteError("failed to execute command.");
 

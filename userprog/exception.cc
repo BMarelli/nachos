@@ -136,6 +136,10 @@ static void HandleExec() {
         return;
     }
 
+    int argsAddr = machine->ReadRegister(5);
+
+    bool parallel = machine->ReadRegister(6);
+
     OpenFile *executable = fileSystem->Open(filepath);
     if (executable == nullptr) {
         DEBUG('e', "Error: file `%s` not found.\n", filepath);
@@ -144,7 +148,7 @@ static void HandleExec() {
         return;
     }
 
-    Thread *thread = new Thread(filepath, true, currentThread->GetPriority());
+    Thread *thread = new Thread(filepath, !parallel, currentThread->GetPriority());
 
     SpaceId pid = processTable->Add(thread);
     if (pid == -1) {
@@ -158,7 +162,6 @@ static void HandleExec() {
 
     thread->space = new AddressSpace(executable, pid);
 
-    int argsAddr = machine->ReadRegister(5);
     char **args = (argsAddr == 0) ? nullptr : SaveArgs(argsAddr);
 
 #ifdef FILESYS

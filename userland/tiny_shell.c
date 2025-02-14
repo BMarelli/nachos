@@ -18,7 +18,7 @@ int main(void) {
         buffer[i] = '\0';
 
         if (i > 0) {
-            SpaceId newProc = Exec(buffer, NULL);
+            SpaceId newProc = Exec(buffer, NULL, false);
             if (newProc < 0) {
                 puts("Error: failed to execute command.\n");
 
