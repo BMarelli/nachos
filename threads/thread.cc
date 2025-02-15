@@ -79,18 +79,6 @@ Thread::~Thread() {
 
     if (stack != nullptr) SystemDep::DeallocBoundedArray((char *)stack, STACK_SIZE * sizeof *stack);
 
-#ifdef USER_PROGRAM
-    if (space != nullptr) delete space;
-
-    for (unsigned i = 0; i < openFiles->SIZE; i++) {
-        if (openFiles->HasKey(i)) {
-            fileSystem->Close(openFiles->Remove(i));
-        }
-    }
-
-    delete openFiles;
-#endif
-
 #ifdef FILESYS
     if (currentWorkingDirectory != nullptr) {
         delete currentWorkingDirectory;
@@ -172,6 +160,26 @@ void Thread::Finish(int exitStatus) {
     interrupt->SetLevel(INT_OFF);
 
     DEBUG('t', "Finishing thread \"%s\"\n", GetName());
+
+#ifdef USER_PROGRAM
+    // NOTE: cleanup needs to happen here, before switching to a different thread,
+    // because some disk operations may need to be performed.
+    // For example:
+    // - SWAP files may need to be removed from the file system.
+    // - Closing an open file which has been marked for deletion may result in the
+    //  file being removed from the file system if this thread was the last one
+    //  holding a reference to it.
+
+    if (space != nullptr) delete space;
+
+    for (unsigned i = 0; i < openFiles->SIZE; i++) {
+        if (openFiles->HasKey(i)) {
+            fileSystem->Close(openFiles->Remove(i));
+        }
+    }
+
+    delete openFiles;
+#endif
 
     // NOTE: by setting the status to `FINISHED`, we can guarantee that the
     // thread will never be scheduled to run again. This is because we avoid
