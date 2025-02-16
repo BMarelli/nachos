@@ -81,11 +81,9 @@ AddressSpace::~AddressSpace() {
     fileSystem->Close(executable_file);
 
 #ifdef SWAP
-    if (!fileSystem->RemoveFile(swapFileName)) {
-        DEBUG('a', "Error removing swap file %s\n", swapFileName);
-    }
+    fileSystem->Close(swapFile);
 
-    delete swapFile;
+    ASSERT(fileSystem->RemoveFile(swapFileName));
 #endif
 }
 
