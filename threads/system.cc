@@ -57,6 +57,10 @@ Table<Thread *> *processTable;  ///< Table of processes.
 PostOffice *postOffice;
 #endif
 
+#ifdef SWAP
+Lock *pageLoadingLock;
+#endif
+
 // External definition, to allow us to take a pointer to this function.
 extern void Cleanup();
 
@@ -255,6 +259,10 @@ void Initialize(int argc, char **argv) {
 #ifdef NETWORK
     postOffice = new PostOffice(netname, rely, 10);
 #endif
+
+#ifdef SWAP
+    pageLoadingLock = new Lock();
+#endif
 }
 
 /// Nachos is halting.  De-allocate global data structures.
@@ -281,6 +289,10 @@ void Cleanup() {
 
 #ifdef FILESYS
     delete synchDisk;
+#endif
+
+#ifdef SWAP
+    delete pageLoadingLock;
 #endif
 
     delete timer;

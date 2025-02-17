@@ -151,6 +151,10 @@ TranslationEntry *AddressSpace::GetPage(unsigned vpn) {
 void AddressSpace::LoadPage(unsigned vpn) {
     ASSERT(vpn < numPages);
 
+#ifdef SWAP
+    pageLoadingLock->Acquire();
+#endif
+
     char *mainMemory = machine->GetMMU()->mainMemory;
 
     int physicalPage = memoryMap->Find(this, vpn);
@@ -175,6 +179,11 @@ void AddressSpace::LoadPage(unsigned vpn) {
 
         swapFile->ReadAt(mainMemory + physicalPage * PAGE_SIZE, PAGE_SIZE, vpn * PAGE_SIZE);
         stats->numPagesLoadedFromSwap++;
+
+#ifdef SWAP
+        pageLoadingLock->Release();
+#endif
+
         return;
     }
 #endif
@@ -220,6 +229,10 @@ void AddressSpace::LoadPage(unsigned vpn) {
     }
 
     ASSERT(totalRead <= PAGE_SIZE);
+
+#ifdef SWAP
+    pageLoadingLock->Release();
+#endif
 }
 
 #ifdef SWAP
@@ -238,13 +251,14 @@ void AddressSpace::SendPageToSwap(unsigned vpn) {
 
     pageTable[vpn].dirty = false;
 
+    swapBitmap->Mark(vpn);
+
     int written = swapFile->WriteAt(machine->GetMMU()->mainMemory + pageTable[vpn].physicalPage * PAGE_SIZE, PAGE_SIZE, vpn * PAGE_SIZE);
     if (written != PAGE_SIZE) {
         DEBUG('a', "Error writing to swap file %s: expected %u bytes, got %d bytes\n", swapFileName, PAGE_SIZE, written);
         ASSERT(false);
     }
 
-    swapBitmap->Mark(vpn);
     stats->numPagesSentToSwap++;
 }
 
@@ -342,9 +356,9 @@ unsigned AddressSpace::FreePageForVPN(unsigned vpn) {
     }
 #endif
 
-    victimSpace->SendPageToSwap(victimPage);
-
     memoryMap->Mark(victim, this, vpn);
+
+    victimSpace->SendPageToSwap(victimPage);
 
     return victim;
 }

@@ -69,4 +69,9 @@ extern SynchDisk *synchDisk;
 extern PostOffice *postOffice;
 #endif
 
+#ifdef SWAP
+#include "lock.hh"
+extern Lock *pageLoadingLock;
+#endif
+
 #endif
