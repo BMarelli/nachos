@@ -14,13 +14,6 @@
 /// as a string and the location where the error occurred.
 #define ASSERT(condition) Assert(condition, #condition, __FILE__, __LINE__)
 
-#define ASSERT_WITH_RETRY(condition)                           \
-    do {                                                       \
-        if (!condition) {                                      \
-            Assert(condition, #condition, __FILE__, __LINE__); \
-        }                                                      \
-    } while (0)
-
 void Assert(bool result, const char *expString, const char *filename, unsigned line);
 
 #endif

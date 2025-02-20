@@ -32,6 +32,7 @@ extern Timer *timer;                 ///< The hardware alarm clock.
 extern bool disablePeriodicYield;    ///< Disables context switches caused by the timer device.
 
 #ifdef USER_PROGRAM
+#include "lib/debug.hh"
 #include "lib/table.hh"
 #include "machine/machine.hh"
 #include "synch_console.hh"
@@ -43,9 +44,17 @@ extern SynchConsole *synchConsole;     // Synchronized console.
 extern Table<Thread *> *processTable;  // Table of processes.
 
 #if defined(USE_TLB) || defined(DEMAND_LOADING) || defined(SWAP)
-// When using TLB or demand loading, we need to retry the read/write as the first attempt may result in a page fault.
-#define READ_MEM(addr, size, value) ASSERT_WITH_RETRY(machine->ReadMem(addr, size, value))
-#define WRITE_MEM(addr, size, value) ASSERT_WITH_RETRY(machine->WriteMem(addr, size, value))
+// When using TLB, demand loading or swap, we may need to retry the read/write as page faults may occur.
+// TODO: only retry if the exception was a page fault.
+#define RETRY_UNTIL(condition)                                                   \
+    do {                                                                         \
+        while (!(condition)) {                                                   \
+            DEBUG('a', "RETRYING: %s, %s:%u\n", #condition, __FILE__, __LINE__); \
+        }                                                                        \
+    } while (0)
+
+#define READ_MEM(addr, size, value) RETRY_UNTIL(machine->ReadMem(addr, size, value))
+#define WRITE_MEM(addr, size, value) RETRY_UNTIL(machine->WriteMem(addr, size, value))
 #else
 // Otherwise, we don't need to retry the read/write as pages are always valid.
 #define READ_MEM(addr, size, value) ASSERT(machine->ReadMem(addr, size, value))
