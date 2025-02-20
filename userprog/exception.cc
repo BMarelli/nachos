@@ -336,12 +336,15 @@ static void HandleRead() {
         case CONSOLE_INPUT: {
             DEBUG('e', "Reading from console input.\n");
 
-            char buffer[size];
+            char *buffer = new char[size];
             int bytesRead = synchConsole->Read(buffer, size);
 
             if (bytesRead > 0) WriteBufferToUser(buffer, bufferAddr, bytesRead);
 
+            delete[] buffer;
+
             machine->WriteRegister(2, bytesRead);
+
             break;
         }
 
@@ -364,10 +367,12 @@ static void HandleRead() {
 
             OpenFile *file = currentThread->openFiles->Get(key);
 
-            char buffer[size];
+            char *buffer = new char[size];
             int bytesRead = file->Read(buffer, size);
 
             if (bytesRead > 0) WriteBufferToUser(buffer, bufferAddr, bytesRead);
+
+            delete[] buffer;
 
             machine->WriteRegister(2, bytesRead);
             break;
@@ -412,10 +417,12 @@ static void HandleWrite() {
         case CONSOLE_OUTPUT: {
             DEBUG('e', "Writing to console output.\n");
 
-            char buffer[size];
+            char *buffer = new char[size];
             ReadBufferFromUser(bufferAddr, buffer, size);
 
             synchConsole->Write(buffer, size);
+
+            delete[] buffer;
 
             machine->WriteRegister(2, size);
             break;
@@ -433,10 +440,12 @@ static void HandleWrite() {
 
             OpenFile *file = currentThread->openFiles->Get(key);
 
-            char buffer[size];
+            char *buffer = new char[size];
             ReadBufferFromUser(bufferAddr, buffer, size);
 
             int bytesWritten = file->Write(buffer, size);
+
+            delete[] buffer;
 
             machine->WriteRegister(2, bytesWritten);
             break;
