@@ -104,13 +104,19 @@ int main(void) {
         }
 
         if (strcmp(argv[0], "cd") == 0) {
-            if (res == 1) {
-                ChangeDirectory(NULL);
-            } else if (res == 2) {
-                ChangeDirectory(argv[1]);
-            } else {
+            if (res > 2) {
                 WriteError("too many arguments.");
+
+                continue;
             }
+
+            char *target;
+            if (res == 1)
+                target = NULL;
+            else
+                target = argv[1];
+
+            if (ChangeDirectory(target) < 0) WriteError("failed to change directory.");
         } else {
             bool parallel = argv[0][0] == '&';
 
