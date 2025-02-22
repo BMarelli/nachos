@@ -41,6 +41,8 @@
                      // UNIX, until the real file system implementation is
                      // available.
 
+#include <cstdlib>
+
 /// Dummy value for the size of the free map file. For the stub filesystem
 /// it is not required, but system information tools expects it to be defined
 /// as a constant.
@@ -93,7 +95,7 @@ class FileSystem {
     }
 
     bool ChangeDirectory(const char *path) {
-        if (path == nullptr) return SystemDep::ChangeDirectory("");
+        if (path == nullptr) return SystemDep::ChangeDirectory(getenv("HOME"));
 
         return SystemDep::ChangeDirectory(path);
     }
