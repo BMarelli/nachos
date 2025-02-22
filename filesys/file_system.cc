@@ -332,7 +332,19 @@ static bool CheckFileSectors(unsigned sector, const FileHeader *fileHeader, Bitm
     error |= CheckForError(!shadowMap->Test(sector), "file header sector already marked");
     shadowMap->Mark(sector);
 
-    for (unsigned i = 0; i < fileHeader->GetRaw()->numSectors; i++) {
+    const RawFileHeader *raw = fileHeader->GetRaw();
+
+    if (raw->numSectors > NUM_DIRECT) {
+        error |= CheckForError(!shadowMap->Test(raw->indirectionSector), "indirection sector already marked");
+        shadowMap->Mark(raw->indirectionSector);
+    }
+
+    if (raw->numSectors > NUM_DIRECT + NUM_INDIRECT) {
+        error |= CheckForError(!shadowMap->Test(raw->doubleIndirectionSector), "double indirection sector already marked");
+        shadowMap->Mark(raw->doubleIndirectionSector);
+    }
+
+    for (unsigned i = 0; i < raw->numSectors; i++) {
         error |= CheckForError(!shadowMap->Test(fileHeader->GetSector(i)), "sector already marked");
 
         shadowMap->Mark(fileHeader->GetSector(i));
